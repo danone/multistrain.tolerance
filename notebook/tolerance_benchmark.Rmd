@@ -1,0 +1,131 @@
+---
+title: "pipeline benchmark from Tolerance study set"
+output:
+  html_notebook:
+    highlight: tango
+    author: Julien Tap
+    mathjax: null
+    theme: cerulean
+    toc: yes
+    toc_float: yes
+    code_folding: hide
+date: '`r Sys.Date()`'
+---
+
+
+```{r, message=FALSE, warning=FALSE}
+
+devtools::load_all()
+library(ggplot2)
+library(magrittr)
+library(dplyr)
+library(reshape2)
+
+```
+
+
+get biom url from Tolerance data package
+
+```{r}
+
+usearch_lotus = system.file("biom", "OTU_lotus_usearchv7_32bit.biom", package="Tolerance")
+
+usearch_qiime = system.file("biom", "otu_table_non_chimeric_usearch_qiime.biom", package="Tolerance")
+
+vsearch_qiime = system.file("biom", "otu_table_non_chimeric_vsearch_qiime.biom", package="Tolerance")
+
+
+```
+
+
+compute diversity stat
+
+```{r}
+
+
+diversity_raw_stat = function(biom_url){
+
+b = biomformat::read_biom(biom_url)
+o = biomformat::biom_data(b)
+#o %>% as.matrix %>% t %>% vegan::rarefy(10000)
+
+#o %>% as.matrix %>% t %>% vegan::rrarefy(10000) %>% vegan::diversity(., index="shannon") %>% rbind(shannon = ., o %>% as.matrix %>% t %>% vegan::rrarefy(10000) %>% vegan::estimateR()) %>% t
+
+
+r = o %>% 
+  as.matrix %>% 
+  t %>% 
+  vegan::rrarefy(10000) 
+
+res = rbind(
+simpson = vegan::diversity(r, index=c("simpson")),
+shannon = vegan::diversity(r, index=c("shannon")),
+vegan::estimateR(r)
+) %>% t
+
+return(res)
+
+}
+
+
+diversity_pipeline = 
+
+rbind(
+  cbind(diversity_raw_stat(usearch_lotus) , pipeline="usearch_lotus"),
+  cbind(diversity_raw_stat(usearch_qiime)  , pipeline = "usearch_qiime"),
+  cbind(diversity_raw_stat(vsearch_qiime)  , pipeline = "vsearch_qiime")
+)
+
+
+
+
+```
+
+extract metadata and merge with diversity stat
+
+```{r, message=FALSE, warning=FALSE}
+
+
+b = biomformat::read_biom(usearch_lotus)
+
+m = biomformat::sample_metadata(b)
+
+
+
+stat = m %>% select(Description) %>% merge(diversity_pipeline,., by="row.names", all.x = TRUE) %>% melt(id.vars=c("Row.names","Description","pipeline"))
+
+stat$value %<>% as.numeric
+
+stat %<>% cbind(., stringr::str_split(stat$Description, pattern="\\.", simplify = TRUE) )
+
+colnames(stat) = c("Subject","Description","pipeline","index","value","Visit","Product","Dose")
+
+
+stat
+
+
+
+
+
+
+```
+
+
+```{r}
+
+
+stat %>% filter(index=="S.obs") %>% 
+  ggplot() + 
+  geom_violin(aes(x=Visit, y=value), draw_quantiles = 0.5 ) + facet_grid(pipeline~Product+Dose, scales = "free_y")
+
+
+
+
+
+stat %>% filter(index=="S.obs") %>% group_by(Visit, Product, Dose, pipeline) %>% summarize(mean=mean(value)) %>% ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline)) + facet_grid(pipeline~Product+Dose, scales = "free_y")
+
+
+
+
+```
+

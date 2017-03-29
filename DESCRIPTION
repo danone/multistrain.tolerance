@@ -1,0 +1,11 @@
+Package: Tolerance
+Type: Package
+Title: Tolerance data package
+Version: 0.1.0
+Author: Julien Tap
+Maintainer: Julien Tap <julien.tap@danone.com>
+Description: 16S Microbiome data from tolerance study
+    Four groups with two products and two differents doses.
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
