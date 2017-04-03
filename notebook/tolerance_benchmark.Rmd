@@ -34,6 +34,7 @@ usearch_qiime = system.file("biom", "otu_table_non_chimeric_usearch_qiime.biom",
 
 vsearch_qiime = system.file("biom", "otu_table_non_chimeric_vsearch_qiime.biom", package="Tolerance")
 
+dada_variant  = system.file("biom", "data_project.biom", package="Tolerance")
 
 ```
 
@@ -71,9 +72,10 @@ return(res)
 diversity_pipeline = 
 
 rbind(
-  cbind(diversity_raw_stat(usearch_lotus) , pipeline="usearch_lotus"),
-  cbind(diversity_raw_stat(usearch_qiime)  , pipeline = "usearch_qiime"),
-  cbind(diversity_raw_stat(vsearch_qiime)  , pipeline = "vsearch_qiime")
+  cbind(diversity_raw_stat(usearch_lotus), pipeline = "usearch_lotus"),
+  cbind(diversity_raw_stat(usearch_qiime), pipeline = "usearch_qiime"),
+  cbind(diversity_raw_stat(vsearch_qiime), pipeline = "vsearch_qiime"),
+  cbind(diversity_raw_stat(dada_variant) , pipeline = "dada2")
 )
 
 
@@ -113,19 +115,130 @@ stat
 
 ```{r}
 
+# 
+# stat %>% filter(index=="S.obs") %>% 
+#   ggplot() + 
+#   geom_violin(aes(x=Visit, y=value), draw_quantiles = 0.5 ) + facet_grid(pipeline~Product+Dose, scales = "free_y")
+# 
+
 
 stat %>% filter(index=="S.obs") %>% 
-  ggplot() + 
-  geom_violin(aes(x=Visit, y=value), draw_quantiles = 0.5 ) + facet_grid(pipeline~Product+Dose, scales = "free_y")
+  group_by(Visit, Product, Dose, pipeline) %>% 
+  summarize(mean=median(value), q25 = quantile(value,0.25), q75 = quantile(value,0.75)) %>%  
+  ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline),  col="red") + 
+  geom_line(aes(y=q25, x=Visit, group=pipeline), linetype=2) + 
+  geom_line(aes(y=q75, x=Visit, group=pipeline), linetype=2) + 
+  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("S.chao1")
 
 
 
+stat %>% filter(index=="simpson") %>% 
+  group_by(Visit, Product, Dose, pipeline) %>% 
+  summarize(mean=median(value), q25 = quantile(value,0.25), q75 = quantile(value,0.75)) %>%  
+  ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline),  col="red") + 
+  geom_line(aes(y=q25, x=Visit, group=pipeline), linetype=2) + 
+  geom_line(aes(y=q75, x=Visit, group=pipeline), linetype=2) + 
+  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("S.chao1")
 
 
-stat %>% filter(index=="S.obs") %>% group_by(Visit, Product, Dose, pipeline) %>% summarize(mean=mean(value)) %>% ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline)) + facet_grid(pipeline~Product+Dose, scales = "free_y")
+stat %>% filter(index=="shannon") %>% 
+  group_by(Visit, Product, Dose, pipeline) %>% 
+  summarize(mean=median(value), q25 = quantile(value,0.25), q75 = quantile(value,0.75)) %>%  
+  ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline),  col="red") + 
+  geom_line(aes(y=q25, x=Visit, group=pipeline), linetype=2) + 
+  geom_line(aes(y=q75, x=Visit, group=pipeline), linetype=2) + 
+  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("S.chao1")
+
+
+stat %>% filter(index=="S.chao1") %>% 
+  group_by(Visit, Product, Dose, pipeline) %>% 
+  summarize(mean=median(value), q25 = quantile(value,0.25), q75 = quantile(value,0.75)) %>%  
+  ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline),  col="red") + 
+  geom_line(aes(y=q25, x=Visit, group=pipeline), linetype=2) + 
+  geom_line(aes(y=q75, x=Visit, group=pipeline), linetype=2) + 
+  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("S.chao1")
 
 
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+stat %>%  dcast(Visit+Product+Dose+Description+index+Subject~pipeline, value.var = "value") %>% filter(index=="S.chao1") %>% ggplot() + geom_point(aes(x=vsearch_qiime, y=usearch_qiime, col=Dose)) + facet_wrap(~Visit+Product)
+
+
+stat %>% dcast(Visit+Product+Dose+index+Subject~pipeline, value.var = "value") %>% 
+  filter(index=="S.obs") %>% 
+  group_by(Visit,Product,Dose,index) %>% 
+  do(melt(cor(.[,-c(1:5)], method="spearman"))) %>% 
+  ggplot() + geom_tile(aes(x=Var1, y=Var2, fill=value)) + 
+  facet_grid(Visit~Product+Dose) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0)) +
+  xlab("pipeline") + ylab("") + scale_fill_gradient("Alpha_div\nCor.")
+  
+  
+  
+  
+```
+
+
+
+
+```{r}
+
+
+
+get_genus_from_biom = function(biom_file){
+  
+  
+  b     = biomformat::read_biom(biom_file)
+  otu   = biomformat::biom_data(b)
+  tax   = biomformat::observation_metadata(b)
+  genus = apply(otu, 2, tapply, paste(tax[,1],tax[,2] ,tax[,3],tax[,4],tax[,5],tax[,6], sep="; "), sum)
+
+  return(genus)  
+  
+}
+
+genus_dada = get_genus_from_biom(dada_variant)
+
+genus_usearch_qiime = get_genus_from_biom(usearch_qiime)
+
+genus_vsearch_qiime = get_genus_from_biom(vsearch_qiime)
+
+genus_usearch_lotus = get_genus_from_biom(usearch_lotus)
+
+
+row.names(genus_usearch_lotus) %>% grep("Bifidobacterium|Faecalibacterium|Bacteroides|Lactobacillus|Akkermansia",., value=TRUE)
+
+
+
+plot(genus_usearch_lotus %>% apply(.,2,sum), genus_dada %>% apply(.,2,sum))
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
 
