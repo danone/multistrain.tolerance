@@ -24,6 +24,8 @@ library(reshape2)
 ```
 
 
+## get started
+
 get biom url from Tolerance data package
 
 ```{r}
@@ -112,6 +114,7 @@ stat
 
 ```
 
+# alpha diversity plot
 
 ```{r}
 
@@ -128,7 +131,7 @@ stat %>% filter(index=="S.obs") %>%
   ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline),  col="red") + 
   geom_line(aes(y=q25, x=Visit, group=pipeline), linetype=2) + 
   geom_line(aes(y=q75, x=Visit, group=pipeline), linetype=2) + 
-  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("S.chao1")
+  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("S.obs")
 
 
 
@@ -138,7 +141,7 @@ stat %>% filter(index=="simpson") %>%
   ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline),  col="red") + 
   geom_line(aes(y=q25, x=Visit, group=pipeline), linetype=2) + 
   geom_line(aes(y=q75, x=Visit, group=pipeline), linetype=2) + 
-  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("S.chao1")
+  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("Simpson")
 
 
 stat %>% filter(index=="shannon") %>% 
@@ -147,7 +150,7 @@ stat %>% filter(index=="shannon") %>%
   ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline),  col="red") + 
   geom_line(aes(y=q25, x=Visit, group=pipeline), linetype=2) + 
   geom_line(aes(y=q75, x=Visit, group=pipeline), linetype=2) + 
-  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("S.chao1")
+  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("Shannon")
 
 
 stat %>% filter(index=="S.chao1") %>% 
@@ -169,7 +172,7 @@ stat %>% filter(index=="S.chao1") %>%
 
 
 
-
+# alpha diversity correlation
 
 
 
@@ -193,7 +196,7 @@ stat %>% dcast(Visit+Product+Dose+index+Subject~pipeline, value.var = "value") %
 ```
 
 
-
+## read mass and genus level plot
 
 ```{r}
 
@@ -220,11 +223,47 @@ genus_vsearch_qiime = get_genus_from_biom(vsearch_qiime)
 genus_usearch_lotus = get_genus_from_biom(usearch_lotus)
 
 
-row.names(genus_usearch_lotus) %>% grep("Bifidobacterium|Faecalibacterium|Bacteroides|Lactobacillus|Akkermansia",., value=TRUE)
+#row.names(genus_usearch_lotus) %>% grep("Bifidobacterium|Faecalibacterium|Bacteroides|Lactobacillus|Akkermansia",., value=TRUE)
+
+
+all_pipeline = 
+rbind(
+  melt(genus_dada) %>% cbind(pipeline="dada2"),
+  melt(genus_usearch_qiime) %>% cbind(pipeline="usearch_qiime"),
+  melt(genus_vsearch_qiime) %>% cbind(pipeline="vsearch_qiime"),
+  melt(genus_usearch_lotus) %>% cbind(pipeline="usearch_lotus")
+  )
+
+
+all_pipeline %>% group_by(Var2,pipeline) %>% 
+  summarise(read_mass=sum(value)) %>%
+  ggplot() + geom_density(aes(x=read_mass, fill=pipeline), alpha=0.8) + scale_x_log10()
+
+
+all_pipeline %>% group_by(Var2,pipeline) %>% 
+  summarise(read_mass=sum(value)) %>% 
+  dcast(Var2~pipeline) %>% .[,-1] %>% log10 %>% GGally::ggpairs(upper = list(continuous = "cor", corMethod = "spearman")) + xlab("read mass")
 
 
 
-plot(genus_usearch_lotus %>% apply(.,2,sum), genus_dada %>% apply(.,2,sum))
+all_pipeline %>% group_by(Var2,pipeline) %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  filter(grepl("Akkermansia", Var1)) %>%
+  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Akkermansia")
+
+
+all_pipeline %>% group_by(Var2,pipeline) %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  filter(grepl("Bifidobacterium", Var1)) %>%
+  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Bifidobacterium")
+
+
+
+
+all_pipeline %>% group_by(Var2,pipeline) %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  filter(grepl("Methanobrevibacter", Var1)) %>%
+  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Methanobrevibacter")
 
 
 
