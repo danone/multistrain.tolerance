@@ -34,6 +34,8 @@ usearch_lotus = system.file("biom", "OTU_lotus_usearchv7_32bit.biom", package="T
 
 usearch_qiime = system.file("biom", "otu_table_non_chimeric_usearch_qiime.biom", package="Tolerance")
 
+usearch2_qiime = system.file("biom", "usearch_otu_table_non_chimeric.biom", package="Tolerance") #sent by Heleen 2017-04-06
+
 vsearch_qiime = system.file("biom", "otu_table_non_chimeric_vsearch_qiime.biom", package="Tolerance")
 
 dada_variant  = system.file("biom", "data_project.biom", package="Tolerance")
@@ -76,6 +78,7 @@ diversity_pipeline =
 rbind(
   cbind(diversity_raw_stat(usearch_lotus), pipeline = "usearch_lotus"),
   cbind(diversity_raw_stat(usearch_qiime), pipeline = "usearch_qiime"),
+  cbind(diversity_raw_stat(usearch2_qiime), pipeline = "usearch2_qiime"),
   cbind(diversity_raw_stat(vsearch_qiime), pipeline = "vsearch_qiime"),
   cbind(diversity_raw_stat(dada_variant) , pipeline = "dada2")
 )
@@ -196,9 +199,11 @@ stat %>% dcast(Visit+Product+Dose+index+Subject~pipeline, value.var = "value") %
 ```
 
 
-## read mass and genus level plot
+# read mass and genus level plot
 
-```{r}
+Warning: some of the pipeline might use a different taxonomic databases.
+
+```{r, message=FALSE, warning=FALSE}
 
 
 
@@ -218,6 +223,8 @@ genus_dada = get_genus_from_biom(dada_variant)
 
 genus_usearch_qiime = get_genus_from_biom(usearch_qiime)
 
+genus_usearch2_qiime = get_genus_from_biom(usearch2_qiime)
+
 genus_vsearch_qiime = get_genus_from_biom(vsearch_qiime)
 
 genus_usearch_lotus = get_genus_from_biom(usearch_lotus)
@@ -230,6 +237,7 @@ all_pipeline =
 rbind(
   melt(genus_dada) %>% cbind(pipeline="dada2"),
   melt(genus_usearch_qiime) %>% cbind(pipeline="usearch_qiime"),
+  melt(genus_usearch2_qiime) %>% cbind(pipeline="usearch2_qiime"),
   melt(genus_vsearch_qiime) %>% cbind(pipeline="vsearch_qiime"),
   melt(genus_usearch_lotus) %>% cbind(pipeline="usearch_lotus")
   )
@@ -242,20 +250,20 @@ all_pipeline %>% group_by(Var2,pipeline) %>%
 
 all_pipeline %>% group_by(Var2,pipeline) %>% 
   summarise(read_mass=sum(value)) %>% 
-  dcast(Var2~pipeline) %>% .[,-1] %>% log10 %>% GGally::ggpairs(upper = list(continuous = "cor", corMethod = "spearman")) + xlab("read mass")
+  dcast(Var2~pipeline) %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("read mass")
 
 
 
 all_pipeline %>% group_by(Var2,pipeline) %>% 
   mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
   filter(grepl("Akkermansia", Var1)) %>%
-  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Akkermansia")
+  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Akkermansia")
 
 
 all_pipeline %>% group_by(Var2,pipeline) %>% 
   mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
   filter(grepl("Bifidobacterium", Var1)) %>%
-  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Bifidobacterium")
+  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Bifidobacterium")
 
 
 
@@ -263,8 +271,20 @@ all_pipeline %>% group_by(Var2,pipeline) %>%
 all_pipeline %>% group_by(Var2,pipeline) %>% 
   mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
   filter(grepl("Methanobrevibacter", Var1)) %>%
-  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Methanobrevibacter")
+  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Methanobrevibacter")
 
+
+
+all_pipeline %>% group_by(Var2,pipeline) %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  filter(grepl("Bacteroides", Var1)) %>%
+  dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Bacteroides")
+
+
+all_pipeline %>% group_by(Var2,pipeline) %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  filter(grepl("Prevotellaceae", Var1)) %>% summarise(prop=sum(prop)) %>%
+   dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Prevotellaceae")
 
 
 
