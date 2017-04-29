@@ -20,6 +20,7 @@ library(ggplot2)
 library(magrittr)
 library(dplyr)
 library(reshape2)
+library(mixOmics)
 
 ```
 
@@ -291,6 +292,51 @@ all_pipeline %>% group_by(Var2,pipeline) %>%
 
 ```
 
+
+
+# discriminant analysis with sPLS
+
+
+```{r}
+
+
+
+metadata = m %>% cbind(.,stringr::str_split(m$Description, pattern="\\.", simplify = TRUE)) %>% .[,-c(1,2)] %>% `colnames<-` (c("fastqFile","Subject","Description","Visit","Product","Dose"))
+
+metadata
+
+
+```
+
+
+
+
+
+```{r, eval=FALSE, include=FALSE}
+
+design = data.frame(sample=metadata$Subject)
+
+
+res.splsda = 
+genus_usearch_qiime %>% add(1) %>%
+  prop.table(2) %>% BiotypeR::noise.removal(percent = 0.1) %>% t %>%
+  splsda(., 
+         Y = metadata$Visit, 
+         ncomp = 2, multilevel = data.frame(sample=metadata$Subject),
+keepX = c(10, 10), logratio= 'CLR')
+
+
+plotIndiv(res.splsda, group = metadata$Visit, ind.names = metadata$Visit,
+legend = TRUE)
+
+perf(res.splsda)$error.rate
+
+#plotLoadings(res.splsda, comp=1, method = 'median', contrib = "max")
+
+idx = res.splsda$loadings$X[,2] != 0 | res.splsda$loadings$X[,1] != 0 
+res.splsda$loadings$X[idx,] %>% as.data.frame
+
+```
 
 
 
