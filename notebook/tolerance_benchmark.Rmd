@@ -17,10 +17,10 @@ date: '`r Sys.Date()`'
 
 devtools::load_all()
 library(ggplot2)
-library(magrittr)
-library(dplyr)
 library(reshape2)
 library(mixOmics)
+library(dplyr)
+library(magrittr)
 
 ```
 
@@ -100,7 +100,7 @@ m = biomformat::sample_metadata(b)
 
 
 
-stat = m %>% select(Description) %>% merge(diversity_pipeline,., by="row.names", all.x = TRUE) %>% melt(id.vars=c("Row.names","Description","pipeline"))
+stat = m %>% dplyr::select(Description) %>% merge(diversity_pipeline,., by="row.names", all.x = TRUE) %>% melt(id.vars=c("Row.names","Description","pipeline"))
 
 stat$value %<>% as.numeric
 
@@ -112,15 +112,11 @@ colnames(stat) = c("Subject","Description","pipeline","index","value","Visit","P
 stat
 
 
-
-
-
-
 ```
 
 # alpha diversity plot
 
-```{r}
+```{r, fig.height=7, fig.width=7}
 
 # 
 # stat %>% filter(index=="S.obs") %>% 
@@ -256,13 +252,13 @@ all_pipeline %>% group_by(Var2,pipeline) %>%
 
 
 all_pipeline %>% group_by(Var2,pipeline) %>% 
-  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% dplyr::select(-value)  %>% 
   filter(grepl("Akkermansia", Var1)) %>%
   dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Akkermansia")
 
 
 all_pipeline %>% group_by(Var2,pipeline) %>% 
-  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% dplyr::select(-value)  %>% 
   filter(grepl("Bifidobacterium", Var1)) %>%
   dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Bifidobacterium")
 
@@ -270,20 +266,20 @@ all_pipeline %>% group_by(Var2,pipeline) %>%
 
 
 all_pipeline %>% group_by(Var2,pipeline) %>% 
-  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% dplyr::select(-value)  %>% 
   filter(grepl("Methanobrevibacter", Var1)) %>%
   dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Methanobrevibacter")
 
 
 
 all_pipeline %>% group_by(Var2,pipeline) %>% 
-  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% dplyr::select(-value)  %>% 
   filter(grepl("Bacteroides", Var1)) %>%
   dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Bacteroides")
 
 
 all_pipeline %>% group_by(Var2,pipeline) %>% 
-  mutate(prop=(value+1)/sum(value+1)) %>% select(-value)  %>% 
+  mutate(prop=(value+1)/sum(value+1)) %>% dplyr::select(-value)  %>% 
   filter(grepl("Prevotellaceae", Var1)) %>% summarise(prop=sum(prop)) %>%
    dcast(Var2~pipeline,value.var="prop") %>% .[,-1] %>% log10 %>% GGally::ggpairs(progress = F, upper = list(continuous = "cor", corMethod = "spearman")) + xlab("Prevotellaceae")
 
@@ -293,11 +289,80 @@ all_pipeline %>% group_by(Var2,pipeline) %>%
 ```
 
 
+# OTUs correlation
+
+
+```{r}
+
+
+all_pipeline = 
+rbind(
+#  melt(genus_dada %>% prop.table(2) %>% BiotypeR::noise.removal(percent=1) ) %>% cbind(pipeline="dada2"),
+  #  melt(genus_usearch_lotus %>% prop.table(2) %>% BiotypeR::noise.removal(percent=1)) %>% cbind(pipeline="usearch_lotus"),
+  melt(genus_usearch_qiime %>% prop.table(2) %>% BiotypeR::noise.removal(percent=1)) %>% cbind(pipeline="usearch_qiime"),
+  melt(genus_usearch2_qiime %>% prop.table(2) %>% BiotypeR::noise.removal(percent=1)) %>% cbind(pipeline="usearch2_qiime"),
+  melt(genus_vsearch_qiime %>% prop.table(2) %>% BiotypeR::noise.removal(percent=1)) %>% cbind(pipeline="vsearch_qiime")
+
+  )
+
+
+all_pipeline %>% #group_by(Var2,pipeline) %>% 
+  #mutate(prop=(value+1)/sum(value+1)) %>% dplyr::select(-value) %>%
+  ungroup %>%
+  mutate(pipeline=paste0(pipeline,"_pp")) %>%
+  dcast(Var2~pipeline+Var1,value.var="value") %>%
+  dplyr::select(-Var2) %>%
+  cor(method="spearman") %>% melt %>% filter(value > 0.9 & value != 1) %>%
+  tidyr::separate(Var1,c("pipeline1","tax1"), sep="_pp_", remove = TRUE) %>%
+  tidyr::separate(Var2,c("pipeline2","tax2"), sep="_pp_", remove = TRUE) %>%
+  dcast(pipeline1~pipeline2) 
+
+
+
+
+all_pipeline_otu = 
+rbind(
+  #biomformat::read_biom(dada_variant) %>% biomformat::biom_data() %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1) %>% melt %>% cbind(pipeline="dada2"),
+     #biomformat::read_biom(usearch_lotus) %>% biomformat::biom_data() %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1)%>% melt %>% cbind(pipeline="usearch_lotus"),
+   biomformat::read_biom(usearch_qiime) %>% biomformat::biom_data() %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1) %>% melt %>% cbind(pipeline="usearch_qiime"),
+   biomformat::read_biom(usearch2_qiime) %>% biomformat::biom_data() %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1)%>% melt %>% cbind(pipeline="usearch2_qiime"),
+   biomformat::read_biom(vsearch_qiime) %>% biomformat::biom_data() %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1)%>% melt %>% cbind(pipeline="vsearch_qiime")
+
+  )
+
+
+
+all_pipeline_otu %>%
+#mutate(prop=(value+1)/sum(value+1)) %>% dplyr::select(-value) %>%
+  #ungroup %>%
+  mutate(pipeline=paste0(pipeline,"_pp")) %>%
+  dcast(Var2~pipeline+Var1,value.var="value") %>%
+  dplyr::select(-Var2) %>%
+  cor(method="spearman") %>% melt %>% filter(value > 0.9 & value != 1) %>%
+  tidyr::separate(Var1,c("pipeline1","tax1"), sep="_pp_", remove = TRUE) %>%
+  tidyr::separate(Var2,c("pipeline2","tax2"), sep="_pp_", remove = TRUE) %>%
+  dcast(pipeline1~pipeline2)
+
+
+
+data.frame(
+usearch_qiime = biomformat::read_biom(usearch_qiime) %>% biomformat::biom_data() %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1) %>% as.matrix %>% dim() %>% .[1],
+usearch2_qiime = biomformat::read_biom(usearch2_qiime) %>% biomformat::biom_data() %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1) %>% as.matrix %>% dim() %>% .[1],
+vsearch_qiime = biomformat::read_biom(vsearch_qiime) %>% biomformat::biom_data() %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1) %>% as.matrix %>% dim() %>% .[1]
+)
+
+
+
+```
+
+
+
+
 
 # discriminant analysis with sPLS
 
 
-```{r}
+```{r, eval=FALSE, include=FALSE}
 
 
 
@@ -314,20 +379,42 @@ metadata
 
 ```{r, eval=FALSE, include=FALSE}
 
-design = data.frame(sample=metadata$Subject)
+
 
 
 res.splsda = 
 genus_usearch_qiime %>% add(1) %>%
   prop.table(2) %>% BiotypeR::noise.removal(percent = 0.1) %>% t %>%
   splsda(., 
+         Y = data.frame(metadata$Visit,metadata$Product),
+         ncomp = 3, multilevel = data.frame(sample=metadata$Subject),
+keepX = c(10, 100, 50), logratio="CLR")
+
+design = data.frame(sample=as.factor(metadata$Subject))
+
+genus_usearch_qiime %>% add(1) %>%
+  prop.table(2) %>% BiotypeR::noise.removal(percent = 1) %>% t -> df
+  
+  
+  
+tune.splsda(X = as.data.frame(df), 
          Y = metadata$Visit, 
-         ncomp = 2, multilevel = data.frame(sample=metadata$Subject),
-keepX = c(10, 10), logratio= 'CLR')
+         already.tested.X = c(50), 
+         ncomp = 2, 
+         multilevel = metadata$Subject,
+         logratio = "CLR")
 
 
-plotIndiv(res.splsda, group = metadata$Visit, ind.names = metadata$Visit,
-legend = TRUE)
+
+plotIndiv(res.splsda, group =metadata$Product , ind.names = metadata$Visit,
+legend = TRUE, ellipse = TRUE)
+
+
+merge(res.splsda$variates$Y, metadata, by="row.names") %>% 
+  ggplot() +
+  geom_point(aes(x=`comp 1`, y=`comp 2`))
+
+
 
 perf(res.splsda)$error.rate
 
