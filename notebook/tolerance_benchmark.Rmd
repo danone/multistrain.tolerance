@@ -49,7 +49,7 @@ compute diversity stat
 ```{r}
 
 
-diversity_raw_stat = function(biom_url){
+diversity_raw_stat = function(biom_url, filter =TRUE){
 
 b = biomformat::read_biom(biom_url)
 o = biomformat::biom_data(b)
@@ -58,10 +58,26 @@ o = biomformat::biom_data(b)
 #o %>% as.matrix %>% t %>% vegan::rrarefy(10000) %>% vegan::diversity(., index="shannon") %>% rbind(shannon = ., o %>% as.matrix %>% t %>% vegan::rrarefy(10000) %>% vegan::estimateR()) %>% t
 
 
+if(filter){
+  
+  
+  idx = o %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1) %>% rownames()
+  
+  o= o[idx,]
+  
+  
+  
+}
+
+
+
 r = o %>% 
   as.matrix %>% 
   t %>% 
   vegan::rrarefy(10000) 
+
+
+
 
 res = rbind(
 simpson = vegan::diversity(r, index=c("simpson")),
@@ -431,6 +447,13 @@ res.splsda$loadings$X[idx,] %>% as.data.frame
 
 
 
+```{r}
+
+
+write.csv2(genus_vsearch_qiime, file="genus_vsearch_qiime_tolerance.csv")
+
+
+```
 
 
 
