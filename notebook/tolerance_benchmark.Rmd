@@ -21,6 +21,7 @@ library(reshape2)
 library(mixOmics)
 library(dplyr)
 library(magrittr)
+library(DirichletMultinomial)
 
 ```
 
@@ -61,7 +62,7 @@ o = biomformat::biom_data(b)
 if(filter){
   
   
-  idx = o %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.1) %>% rownames()
+  idx = o %>% as.matrix %>% prop.table(2) %>% BiotypeR::noise.removal(percent=0.005) %>% rownames()
   
   o= o[idx,]
   
@@ -370,6 +371,40 @@ vsearch_qiime = biomformat::read_biom(vsearch_qiime) %>% biomformat::biom_data()
 
 
 ```
+
+# enterotype
+
+```{r}
+
+
+et3=DirichletMultinomial::dmn(genus_vsearch_qiime %>% t,k = 3)
+
+et1=DirichletMultinomial::dmn(genus_vsearch_qiime %>% t,k = 1)
+
+
+
+
+
+```
+
+
+```{r}
+
+heatmapdmn2(genus_vsearch_qiime %>% t, et1,et3, marges = c(0,1,0,0))
+
+DirichletMultinomial::mixture(et3, assign = TRUE) %>% as.matrix %>% as.data.frame %>% 
+  merge(m, by="row.names") %>% dplyr::rename(et = V1) %>% mutate(et = paste0("et",et)) %>%
+  tidyr::separate(col=Description, sep="\\.", c("Visit","Group","Dose")) %>%
+  ggplot() + geom_bar(aes(x=paste(Group,Dose), fill=et)) + facet_wrap(~Visit)
+
+
+
+
+
+```
+
+
+
 
 
 
