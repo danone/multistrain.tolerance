@@ -2,13 +2,13 @@
 title: "pipeline benchmark from Tolerance study set"
 output:
   html_notebook:
+    author: "Julien Tap"
+    code_folding: hide
     highlight: tango
-    author: Julien Tap
     mathjax: null
     theme: cerulean
     toc: yes
     toc_float: yes
-    code_folding: hide
 date: '`r Sys.Date()`'
 ---
 
@@ -41,6 +41,13 @@ usearch2_qiime = system.file("biom", "usearch_otu_table_non_chimeric.biom", pack
 vsearch_qiime = system.file("biom", "otu_table_non_chimeric_vsearch_qiime.biom", package="Tolerance")
 
 dada_variant  = system.file("biom", "data_project.biom", package="Tolerance")
+
+
+UwVsearch_qiime = system.file("biom","otutable_usearchwithvsearchref.biom", package="Tolerance")
+
+
+VwUsearch_qiime = system.file("biom","otutable_vsearchwithusearchref.biom", package="Tolerance")
+
 
 ```
 
@@ -83,6 +90,7 @@ r = o %>%
 res = rbind(
 simpson = vegan::diversity(r, index=c("simpson")),
 shannon = vegan::diversity(r, index=c("shannon")),
+read_nb = apply(o,2,sum),
 vegan::estimateR(r)
 ) %>% t
 
@@ -98,10 +106,15 @@ rbind(
   cbind(diversity_raw_stat(usearch_qiime), pipeline = "usearch_qiime"),
   cbind(diversity_raw_stat(usearch2_qiime), pipeline = "usearch2_qiime"),
   cbind(diversity_raw_stat(vsearch_qiime), pipeline = "vsearch_qiime"),
-  cbind(diversity_raw_stat(dada_variant) , pipeline = "dada2")
+  cbind(diversity_raw_stat(dada_variant) , pipeline = "dada2"),
+  cbind(diversity_raw_stat(UwVsearch_qiime) , pipeline = "UwVsearch_qiime"),
+    cbind(diversity_raw_stat(VwUsearch_qiime) , pipeline = "VwUsearch_qiime")
+  
+  
 )
 
 
+diversity_pipeline %>% as.data.frame %>% tibble::rownames_to_column()
 
 
 ```
@@ -133,7 +146,7 @@ stat
 
 # alpha diversity plot
 
-```{r, fig.height=7, fig.width=7}
+```{r, fig.height=9, fig.width=7}
 
 # 
 # stat %>% filter(index=="S.obs") %>% 
@@ -181,10 +194,38 @@ stat %>% filter(index=="S.chao1") %>%
 
 
 
+
+
+
+stat %>% filter(index=="read_nb") %>% 
+  group_by(Visit, Product, Dose, pipeline) %>% 
+  summarize(mean=median(value), q25 = quantile(value,0.25), q75 = quantile(value,0.75)) %>%  
+  ggplot() +  geom_line(aes(y=mean, x=Visit, group=pipeline),  col="red") + 
+  geom_line(aes(y=q25, x=Visit, group=pipeline), linetype=2) + 
+  geom_line(aes(y=q75, x=Visit, group=pipeline), linetype=2) + 
+  facet_grid(pipeline~Product+Dose, scales = "free_y") + ylab("read_nb")
+
+
+
+
+
 ```
 
 
 
+## focus on read number
+
+
+```{r}
+
+stat$value = as.numeric(as.character(stat$value))
+
+stat %>% filter(index=="read_nb", pipeline=="vsearch_qiime") %>% 
+  group_by(Visit, Product) %>% 
+  summarize(median=median(value), q25 = quantile(value,0.25), q75 = quantile(value,0.75), min=min(value), max=max(value))
+
+
+```
 
 
 
