@@ -49,10 +49,57 @@ UwVsearch_qiime = system.file("biom","otutable_usearchwithvsearchref.biom", pack
 VwUsearch_qiime = system.file("biom","otutable_vsearchwithusearchref.biom", package="Tolerance")
 
 
+#vsearch_unremoval = system.file("biom","vsearch_withoutremoval.biom", package="Tolerance")
+
+
+deblur_filtered = system.file("biom", "deblur_filtered.seqs.noneukaryota.nonchimeras.biom", package = "Tolerance") # sent by Heleen 2018-08-30
+
+
 ```
 
 
-compute diversity stat
+## Import and tidy qPCR data
+
+
+
+```{r, message=FALSE, warning=FALSE}
+
+
+b = biomformat::read_biom(usearch_lotus)
+m = biomformat::sample_metadata(b)
+
+
+qPCR = system.file("qPCR","Tolérance_qPCR_Bilan repro_version170804_final.xlsx", package="Tolerance")
+
+qPCR = readxl::read_excel(qPCR)
+
+qPCR =
+  qPCR[1:6] %>%
+  filter(target == "Bacteria_gr") %>%
+  select(visit, Moyenne) %>%
+  tidyr::separate(visit,c("Subject","V"),sep = "V") %>%
+  mutate(Visit = paste0("V",V)) %>%
+  select(Subject,Visit,Moyenne)
+
+all_bacteria = 
+  
+  m %>%
+  tibble::rownames_to_column("Subject_bis") %>%
+  select(Subject_bis, Subject, Description) %>%
+  tidyr::separate(Description,c("Visit","Product","Dose"),sep = "\\.") %>%
+  merge(.,qPCR, by=c("Subject","Visit"))
+
+
+all_bacteria
+
+
+```
+
+
+
+
+
+## compute diversity stat
 
 ```{r}
 
@@ -82,7 +129,7 @@ if(filter){
 r = o %>% 
   as.matrix %>% 
   t %>% 
-  vegan::rrarefy(10000) 
+  vegan::rrarefy(5000) 
 
 
 
@@ -108,8 +155,9 @@ rbind(
   cbind(diversity_raw_stat(vsearch_qiime), pipeline = "vsearch_qiime"),
   cbind(diversity_raw_stat(dada_variant) , pipeline = "dada2"),
   cbind(diversity_raw_stat(UwVsearch_qiime) , pipeline = "UwVsearch_qiime"),
-    cbind(diversity_raw_stat(VwUsearch_qiime) , pipeline = "VwUsearch_qiime")
-  
+    cbind(diversity_raw_stat(VwUsearch_qiime) , pipeline = "VwUsearch_qiime"),
+  #cbind(diversity_raw_stat(vsearch_unremoval) , pipeline = "vsearch_unremoval"),
+  cbind(diversity_raw_stat(deblur_filtered) , pipeline = "deblur_filtered")
   
 )
 
@@ -212,6 +260,53 @@ stat %>% filter(index=="read_nb") %>%
 ```
 
 
+## association between richness and all bacteria
+
+
+```{r}
+
+all_bacteria
+
+```
+
+
+
+```{r, message=FALSE, warning=FALSE}
+
+stat_qpcr = 
+  stat %>%
+  merge(.,all_bacteria %>% select(-Subject), by.x=c("Subject","Visit","Product","Dose") , by.y=c("Subject_bis","Visit","Product","Dose"))
+
+
+stat_qpcr %>%
+  #filter(index != "read_nb") %>%
+  #filter(index != "se.chao1") %>%
+  #filter(index != "se.ACE") %>%
+  filter(index == "S.obs") %>%
+  ggplot() + 
+  geom_point(aes(x=Moyenne,y=value)) + 
+  facet_wrap(pipeline~index+Product+Dose, scales = "free") +
+  xlim(10,12)
+
+
+
+(stat_qpcr %>%
+  group_by(pipeline,index,Visit,Product,Dose) %>%
+  summarise(rho = cor(value,Moyenne, method="spearman"), n=n(), p.value=cor.test(value,Moyenne, method="spearman") %>% .$p.value) %>%
+  arrange(desc(rho)) %>%
+  filter(index == "S.obs") -> res)
+
+summary(lm(aov(data=res,  formula = rho~0+Visit+Dose)))
+
+
+
+
+```
+
+
+
+
+
 
 ## focus on read number
 
@@ -284,6 +379,7 @@ genus_vsearch_qiime = get_genus_from_biom(vsearch_qiime)
 
 genus_usearch_lotus = get_genus_from_biom(usearch_lotus)
 
+genus_deblur_filtered = get_genus_from_biom(deblur_filtered)
 
 #row.names(genus_usearch_lotus) %>% grep("Bifidobacterium|Faecalibacterium|Bacteroides|Lactobacillus|Akkermansia",., value=TRUE)
 
@@ -294,7 +390,8 @@ rbind(
   melt(genus_usearch_qiime) %>% cbind(pipeline="usearch_qiime"),
   melt(genus_usearch2_qiime) %>% cbind(pipeline="usearch2_qiime"),
   melt(genus_vsearch_qiime) %>% cbind(pipeline="vsearch_qiime"),
-  melt(genus_usearch_lotus) %>% cbind(pipeline="usearch_lotus")
+  melt(genus_usearch_lotus) %>% cbind(pipeline="usearch_lotus"),
+  melt(genus_deblur_filtered) %>% cbind(pipeline="deblur_filtered")
   )
 
 
