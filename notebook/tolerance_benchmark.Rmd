@@ -55,6 +55,9 @@ VwUsearch_qiime = system.file("biom","otutable_vsearchwithusearchref.biom", pack
 deblur_filtered = system.file("biom", "deblur_filtered.seqs.noneukaryota.nonchimeras.biom", package = "Tolerance") # sent by Heleen 2018-08-30
 
 
+deblur2_filtered = system.file("biom", "version2.filtered.seqs.noneukaryota.nonchimeras.biom", package = "Tolerance") # sent by Heleen 2018-09-05
+
+
 ```
 
 
@@ -155,10 +158,10 @@ rbind(
   cbind(diversity_raw_stat(vsearch_qiime), pipeline = "vsearch_qiime"),
   cbind(diversity_raw_stat(dada_variant) , pipeline = "dada2"),
   cbind(diversity_raw_stat(UwVsearch_qiime) , pipeline = "UwVsearch_qiime"),
-    cbind(diversity_raw_stat(VwUsearch_qiime) , pipeline = "VwUsearch_qiime"),
+  #  cbind(diversity_raw_stat(VwUsearch_qiime) , pipeline = "VwUsearch_qiime"),
   #cbind(diversity_raw_stat(vsearch_unremoval) , pipeline = "vsearch_unremoval"),
+  cbind(diversity_raw_stat(deblur2_filtered) , pipeline = "deblur2_filtered"),
   cbind(diversity_raw_stat(deblur_filtered) , pipeline = "deblur_filtered")
-  
 )
 
 
@@ -379,7 +382,7 @@ genus_vsearch_qiime = get_genus_from_biom(vsearch_qiime)
 
 genus_usearch_lotus = get_genus_from_biom(usearch_lotus)
 
-genus_deblur_filtered = get_genus_from_biom(deblur_filtered)
+genus_deblur2_filtered = get_genus_from_biom(deblur2_filtered)
 
 #row.names(genus_usearch_lotus) %>% grep("Bifidobacterium|Faecalibacterium|Bacteroides|Lactobacillus|Akkermansia",., value=TRUE)
 
@@ -391,7 +394,7 @@ rbind(
   melt(genus_usearch2_qiime) %>% cbind(pipeline="usearch2_qiime"),
   melt(genus_vsearch_qiime) %>% cbind(pipeline="vsearch_qiime"),
   melt(genus_usearch_lotus) %>% cbind(pipeline="usearch_lotus"),
-  melt(genus_deblur_filtered) %>% cbind(pipeline="deblur_filtered")
+  melt(genus_deblur_filtered) %>% cbind(pipeline="deblur2_filtered")
   )
 
 
