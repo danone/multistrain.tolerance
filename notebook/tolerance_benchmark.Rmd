@@ -57,6 +57,7 @@ deblur_filtered = system.file("biom", "deblur_filtered.seqs.noneukaryota.nonchim
 
 deblur2_filtered = system.file("biom", "version2.filtered.seqs.noneukaryota.nonchimeras.biom", package = "Tolerance") # sent by Heleen 2018-09-05
 
+asap_filtered = system.file("biom", "seqs.final.filtered.biom", package = "Tolerance") 
 
 ```
 
@@ -157,7 +158,8 @@ rbind(
   cbind(diversity_raw_stat(usearch2_qiime), pipeline = "usearch2_qiime"),
   cbind(diversity_raw_stat(vsearch_qiime), pipeline = "vsearch_qiime"),
   cbind(diversity_raw_stat(dada_variant) , pipeline = "dada2"),
-  cbind(diversity_raw_stat(UwVsearch_qiime) , pipeline = "UwVsearch_qiime"),
+  cbind(diversity_raw_stat(dada_variant) , pipeline = "asap"),
+  #cbind(diversity_raw_stat(UwVsearch_qiime) , pipeline = "UwVsearch_qiime"),
   #  cbind(diversity_raw_stat(VwUsearch_qiime) , pipeline = "VwUsearch_qiime"),
   #cbind(diversity_raw_stat(vsearch_unremoval) , pipeline = "vsearch_unremoval"),
   cbind(diversity_raw_stat(deblur2_filtered) , pipeline = "deblur2_filtered"),
