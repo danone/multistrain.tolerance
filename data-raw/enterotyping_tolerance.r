@@ -73,3 +73,8 @@ enterotypes =
 write.table(enterotypes, file=output, row.names=TRUE, sep="\t")
 
 
+devtools::use_data(enterotypes)
+
+
+
+
