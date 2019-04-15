@@ -3,12 +3,14 @@ library("magrittr")
 library("DirichletMultinomial")
 library("parallel")
 library("reshape2")
+source("https://raw.githubusercontent.com/tapj/IBSMicrobiota/master/R/mclapply.hack.R")
 
 
 biomformat::read_biom("inst/biom/tolerance.biom")
 
 input="inst/biom/tolerance.biom"
 output="data-raw/enterotypes_tolerance.txt"
+seed=444
 
 # parse BIOM file and convert at genus levels
 tax   = biomformat::read_biom(input) %>% biomformat::observation_metadata()
@@ -35,7 +37,7 @@ for(i in 1:5) {
 
   set.seed(seeds[i])
 
-  fit_genus <- mclapply(1:6, dmn, count=t(genus), verbose=FALSE, mc.cores=8)
+  fit_genus <- mclapply(1:6, dmn, count=t(genus), verbose=FALSE)
 
   fit_genus_list[[i]] = fit_genus
 
