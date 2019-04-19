@@ -43,6 +43,26 @@ usethis::use_data(og, overwrite = TRUE)
 
 
 
+## MSP tax
+
+
+
+MSP_tax = readxl::read_excel("data-raw/msp2018_tolerance/MSP_taxonomy.xlsx", sheet=4)
+
+
+MSP_tax %>%
+  rename(MSP_ID = "...1") %>%
+  select(MSP_ID,species,genus,family,order,class,phylum,superkingdom) -> MSP_tax
+
+usethis::use_data(MSP_tax, overwrite=TRUE)
+
+
+
+
+
+
+
+
 
 
 

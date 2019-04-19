@@ -33,4 +33,3 @@ system("cut -f 1,10,13 data-raw/annotations/OG.txt > data-raw/annotations/OG_sel
 
 
 
-
