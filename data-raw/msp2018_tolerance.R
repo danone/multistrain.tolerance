@@ -35,13 +35,13 @@ msp2018$gene_length=genes_metadata$gene_length[match(msp2018$gene_name,genes_met
 msp2018$gene_id=match(msp2018$gene_name,genes_metadata$gene_name)
 head(msp2018)
 msp2018_tolerance_catalog_table = msp2018
-devtools::use_data(msp2018_tolerance_catalog_table, file="msp2018_tolerance_catalog_table.rda")
+devtools::use_data(msp2018_tolerance_catalog_table, overwrite = TRUE)
 
 head(msp2018_tolerance_catalog_table)
 
 msp2018=subset(msp2018, module_name=='core')
 msp2018core_tolerance_catalog_table = msp2018
-devtools::use_data(msp2018core_tolerance_catalog_table)
+devtools::use_data(msp2018core_tolerance_catalog_table, overwrite = TRUE)
 
 msps2018_names=unique(msp2018$msp_name)
 
@@ -52,6 +52,6 @@ msp2018_list=foreach(cur_msp_name=msps2018_names) %dopar%
 }
 names(msp2018_list)=msps2018_names
 msp2018_tolerance_catalog = msp2018_list
-devtools::use_data(msp2018_tolerance_catalog)
+devtools::use_data(msp2018_tolerance_catalog,overwrite = TRUE)
 
 head(msp2018_tolerance_catalog)
