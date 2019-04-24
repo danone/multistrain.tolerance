@@ -1,0 +1,191 @@
+---
+title: "between within time analysis"
+output: html_notebook
+---
+
+
+
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+devtools::load_all(reset=FALSE)  
+
+load("notebook/tolerance_genus_JSD.rda")
+load("notebook/tolerance_genus_BC.rda")
+
+Tolerance::sample_metadata
+
+```
+
+
+
+```{r fig.height=7, fig.width=10, message=FALSE, warning=FALSE}
+
+
+
+
+
+tolerance_genus_JSD %>% 
+  as.matrix() %>%
+  reshape2::melt() %>%
+  merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var1", by.y="samplenr") %>%
+    merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var2", by.y="samplenr") %>%
+  mutate(
+    Subject_test = case_when(
+    Subject.x == Subject.y ~ "Within Subject",
+    Subject.x != Subject.y ~ "Between Subject"
+      ) ,
+    Group_test = case_when(
+      Groupe_dose.x == Groupe_dose.y ~ "Within Group",
+      Groupe_dose.x != Groupe_dose.y ~ "Between Group"
+      
+    ) ,
+    Visit_test = case_when(
+      Visit.x == Visit.y ~ "Within Visit",
+      Visit.x != Visit.y ~ "Between Visit"
+      
+    ) 
+    
+    
+  ) %>% 
+  filter(Visit.x == "V2",Group_test=="Within Group") %>%
+  ggplot() + geom_boxplot(aes(y=value,x=Visit.y,fill=Subject_test)) + facet_wrap(~Groupe_dose.x,nrow = 2)
+  
+  
+  
+
+
+tolerance_genus_JSD %>% 
+  as.matrix() %>%
+  reshape2::melt() %>%
+  merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var1", by.y="samplenr") %>%
+    merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var2", by.y="samplenr") %>%
+  mutate(
+    Subject_test = case_when(
+    Subject.x == Subject.y ~ "Within Subject",
+    Subject.x != Subject.y ~ "Between Subject"
+      ) ,
+    Group_test = case_when(
+      Groupe_dose.x == Groupe_dose.y ~ "Within Group",
+      Groupe_dose.x != Groupe_dose.y ~ "Between Group"
+      
+    ) ,
+    Visit_test = case_when(
+      Visit.x == Visit.y ~ "Within Visit",
+      Visit.x != Visit.y ~ "Between Visit"
+      
+    ) 
+    
+    
+  ) %>% 
+  filter(Visit.x == "V2") %>%
+  ggplot() + geom_boxplot(aes(y=value,x=Visit.y,fill=Group_test)) + facet_wrap(~Groupe_dose.x,nrow = 2)
+  
+  
+  
+
+
+
+
+
+
+
+```
+
+
+
+
+```{r fig.height=7, fig.width=10, message=FALSE, warning=FALSE}
+
+
+
+
+
+tolerance_genus_BC %>% 
+  as.matrix() %>%
+  reshape2::melt() %>%
+  merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var1", by.y="samplenr") %>%
+    merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var2", by.y="samplenr") %>%
+  mutate(
+    Subject_test = case_when(
+    Subject.x == Subject.y ~ "Within Subject",
+    Subject.x != Subject.y ~ "Between Subject"
+      ) ,
+    Group_test = case_when(
+      Groupe_dose.x == Groupe_dose.y ~ "Within Group",
+      Groupe_dose.x != Groupe_dose.y ~ "Between Group"
+      
+    ) ,
+    Visit_test = case_when(
+      Visit.x == Visit.y ~ "Within Visit",
+      Visit.x != Visit.y ~ "Between Visit"
+      
+    ) 
+    
+    
+  ) %>% 
+  filter(Visit.x == "V2",Group_test=="Within Group") %>%
+  ggplot() + geom_boxplot(aes(y=value,x=Visit.y,fill=Subject_test)) + facet_wrap(~Groupe_dose.x,nrow = 2)
+  
+  
+  
+
+
+tolerance_genus_BC %>% 
+  as.matrix() %>%
+  reshape2::melt() %>%
+  merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var1", by.y="samplenr") %>%
+    merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var2", by.y="samplenr") %>%
+  mutate(
+    Subject_test = case_when(
+    Subject.x == Subject.y ~ "Within Subject",
+    Subject.x != Subject.y ~ "Between Subject"
+      ) ,
+    Group_test = case_when(
+      Groupe_dose.x == Groupe_dose.y ~ "Within Group",
+      Groupe_dose.x != Groupe_dose.y ~ "Between Group"
+      
+    ) ,
+    Visit_test = case_when(
+      Visit.x == Visit.y ~ "Within Visit",
+      Visit.x != Visit.y ~ "Between Visit"
+      
+    ) 
+    
+    
+  ) %>% 
+  filter(Visit.x == "V2") %>%
+  ggplot() + geom_boxplot(aes(y=value,x=Visit.y,fill=Group_test)) + facet_wrap(~Groupe_dose.x,nrow = 2)
+  
+  
+  
+
+
+
+
+
+
+
+```
+
+
+
