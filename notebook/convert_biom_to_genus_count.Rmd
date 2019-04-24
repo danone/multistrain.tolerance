@@ -1,0 +1,52 @@
+---
+title: "convert BIOM to genus count"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(phyloseq)
+library(biomformat)
+library(dplyr)
+library(tidyr)
+devtools::load_all()
+
+
+```
+
+
+get path to the BIOM file
+```{r message=FALSE, warning=FALSE}
+
+tolerance_biom_file =
+system.file("biom/tolerance.biom",  package="Tolerance")
+                        
+
+
+```
+
+Handle the BIOM file using biomformat library and aggregate it at the genus level.
+
+
+```{r message=FALSE, warning=FALSE}
+
+
+b     = biomformat::read_biom(tolerance_biom_file)
+otu   = biomformat::biom_data(b)
+tax   = biomformat::observation_metadata(b)
+genus = apply(otu, 2, tapply, paste(tax[,1],tax[,2] ,tax[,3],tax[,4],tax[,5],tax[,6], sep="; "), sum)
+
+
+genus %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") -> genus
+
+
+
+save(genus, file="genus.rda")
+
+
+
+```
+
