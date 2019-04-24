@@ -1,0 +1,54 @@
+---
+title: "Compute beta diversity"
+output: html_notebook
+---
+
+
+
+```{r}
+
+library(dplyr)
+
+
+
+```
+
+
+```{r}
+
+load("genus.rda")
+
+
+
+```
+
+
+compute JSD distance
+```{r}
+
+tolerance_genus_JSD = 
+  genus %>% 
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("genus") %>%
+  BiotypeR::dist.JSD()
+
+save(tolerance_genus_JSD, file="tolerance_genus_JSD.rda")
+
+```
+
+
+compute Bray-Curtis dissimilarity
+
+```{r}
+
+tolerance_genus_BC = 
+  genus %>% 
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("genus") %>%
+  t %>%
+  vegan::vegdist(method="bray")
+
+save(tolerance_genus_JSD, file="tolerance_genus_BC.rda")
+
+```
+
