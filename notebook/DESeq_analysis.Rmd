@@ -1,0 +1,91 @@
+---
+title: "Differential analysis"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+devtools::load_all(reset=FALSE)
+
+```
+
+```{r}
+
+load("genus.rda")
+
+Tolerance::sample_metadata %>% head
+
+```
+
+```{r}
+
+genus %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("genus") %>%
+  BiotypeR::noise.removal(percent=0.1) %>% rownames() -> genus_select
+
+
+
+genus %>%
+  filter(genus %in% genus_select) %>%
+  tibble::column_to_rownames("genus") %>%
+  t %>% as.data.frame-> genus_count
+
+
+Tolerance::sample_metadata %>%
+  tibble::column_to_rownames("samplenr") %>% head
+  
+
+
+```
+
+
+```{r}
+
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(genus_count[Tolerance::sample_metadata$samplenr,]), 
+  colData = Tolerance::sample_metadata %>% tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Subject)
+
+
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Subject)
+
+
+
+
+save(dds_res1, file="deseq2_dds_res1_analysis.rda")
+
+```
+
+
+
+
+```{r}
+
+results(dds_res1, alpha=0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>%
+  filter(padj<0.05, abs(log2FoldChange) > 1) %>%
+  arrange(padj)
+
+
+
+```
+
+
+
+
+```{r}
+results(dds_res1, alpha=0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>%
+  #filter(padj<0.05) %>%
+  arrange(padj) %>%
+  ggplot() + geom_point(aes(x=baseMean,y=log2FoldChange,color=padj<0.05)) + scale_x_log10()
+```
+
