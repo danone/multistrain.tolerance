@@ -13,11 +13,18 @@ library(dplyr)
 
 devtools::load_all(reset=FALSE)  
 
-load("notebook/tolerance_genus_JSD.rda")
-load("notebook/tolerance_genus_BC.rda")
 
-Tolerance::sample_metadata
+```
 
+
+
+```{r}
+
+load("tolerance_genus_JSD.rda")
+load("tolerance_genus_BC.rda")
+load("tolerance_unifrac.rda")
+
+Tolerance::sample_metadata %>% head(10)
 ```
 
 
@@ -64,11 +71,6 @@ tolerance_genus_JSD %>%
     
     
   ) -> beta_diversity_data
-
-
-  
-  
-
 
 
 
