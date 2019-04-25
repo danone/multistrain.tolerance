@@ -12,6 +12,22 @@ devtools::load_all(reset=FALSE)
 
 ```
 
+
+```{r}
+# Function to get the new subject id
+Get_New_Subject_ID = function(data_temp) {
+  old = factor(data_temp$Subject)
+  new_sub = paste0("S", 1:length(levels(old)))
+  names(new_sub) = levels(old)
+  return(data.frame(new_sub))
+}
+
+
+
+```
+
+
+
 ```{r}
 
 load("genus.rda")
@@ -20,6 +36,8 @@ Tolerance::sample_metadata %>% head
 
 ```
 
+
+## Filter abundant taxa
 ```{r}
 
 genus %>%
@@ -42,7 +60,7 @@ Tolerance::sample_metadata %>%
 
 ```
 
-
+## global time effect
 ```{r}
 
 
@@ -79,7 +97,6 @@ results(dds_res1, alpha=0.05) %>%
 
 
 
-
 ```{r}
 results(dds_res1, alpha=0.05) %>% 
   as.data.frame() %>%
@@ -87,5 +104,133 @@ results(dds_res1, alpha=0.05) %>%
   #filter(padj<0.05) %>%
   arrange(padj) %>%
   ggplot() + geom_point(aes(x=baseMean,y=log2FoldChange,color=padj<0.05)) + scale_x_log10()
+
+```
+
+
+
+## Specific group effect and visit
+
+
+
+
+```{r}
+
+
+temp <- Tolerance::sample_metadata #%>% tibble::column_to_rownames("samplenr")
+temp <- temp[with(temp, order(Groupe_dose, Subject)), ]
+new_sub <- data.frame(Reduce(rbind, 
+                            by(as.data.frame(temp), 
+                                temp$Groupe_dose, 
+                                Get_New_Subject_ID, 
+                                simplify = FALSE)))
+names(new_sub) = "subject.n"
+new_sub[, "Subject"] <- factor(rownames(new_sub))
+temp = full_join(temp, 
+                  new_sub, 
+                  by = "Subject")
+rownames(temp) <- temp$samplenr
+
+temp
+
+
+# DESeq2 object and design matrices
+dds2 <- dds
+dds2 <- estimateSizeFactors(dds2, type="poscounts")
+
+# Full design matrix
+mod <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose + Groupe_dose:Visit, temp)
+mod <- mod[,colSums(mod)>0]
+dds2 <- estimateDispersions(dds2, modelMatrix = mod)
+
+# Reduced design matrix
+mod2 <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose, temp)
+mod2 = mod2[, colSums(mod2)>0]
+
+
+dds2_res1 <- nbinomLRT(dds2, full = mod, reduced = mod2)
+
+save(dds2_res1, file="deseq2_dds2_res1_analysis.rda")
+
+results(dds2_res1, alpha = 0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>%
+  filter(pvalue<0.05, abs(log2FoldChange) > 1) %>%
+  arrange(pvalue)
+
+
+
+# dds = DESeq2::DESeqDataSetFromMatrix(
+#   countData = t(genus_count[temp$samplenr,]), 
+#   colData = Tolerance::sample_metadata %>% tibble::column_to_rownames("samplenr"), 
+#   design = ~ Visit + Subject)
+
+
+
+
+
+```
+
+
+
+```{r}
+
+# Group comparisons at each time point
+dds2_res2 = nbinomWaldTest(dds2, modelMatrix = mod, betaPrior = FALSE)
+
+DESeq2::resultsNames(dds2_res2)
+
+DESeq2::resultsNames(dds2_res2)[grep("ATN.1",DESeq2::resultsNames(dds2_res2))]
+
+
+```
+
+```{r}
+# ATN3 Vs baseline
+results(dds2_res2, contrast = list("Groupe_doseATN.3","Groupe_doseATN.3.VisitV3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3","Groupe_doseATN.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3","Groupe_doseATN.3.VisitV5"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+
+# ATN3 vs CP3 by Visit
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3","Groupe_doseCP.3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV3","Groupe_doseCP.3.VisitV3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV5","Groupe_doseCP.3.VisitV5"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+
+# ATN3 vs ATN1 by Visit
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV3","Groupe_doseATN.1.VisitV3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseATN.1.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV5","Groupe_doseATN.1.VisitV5"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+
+
+
+
+
+
+
 ```
 
