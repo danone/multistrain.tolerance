@@ -182,6 +182,8 @@ DESeq2::resultsNames(dds2_res2)
 
 DESeq2::resultsNames(dds2_res2)[grep("ATN.1",DESeq2::resultsNames(dds2_res2))]
 
+save(dds2_res2, file="deseq2_dds2_res2_analysis.rda" )
+
 
 ```
 
