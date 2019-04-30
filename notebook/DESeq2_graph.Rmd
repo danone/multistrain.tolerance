@@ -4,3 +4,20 @@ output: html_notebook
 ---
 
 
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+devtools::load_all(reset=FALSE)
+
+```
+
+```{r}
+
+load("res_ATN1_CP1_v2_p0.05.rda")
+res_ATN1_CP1_v2 %>% head
+head(res_ATN1_CP1_v2$genus)
+str(res_ATN1_CP1_v2$genus)
+
+```
+
