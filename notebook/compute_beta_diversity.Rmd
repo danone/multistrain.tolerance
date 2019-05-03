@@ -50,7 +50,7 @@ tolerance_genus_BC =
   t %>%
   vegan::vegdist(method="bray")
 
-save(tolerance_genus_JSD, file="tolerance_genus_BC.rda")
+save(tolerance_genus_BC, file="tolerance_genus_BC.rda")
 
 ```
 
