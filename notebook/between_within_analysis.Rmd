@@ -13,7 +13,11 @@ library(dplyr)
 
 devtools::load_all(reset=FALSE)  
 
-
+install.packages("ggpubr") 
+library(ggpubr)
+install.packages("viridis") 
+library(viridis)
+library(viridisLite)
 ```
 
 
@@ -74,6 +78,8 @@ tolerance_genus_JSD %>%
 
 
 
+save(beta_diversity_data, file="beta_diversity_data.rda")
+
 ```
 
 
@@ -102,12 +108,18 @@ beta_diversity_data %>%
   cowplot::theme_cowplot()
 
 
-
-
   
 ```
 
 
+```{r}
+# changement du noms des variables
+# Visits by Days
+# ATN by FMP
+
+
+
+```
 
 
 
