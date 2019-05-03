@@ -117,6 +117,56 @@ beta_diversity_data %>%
 # Visits by Days
 # ATN by FMP
 
+beta_diversity_data$Visit.x = as.factor(beta_diversity_data$Visit.x)
+beta_diversity_data  = transform(beta_diversity_data, Days = factor(Visit.x, labels=c("D0","D14","D28","D56"), ordered =TRUE))
+
+
+beta_diversity_data$Groupe_dose.x = as.factor(beta_diversity_data$Groupe_dose.x)
+beta_diversity_data  = transform(beta_diversity_data, Product_dose.x = factor(Groupe_dose.x, labels=c("FMP.1","FMP.3","CP.1","CP.3"), ordered =TRUE))
+
+beta_diversity_data$Visit.y = as.factor(beta_diversity_data$Visit.y)
+beta_diversity_data  = transform(beta_diversity_data, Days.y = factor(Visit.y, labels=c("D0","D14","D28","D56"), ordered =TRUE))
+
+# plots
+
+beta_diversity_data %>%
+filter(Days == "D0",Group_test=="Within Group") %>%
+filter(!(Days.y == "D0" & Subject_test=="Within Subject")) %>%
+ggboxplot(y="value",x="Days.y",color="Subject_test", palette=c("#0073C2FF", "#EFC000FF"),
+# add = "jitter",
+# add.params = list(size = 0.05, jitter = 0.1),
+ylab ="microbiota beta-diversity",xlab="Days", ggtheme = theme_pubr()) +
+theme(legend.position = 'bottom')+
+facet_grid(variable~Product_dose.x, scales = "free_y")+
+theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.text.y = element_text(size=13, color="white", face="bold"))+
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+theme(axis.title.x = element_text(color="black", face="bold", size=13),
+axis.title.y = element_text(color="black", size=12, face="bold"),
+axis.text.y = element_text(color="black", size=10, face="bold"),
+axis.text.x = element_text(color="black", size=10, face="bold"),
+legend.text = element_text(color="black", size=10, face="bold"),
+legend.title = element_text(color="black", size=13, face="bold"))
+
+beta_diversity_data %>%
+filter(Days == "D0") %>%
+filter(!(Days.y == "D0" & Subject_test=="Within Subject")) %>%
+ggboxplot(y="value",x="Days.y",color="Group_test", palette=c("#0073C2FF", "#EFC000FF"),
+# add = "jitter",
+# add.params = list(size = 0.05, jitter = 0.1),
+ylab ="microbiota beta-diversity",xlab="Days", ggtheme = theme_pubr()) +
+theme(legend.position = 'bottom')+
+facet_grid(variable~Product_dose.x, scales = "free_y")+
+theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.text.y = element_text(size=13, color="white", face="bold"))+
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+theme(axis.title.x = element_text(color="black", face="bold", size=13),
+axis.title.y = element_text(color="black", size=12, face="bold"),
+axis.text.y = element_text(color="black", size=10, face="bold"),
+axis.text.x = element_text(color="black", size=10, face="bold"),
+legend.text = element_text(color="black", size=10, face="bold"),
+legend.title = element_text(color="black", size=13, face="bold"))
+
 
 
 ```
