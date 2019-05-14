@@ -15,9 +15,9 @@ devtools::load_all(reset=FALSE)
 
 install.packages("ggpubr") 
 library(ggpubr)
-install.packages("viridis") 
-library(viridis)
-library(viridisLite)
+# install.packages("viridis") 
+# library(viridis)
+# library(viridisLite)
 ```
 
 

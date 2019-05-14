@@ -21,3 +21,21 @@ str(res_ATN1_CP1_v2$genus)
 
 ```
 
+```{r}
+
+res_ATN1_CP1_v2$genus
+
+
+genus %>%
+  tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","family","Genus"), sep=";")
+  
+  
+  
+  res_ATN1_CP1_v2 %>%
+    tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","Family","Genus"), sep=";") %>%
+    ggplot() + geom_point(aes(x=Genus,y=log2FoldChange, col=Family)) +
+    
+  
+
+```
+
