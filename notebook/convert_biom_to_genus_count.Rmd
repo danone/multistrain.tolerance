@@ -46,6 +46,9 @@ genus %>%
 
 save(genus, file="genus.rda")
 
+otu = as.matrix(otu)
+
+save(otu, file="otu.rda")
 
 
 ```
