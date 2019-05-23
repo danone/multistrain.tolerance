@@ -20,12 +20,15 @@ library(dplyr)
 
 load("genus.rda")
 
-
+load("otu.rda")
 
 ```
 
 
-compute JSD distance
+## compute JSD distance
+
+- at genus level
+
 ```{r}
 
 tolerance_genus_JSD = 
@@ -39,7 +42,33 @@ save(tolerance_genus_JSD, file="tolerance_genus_JSD.rda")
 ```
 
 
-compute Bray-Curtis dissimilarity
+
+- at OTU level
+
+```{r}
+
+
+tolerance_otu_JSD = 
+  otu %>% 
+  as.data.frame() %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  #tibble::column_to_rownames("otu") %>%
+  BiotypeR::dist.JSD()
+
+save(tolerance_otu_JSD, file="tolerance_otu_JSD.rda")
+
+
+
+```
+
+
+
+
+
+## compute Bray-Curtis dissimilarity
+
+- at genus level
+
 
 ```{r}
 
@@ -53,6 +82,27 @@ tolerance_genus_BC =
 save(tolerance_genus_BC, file="tolerance_genus_BC.rda")
 
 ```
+
+
+- at otu level
+
+
+
+```{r}
+
+tolerance_genus_BC = 
+  otu %>% 
+  as.data.frame %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  #tibble::column_to_rownames("otu") %>%
+  t %>%
+  vegan::vegdist(method="bray")
+
+save(tolerance_genus_BC, file="tolerance_otu_BC.rda")
+
+```
+
+
 
 
 
