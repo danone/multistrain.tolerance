@@ -56,7 +56,7 @@ save(tolerance_genus_BC, file="tolerance_genus_BC.rda")
 
 
 
-import unweigthed UNIFRAC from qiime
+import unweigthed and weigthed UNIFRAC from qiime
 
 ```{r}
 
@@ -68,6 +68,21 @@ readr::read_tsv(system.file("distance/weighted_unifrac_dm.txt", package="Toleran
 save(tolerance_unifrac, file="tolerance_unifrac.rda")
 
 ```
+
+
+
+```{r}
+
+readr::read_tsv(system.file("distance/unweighted_unifrac_dm.txt", package="Tolerance")) %>%
+  tibble::column_to_rownames("X1") %>%
+  as.dist() -> tolerance_unifrac_UW
+
+
+save(tolerance_unifrac, file="tolerance_unifrac_UW.rda")
+
+
+```
+
 
 
 
