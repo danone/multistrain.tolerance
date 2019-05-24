@@ -200,57 +200,57 @@ dds2_res2 = nbinomWaldTest(dds2, modelMatrix = mod, betaPrior = FALSE)
 #67 rows did not converge in beta, labelled in mcols(object)$betaConv. Use larger maxit argument with nbinomWaldTest
 
 DESeq2::resultsNames(dds2_res2)
-# [1] "Intercept"                     "Groupe_doseATN.3"             
-#   [3] "Groupe_doseCP.1"               "Groupe_doseCP.3"              
-#   [5] "Groupe_doseATN.1.subject.nS10" "Groupe_doseATN.3.subject.nS10"
-#   [7] "Groupe_doseCP.1.subject.nS10"  "Groupe_doseCP.3.subject.nS10" 
-#   [9] "Groupe_doseATN.1.subject.nS11" "Groupe_doseATN.3.subject.nS11"
-#  [11] "Groupe_doseCP.1.subject.nS11"  "Groupe_doseCP.3.subject.nS11" 
-#  [13] "Groupe_doseATN.1.subject.nS12" "Groupe_doseATN.3.subject.nS12"
-#  [15] "Groupe_doseCP.1.subject.nS12"  "Groupe_doseCP.3.subject.nS12" 
-#  [17] "Groupe_doseATN.1.subject.nS13" "Groupe_doseATN.3.subject.nS13"
-#  [19] "Groupe_doseCP.1.subject.nS13"  "Groupe_doseCP.3.subject.nS13" 
-#  [21] "Groupe_doseATN.1.subject.nS14" "Groupe_doseATN.3.subject.nS14"
-#  [23] "Groupe_doseCP.1.subject.nS14"  "Groupe_doseCP.3.subject.nS14" 
-#  [25] "Groupe_doseATN.1.subject.nS15" "Groupe_doseATN.3.subject.nS15"
-#  [27] "Groupe_doseCP.1.subject.nS15"  "Groupe_doseCP.3.subject.nS15" 
-#  [29] "Groupe_doseATN.1.subject.nS16" "Groupe_doseATN.3.subject.nS16"
-#  [31] "Groupe_doseCP.1.subject.nS16"  "Groupe_doseCP.3.subject.nS16" 
-#  [33] "Groupe_doseATN.1.subject.nS17" "Groupe_doseATN.3.subject.nS17"
-#  [35] "Groupe_doseCP.1.subject.nS17"  "Groupe_doseCP.3.subject.nS17" 
-#  [37] "Groupe_doseATN.1.subject.nS18" "Groupe_doseATN.3.subject.nS18"
-#  [39] "Groupe_doseCP.1.subject.nS18"  "Groupe_doseCP.3.subject.nS18" 
-#  [41] "Groupe_doseATN.1.subject.nS19" "Groupe_doseATN.3.subject.nS19"
-#  [43] "Groupe_doseCP.1.subject.nS19"  "Groupe_doseCP.3.subject.nS19" 
-#  [45] "Groupe_doseATN.1.subject.nS2"  "Groupe_doseATN.3.subject.nS2" 
-#  [47] "Groupe_doseCP.1.subject.nS2"   "Groupe_doseCP.3.subject.nS2"  
-#  [49] "Groupe_doseATN.1.subject.nS20" "Groupe_doseATN.3.subject.nS20"
-#  [51] "Groupe_doseCP.1.subject.nS20"  "Groupe_doseCP.3.subject.nS20" 
-#  [53] "Groupe_doseATN.1.subject.nS21" "Groupe_doseATN.3.subject.nS21"
-#  [55] "Groupe_doseCP.1.subject.nS21"  "Groupe_doseCP.3.subject.nS21" 
+#   [1] "Intercept"                     "Groupe_doseATN.1"             
+#   [3] "Groupe_doseATN.3"              "Groupe_doseCP.3"              
+#   [5] "Groupe_doseCP.1.subject.nS10"  "Groupe_doseATN.1.subject.nS10"
+#   [7] "Groupe_doseATN.3.subject.nS10" "Groupe_doseCP.3.subject.nS10" 
+#   [9] "Groupe_doseCP.1.subject.nS11"  "Groupe_doseATN.1.subject.nS11"
+#  [11] "Groupe_doseATN.3.subject.nS11" "Groupe_doseCP.3.subject.nS11" 
+#  [13] "Groupe_doseCP.1.subject.nS12"  "Groupe_doseATN.1.subject.nS12"
+#  [15] "Groupe_doseATN.3.subject.nS12" "Groupe_doseCP.3.subject.nS12" 
+#  [17] "Groupe_doseCP.1.subject.nS13"  "Groupe_doseATN.1.subject.nS13"
+#  [19] "Groupe_doseATN.3.subject.nS13" "Groupe_doseCP.3.subject.nS13" 
+#  [21] "Groupe_doseCP.1.subject.nS14"  "Groupe_doseATN.1.subject.nS14"
+#  [23] "Groupe_doseATN.3.subject.nS14" "Groupe_doseCP.3.subject.nS14" 
+#  [25] "Groupe_doseCP.1.subject.nS15"  "Groupe_doseATN.1.subject.nS15"
+#  [27] "Groupe_doseATN.3.subject.nS15" "Groupe_doseCP.3.subject.nS15" 
+#  [29] "Groupe_doseCP.1.subject.nS16"  "Groupe_doseATN.1.subject.nS16"
+#  [31] "Groupe_doseATN.3.subject.nS16" "Groupe_doseCP.3.subject.nS16" 
+#  [33] "Groupe_doseCP.1.subject.nS17"  "Groupe_doseATN.1.subject.nS17"
+#  [35] "Groupe_doseATN.3.subject.nS17" "Groupe_doseCP.3.subject.nS17" 
+#  [37] "Groupe_doseCP.1.subject.nS18"  "Groupe_doseATN.1.subject.nS18"
+#  [39] "Groupe_doseATN.3.subject.nS18" "Groupe_doseCP.3.subject.nS18" 
+#  [41] "Groupe_doseCP.1.subject.nS19"  "Groupe_doseATN.1.subject.nS19"
+#  [43] "Groupe_doseATN.3.subject.nS19" "Groupe_doseCP.3.subject.nS19" 
+#  [45] "Groupe_doseCP.1.subject.nS2"   "Groupe_doseATN.1.subject.nS2" 
+#  [47] "Groupe_doseATN.3.subject.nS2"  "Groupe_doseCP.3.subject.nS2"  
+#  [49] "Groupe_doseCP.1.subject.nS20"  "Groupe_doseATN.1.subject.nS20"
+#  [51] "Groupe_doseATN.3.subject.nS20" "Groupe_doseCP.3.subject.nS20" 
+#  [53] "Groupe_doseCP.1.subject.nS21"  "Groupe_doseATN.1.subject.nS21"
+#  [55] "Groupe_doseATN.3.subject.nS21" "Groupe_doseCP.3.subject.nS21" 
 #  [57] "Groupe_doseATN.1.subject.nS22" "Groupe_doseATN.3.subject.nS22"
-#  [59] "Groupe_doseCP.3.subject.nS22"  "Groupe_doseATN.1.subject.nS3" 
-#  [61] "Groupe_doseATN.3.subject.nS3"  "Groupe_doseCP.1.subject.nS3"  
-#  [63] "Groupe_doseCP.3.subject.nS3"   "Groupe_doseATN.1.subject.nS4" 
-#  [65] "Groupe_doseATN.3.subject.nS4"  "Groupe_doseCP.1.subject.nS4"  
-#  [67] "Groupe_doseCP.3.subject.nS4"   "Groupe_doseATN.1.subject.nS5" 
-#  [69] "Groupe_doseATN.3.subject.nS5"  "Groupe_doseCP.1.subject.nS5"  
-#  [71] "Groupe_doseCP.3.subject.nS5"   "Groupe_doseATN.1.subject.nS6" 
-#  [73] "Groupe_doseATN.3.subject.nS6"  "Groupe_doseCP.1.subject.nS6"  
-#  [75] "Groupe_doseCP.3.subject.nS6"   "Groupe_doseATN.1.subject.nS7" 
-#  [77] "Groupe_doseATN.3.subject.nS7"  "Groupe_doseCP.1.subject.nS7"  
-#  [79] "Groupe_doseCP.3.subject.nS7"   "Groupe_doseATN.1.subject.nS8" 
-#  [81] "Groupe_doseATN.3.subject.nS8"  "Groupe_doseCP.1.subject.nS8"  
-#  [83] "Groupe_doseCP.3.subject.nS8"   "Groupe_doseATN.1.subject.nS9" 
-#  [85] "Groupe_doseATN.3.subject.nS9"  "Groupe_doseCP.1.subject.nS9"  
+#  [59] "Groupe_doseCP.3.subject.nS22"  "Groupe_doseCP.1.subject.nS3"  
+#  [61] "Groupe_doseATN.1.subject.nS3"  "Groupe_doseATN.3.subject.nS3" 
+#  [63] "Groupe_doseCP.3.subject.nS3"   "Groupe_doseCP.1.subject.nS4"  
+#  [65] "Groupe_doseATN.1.subject.nS4"  "Groupe_doseATN.3.subject.nS4" 
+#  [67] "Groupe_doseCP.3.subject.nS4"   "Groupe_doseCP.1.subject.nS5"  
+#  [69] "Groupe_doseATN.1.subject.nS5"  "Groupe_doseATN.3.subject.nS5" 
+#  [71] "Groupe_doseCP.3.subject.nS5"   "Groupe_doseCP.1.subject.nS6"  
+#  [73] "Groupe_doseATN.1.subject.nS6"  "Groupe_doseATN.3.subject.nS6" 
+#  [75] "Groupe_doseCP.3.subject.nS6"   "Groupe_doseCP.1.subject.nS7"  
+#  [77] "Groupe_doseATN.1.subject.nS7"  "Groupe_doseATN.3.subject.nS7" 
+#  [79] "Groupe_doseCP.3.subject.nS7"   "Groupe_doseCP.1.subject.nS8"  
+#  [81] "Groupe_doseATN.1.subject.nS8"  "Groupe_doseATN.3.subject.nS8" 
+#  [83] "Groupe_doseCP.3.subject.nS8"   "Groupe_doseCP.1.subject.nS9"  
+#  [85] "Groupe_doseATN.1.subject.nS9"  "Groupe_doseATN.3.subject.nS9" 
 #  [87] "Groupe_doseCP.3.subject.nS9"   "Groupe_doseATN.3.subject.nS23"
 #  [89] "Groupe_doseCP.3.subject.nS23"  "Groupe_doseCP.3.subject.nS24" 
-#  [91] "Groupe_doseATN.1.VisitV3"      "Groupe_doseATN.3.VisitV3"     
-#  [93] "Groupe_doseCP.1.VisitV3"       "Groupe_doseCP.3.VisitV3"      
-#  [95] "Groupe_doseATN.1.VisitV4"      "Groupe_doseATN.3.VisitV4"     
-#  [97] "Groupe_doseCP.1.VisitV4"       "Groupe_doseCP.3.VisitV4"      
-#  [99] "Groupe_doseATN.1.VisitV5"      "Groupe_doseATN.3.VisitV5"     
-# [101] "Groupe_doseCP.1.VisitV5"       "Groupe_doseCP.3.VisitV5"      
+#  [91] "Groupe_doseCP.1.VisitV3"       "Groupe_doseATN.1.VisitV3"     
+#  [93] "Groupe_doseATN.3.VisitV3"      "Groupe_doseCP.3.VisitV3"      
+#  [95] "Groupe_doseCP.1.VisitV4"       "Groupe_doseATN.1.VisitV4"     
+#  [97] "Groupe_doseATN.3.VisitV4"      "Groupe_doseCP.3.VisitV4"      
+#  [99] "Groupe_doseCP.1.VisitV5"       "Groupe_doseATN.1.VisitV5"     
+# [101] "Groupe_doseATN.3.VisitV5"      "Groupe_doseCP.3.VisitV5"    
 
 
 DESeq2::resultsNames(dds2_res2)[grep("ATN.1",DESeq2::resultsNames(dds2_res2))]
@@ -266,17 +266,17 @@ save(dds2_res2, file="deseq2_dds2_res2_analysis.rda" )
 
 # ATN3 Vs baseline
 res_ATN3_v2v3= 
-  results(dds2_res2, contrast = list("Groupe_doseATN.3","Groupe_doseATN.3.VisitV3"), alpha = 0.05) %>% 
+  results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV3", "Groupe_doseATN.3"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN3_v2v3, file="res_ATN3_v2v3_p0.05.rda")
 
 res_ATN3_v2v4=
-results(dds2_res2, contrast = list("Groupe_doseATN.3","Groupe_doseATN.3.VisitV4"), alpha = 0.05) %>% 
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4", "Groupe_doseATN.3"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN3_v2v4, file="res_ATN3_v2v4_p0.05.rda")
 
 res_ATN3_v2v5=
-results(dds2_res2, contrast = list("Groupe_doseATN.3","Groupe_doseATN.3.VisitV5"), alpha = 0.05) %>% 
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV5", "Groupe_doseATN.3"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN3_v2v5, file="res_ATN3_v2v5_p0.05.rda")
 
@@ -284,17 +284,17 @@ save(res_ATN3_v2v5, file="res_ATN3_v2v5_p0.05.rda")
 # ATN1 Vs baseline
 
 res_ATN1_v2v3= 
-  results(dds2_res2, contrast = list("Intercept","Groupe_doseATN.1.VisitV3"), alpha = 0.05) %>% 
+  results(dds2_res2, contrast = list("Groupe_doseATN.1.VisitV3","Groupe_doseATN.1"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN1_v2v3, file="res_ATN1_v2v3_p0.05.rda")
 
 res_ATN1_v2v4=
-results(dds2_res2, contrast = list("Intercept","Groupe_doseATN.1.VisitV4"), alpha = 0.05) %>% 
+results(dds2_res2, contrast = list("Groupe_doseATN.1.VisitV4","Groupe_doseATN.1"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN1_v2v4, file="res_ATN1_v2v4_p0.05.rda")
 
 res_ATN1_v2v5=
-results(dds2_res2, contrast = list("Intercept","Groupe_doseATN.1.VisitV5"), alpha = 0.05) %>% 
+results(dds2_res2, contrast = list("Groupe_doseATN.1.VisitV5","Groupe_doseATN.1"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN1_v2v5, file="res_ATN1_v2v5_p0.05.rda")
 
@@ -304,7 +304,7 @@ save(res_ATN1_v2v5, file="res_ATN1_v2v5_p0.05.rda")
 # ATN3 vs ATN1 by Visit
 
 res_ATN3_ATN1_v2=
-results(dds2_res2, contrast = list("Groupe_doseATN.3", "Intercept"), alpha = 0.05) %>% 
+results(dds2_res2, contrast = list("Groupe_doseATN.3", "Groupe_doseATN.1"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN3_ATN1_v2, file="res_ATN3_ATN1_v2_p0.05.rda")
 
@@ -329,7 +329,7 @@ save(res_ATN3_ATN1_v2v5, file="res_ATN3_ATN1_v2v5_p0.05.rda")
 # ATN1 vs CP1 by Visit
 
 res_ATN1_CP1_v2=
-  results(dds2_res2, contrast = list("Intercept","Groupe_doseCP.1"), alpha = 0.05) %>% 
+  results(dds2_res2, contrast = list("Groupe_doseATN.1"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN1_CP1_v2, file="res_ATN1_CP1_v2_p0.05.rda")
 
@@ -374,4 +374,41 @@ save(res_ATN3_CP3_v2v5, file="res_ATN3_CP3_v2v5_p0.05.rda")
 
 
 ```
+
+
+
+
+
+```{r}
+
+res_ATN1_v2v3
+res_ATN1_v2v4
+res_ATN1_v2v5
+
+res_ATN3_v2v3
+res_ATN3_v2v4
+res_ATN3_v2v5
+
+res_ATN3_ATN1_v2
+res_ATN3_ATN1_v2v3
+res_ATN3_ATN1_v2v4
+res_ATN3_ATN1_v2v5
+
+res_ATN1_CP1_v2
+res_ATN1_CP1_v2v3
+res_ATN1_CP1_v2v4
+res_ATN1_CP1_v2v5
+
+
+res_ATN3_CP3_v2
+res_ATN3_CP3_v2v3
+res_ATN3_CP3_v2v4
+res_ATN3_CP3_v2v5
+
+
+
+
+
+```
+
 
