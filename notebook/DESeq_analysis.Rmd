@@ -142,7 +142,11 @@ rownames(temp) <- temp$samplenr
 
 temp # need here to force level factor
 
+temp$Groupe_dose = as.factor(temp$Groupe_dose)
+temp$Groupe_dose = relevel(temp$Groupe_dose, ref = "CP.1") 
 
+temp$Groupe = as.factor(temp$Groupe)
+temp$Groupe = relevel(temp$Groupe, ref = "CP") 
 
 
 # DESeq2 object and design matrices
