@@ -20,12 +20,15 @@ library(dplyr)
 
 load("genus.rda")
 
-
+load("otu.rda")
 
 ```
 
 
-compute JSD distance
+## compute JSD distance
+
+- at genus level
+
 ```{r}
 
 tolerance_genus_JSD = 
@@ -39,7 +42,33 @@ save(tolerance_genus_JSD, file="tolerance_genus_JSD.rda")
 ```
 
 
-compute Bray-Curtis dissimilarity
+
+- at OTU level
+
+```{r}
+
+
+tolerance_otu_JSD = 
+  otu %>% 
+  as.data.frame() %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  #tibble::column_to_rownames("otu") %>%
+  BiotypeR::dist.JSD()
+
+save(tolerance_otu_JSD, file="tolerance_otu_JSD.rda")
+
+
+
+```
+
+
+
+
+
+## compute Bray-Curtis dissimilarity
+
+- at genus level
+
 
 ```{r}
 
@@ -55,8 +84,33 @@ save(tolerance_genus_BC, file="tolerance_genus_BC.rda")
 ```
 
 
+- at otu level
 
+
+
+```{r}
+
+tolerance_genus_BC = 
+  otu %>% 
+  as.data.frame %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  #tibble::column_to_rownames("otu") %>%
+  t %>%
+  vegan::vegdist(method="bray")
+
+save(tolerance_genus_BC, file="tolerance_otu_BC.rda")
+
+```
+
+
+
+
+
+<<<<<<< HEAD
 import weigthed UNIFRAC from qiime
+=======
+import unweigthed and weigthed UNIFRAC from qiime
+>>>>>>> 76e38e4e976364492e6118c67d1fffba4f1b8292
 
 ```{r}
 
@@ -70,6 +124,21 @@ save(tolerance_unifrac, file="tolerance_unifrac.rda")
 ```
 
 import unweigthed UNIFRAC from qiime
+
+```{r}
+
+readr::read_tsv(system.file("distance/unweighted_unifrac_dm.txt", package="Tolerance")) %>%
+  tibble::column_to_rownames("X1") %>%
+  as.dist() -> tolerance_unifrac_UW
+
+
+save(tolerance_unifrac, file="tolerance_unifrac_UW.rda")
+
+
+```
+
+
+
 
 
 
