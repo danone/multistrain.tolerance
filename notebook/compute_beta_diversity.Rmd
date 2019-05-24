@@ -104,13 +104,8 @@ save(tolerance_genus_BC, file="tolerance_otu_BC.rda")
 
 
 
-
-
-<<<<<<< HEAD
-import weigthed UNIFRAC from qiime
-=======
 import unweigthed and weigthed UNIFRAC from qiime
->>>>>>> 76e38e4e976364492e6118c67d1fffba4f1b8292
+
 
 ```{r}
 
