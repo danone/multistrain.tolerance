@@ -140,7 +140,9 @@ temp = full_join(temp,
                   by = "Subject")
 rownames(temp) <- temp$samplenr
 
-temp
+temp # need here to force level factor
+
+
 
 
 # DESeq2 object and design matrices
