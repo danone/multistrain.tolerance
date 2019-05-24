@@ -29,6 +29,13 @@ load("tolerance_genus_BC.rda")
 load("tolerance_unifrac.rda")
 
 Tolerance::sample_metadata %>% head(10)
+sample_metadata$Groupe = as.factor(sample_metadata$Groupe)
+str(sample_metadata$Groupe)
+sample_metadata$Groupe = relevel(sample_metadata$Groupe, ref = "CP") 
+
+sample_metadata$Groupe_dose = as.factor(sample_metadata$Groupe_dose)
+sample_metadata$Groupe_dose = relevel(sample_metadata$Groupe_dose, ref = "CP.1") 
+
 ```
 
 
@@ -37,15 +44,15 @@ Tolerance::sample_metadata %>% head(10)
 
 tolerance_genus_JSD %>% 
   as.matrix() %>%
-  reshape2::melt(value.name = "JSD") %>%
+  reshape2::melt(value.name = "JSD (Genus-based)") %>%
   
   merge(tolerance_genus_BC %>% 
   as.matrix() %>%
-  reshape2::melt(value.name = "BC") , by=c("Var1","Var2")) %>%
+  reshape2::melt(value.name = "BrayCurtis (Genus-based)") , by=c("Var1","Var2")) %>%
   
   merge(tolerance_unifrac %>% 
   as.matrix() %>%
-  reshape2::melt(value.name = "UNIFRAC") , by=c("Var1","Var2")) %>%
+  reshape2::melt(value.name = "W-UNIFRAC") , by=c("Var1","Var2")) %>%
   
   reshape2::melt(id.vars=c("Var1","Var2")) %>%
   
