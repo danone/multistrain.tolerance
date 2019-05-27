@@ -25,17 +25,28 @@ str(res_ATN1_CP1_v2$genus)
 
 res_ATN1_CP1_v2$genus
 
-
-genus %>%
-  tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","family","Genus"), sep=";")
-  
-  
-  
+p1=
   res_ATN1_CP1_v2 %>%
     tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","Family","Genus"), sep=";") %>%
-    ggplot() + geom_point(aes(x=Genus,y=log2FoldChange, col=Family)) +
-    
-  
+mutate(Genus = Genus %>% gsub("D_5__","",.)) %>%
+mutate(Family = Family %>% gsub("D_4__","",.)) %>%
+ mutate(Phylum = Phylum %>% gsub("D_1__","",.)) %>% 
+  subset (!"Ambiguous_taxa" %in% Genus) %>% 
+    ggplot(aes(x=Genus,y=log2FoldChange, color=Phylum)) + geom_point(size=3) +
+    theme_set(theme_bw())+
+  geom_hline(yintercept=0, color = "gray", linetype="dashed")+
+  theme(axis.text.x = element_text(angle = -90, hjust = 0))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=12, face="bold"))
 
+
+
+
+
+  
 ```
 
