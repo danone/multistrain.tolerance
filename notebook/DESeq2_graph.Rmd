@@ -44,7 +44,7 @@ mutate(Family = Family %>% gsub("D_4__","",.)) %>%
         legend.title = element_text(color="black", size=12, face="bold"))
 
   
-# integration des differents temps sur la meme figure
+# ATN1 vs CP1 : all visits ----------
  
 tiff(file="DESeq2_ATN1_CP1_allvisits.tiff", w=1500, h=500) 
 rbind(
@@ -76,6 +76,144 @@ filter(Genus != "Ambiguous_taxa") %>%
 theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))
 
 dev.off()
+
+
+
+# ATN3 vs CP3 : all visits ----------
   
+tiff(file="DESeq2_ATN3_CP3_allvisits.tiff", w=1500, h=500) 
+rbind(
+    data.frame(res_ATN3_CP3_v2,visit="D0"), 
+    data.frame(res_ATN3_CP3_v2v3,visit="D14"),
+    data.frame(res_ATN3_CP3_v2v4,visit="D28"), 
+    data.frame(res_ATN3_CP3_v2v5,visit="D56")
+              ) %>%
+  
+    tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","Family","Genus"), sep="; ")%>%
+filter(Domain != "Unassigned") %>%
+# mutate(Genus = Genus %>% gsub("","Unassigned",.)) %>%  # je n'arrive pas à remplacer la cellule "vide" par unassigned"
+mutate(Genus = Genus %>% gsub("D_5__","",.)) %>%
+mutate(Family = Family %>% gsub("D_4__","",.)) %>%
+mutate(Phylum = Phylum %>% gsub("D_1__","",.)) %>% 
+filter(Genus != "Ambiguous_taxa") %>% 
+
+    ggplot(aes(x=Genus,y=log2FoldChange, color=Phylum)) + geom_point(size=3) +
+    theme_set(theme_bw())+
+  geom_hline(yintercept=0, color = "gray", linetype="dashed") +
+  theme(axis.text.x = element_text(angle = -90, hjust=0))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=12, face="bold")) + facet_wrap(~visit, scale="free_x", nrow=1)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))
+
+dev.off()
+
+
+# ATN3 vs ATN1 all visits -------------
+
+
+tiff(file="DESeq2_ATN3_ATN1_allvisits.tiff", w=1500, h=500) 
+rbind(
+    data.frame(res_ATN3_ATN1_v2,visit="D0"), 
+    data.frame(res_ATN3_ATN1_v2v3,visit="D14"),
+    data.frame(res_ATN3_ATN1_v2v4,visit="D28"), 
+    data.frame(res_ATN3_ATN1_v2v5,visit="D56")
+              ) %>%
+  
+    tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","Family","Genus"), sep="; ")%>%
+filter(Domain != "Unassigned") %>%
+# mutate(Genus = Genus %>% gsub("","Unassigned",.)) %>%  # je n'arrive pas à remplacer la cellule "vide" par unassigned"
+mutate(Genus = Genus %>% gsub("D_5__","",.)) %>%
+mutate(Family = Family %>% gsub("D_4__","",.)) %>%
+mutate(Phylum = Phylum %>% gsub("D_1__","",.)) %>% 
+filter(Genus != "Ambiguous_taxa") %>% 
+
+    ggplot(aes(x=Genus,y=log2FoldChange, color=Phylum)) + geom_point(size=3) +
+    theme_set(theme_bw())+
+  geom_hline(yintercept=0, color = "gray", linetype="dashed") +
+  theme(axis.text.x = element_text(angle = -90, hjust=0))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=12, face="bold")) + facet_wrap(~visit, scale="free_x", nrow=1)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))
+
+dev.off()
+
+
+# ATN1 Vs baseline --------
+
+tiff(file="DESeq2_ATN1_time.tiff", w=1500, h=500) 
+rbind(
+    data.frame(res_ATN1_v2v3,visit="D14"), 
+    data.frame(res_ATN1_v2v4,visit="D28"),
+    data.frame(res_ATN1_v2v5,visit="D56")
+              ) %>%
+  
+    tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","Family","Genus"), sep="; ")%>%
+filter(Domain != "Unassigned") %>%
+# mutate(Genus = Genus %>% gsub("","Unassigned",.)) %>%  # je n'arrive pas à remplacer la cellule "vide" par unassigned"
+mutate(Genus = Genus %>% gsub("D_5__","",.)) %>%
+mutate(Family = Family %>% gsub("D_4__","",.)) %>%
+mutate(Phylum = Phylum %>% gsub("D_1__","",.)) %>% 
+filter(Genus != "Ambiguous_taxa") %>% 
+
+    ggplot(aes(x=Genus,y=log2FoldChange, color=Phylum)) + geom_point(size=3) +
+    theme_set(theme_bw())+
+  geom_hline(yintercept=0, color = "gray", linetype="dashed") +
+  theme(axis.text.x = element_text(angle = -90, hjust=0))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=12, face="bold")) + facet_wrap(~visit, scale="free_x", nrow=1)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))
+
+dev.off()
+
+
+# ATN3 Vs baseline --------
+
+
+tiff(file="DESeq2_ATN3_time.tiff", w=1500, h=500) 
+rbind(
+    data.frame(res_ATN3_v2v3,visit="D14"), 
+    data.frame(res_ATN3_v2v4,visit="D28"),
+    data.frame(res_ATN3_v2v5,visit="D56")
+              ) %>%
+  
+    tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","Family","Genus"), sep="; ")%>%
+filter(Domain != "Unassigned") %>%
+# mutate(Genus = Genus %>% gsub("","Unassigned",.)) %>%  # je n'arrive pas à remplacer la cellule "vide" par unassigned"
+mutate(Genus = Genus %>% gsub("D_5__","",.)) %>%
+mutate(Family = Family %>% gsub("D_4__","",.)) %>%
+mutate(Phylum = Phylum %>% gsub("D_1__","",.)) %>% 
+filter(Genus != "Ambiguous_taxa") %>% 
+
+    ggplot(aes(x=Genus,y=log2FoldChange, color=Phylum)) + geom_point(size=3) +
+    theme_set(theme_bw())+
+  geom_hline(yintercept=0, color = "gray", linetype="dashed") +
+  theme(axis.text.x = element_text(angle = -90, hjust=0))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=12, face="bold")) + facet_wrap(~visit, scale="free_x", nrow=1)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))
+
+dev.off()
+
+
 ```
 
