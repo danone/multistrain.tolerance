@@ -90,7 +90,7 @@ save(tolerance_genus_BC, file="tolerance_genus_BC.rda")
 
 ```{r}
 
-tolerance_genus_BC = 
+tolerance_otu_BC = 
   otu %>% 
   as.data.frame %>%
   mutate_if(is.numeric,function(x)(x/sum(x))) %>%
@@ -98,7 +98,7 @@ tolerance_genus_BC =
   t %>%
   vegan::vegdist(method="bray")
 
-save(tolerance_genus_BC, file="tolerance_otu_BC.rda")
+save(tolerance_otu_BC, file="tolerance_otu_BC.rda")
 
 ```
 
@@ -127,7 +127,7 @@ readr::read_tsv(system.file("distance/unweighted_unifrac_dm.txt", package="Toler
   as.dist() -> tolerance_unifrac_UW
 
 
-save(tolerance_unifrac, file="tolerance_unifrac_UW.rda")
+save(tolerance_unifrac_UW, file="tolerance_unifrac_UW.rda")
 
 
 ```

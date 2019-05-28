@@ -27,6 +27,9 @@ library(ggpubr)
 load("tolerance_genus_JSD.rda")
 load("tolerance_genus_BC.rda")
 load("tolerance_unifrac.rda")
+load("tolerance_unifrac_UW.rda")
+load("tolerance_otu_JSD.rda")
+load("tolerance_otu_BC.rda")
 
 Tolerance::sample_metadata %>% head(10)
 sample_metadata$Groupe = as.factor(sample_metadata$Groupe)
@@ -41,6 +44,7 @@ sample_metadata$Groupe_dose = relevel(sample_metadata$Groupe_dose, ref = "CP.1")
 
 ```{r}
 
+# beta-diversity from genus
 
 tolerance_genus_JSD %>% 
   as.matrix() %>%
@@ -53,6 +57,10 @@ tolerance_genus_JSD %>%
   merge(tolerance_unifrac %>% 
   as.matrix() %>%
   reshape2::melt(value.name = "W-UNIFRAC") , by=c("Var1","Var2")) %>%
+  
+  merge(tolerance_unifrac_UW %>% 
+  as.matrix() %>%
+  reshape2::melt(value.name = "UW-UNIFRAC") , by=c("Var1","Var2")) %>%
   
   reshape2::melt(id.vars=c("Var1","Var2")) %>%
   
@@ -134,7 +142,11 @@ beta_diversity_data  = transform(beta_diversity_data, Product_dose.x = factor(Gr
 beta_diversity_data$Visit.y = as.factor(beta_diversity_data$Visit.y)
 beta_diversity_data  = transform(beta_diversity_data, Days.y = factor(Visit.y, labels=c("D0","D14","D28","D56"), ordered =TRUE))
 
+
 # plots
+
+
+tiff(file="beta_diversity_JSD_BC_genusbased_UWunifrac_Wunifrac_plot1.tiff", w=900, h=800)
 
 beta_diversity_data %>%
 filter(Days == "D0",Group_test=="Within Group") %>%
@@ -142,18 +154,23 @@ filter(!(Days.y == "D0" & Subject_test=="Within Subject")) %>%
 ggboxplot(y="value",x="Days.y",color="Subject_test", palette=c("#0073C2FF", "#EFC000FF"),
 # add = "jitter",
 # add.params = list(size = 0.05, jitter = 0.1),
-ylab ="microbiota beta-diversity",xlab="Days", ggtheme = theme_pubr()) +
+ylab ="Microbiota beta-diversity distance metrics",xlab="Days", ggtheme = theme_pubr()) +
 theme(legend.position = 'bottom')+
 facet_grid(variable~Product_dose.x, scales = "free_y")+
 theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
 theme(strip.text.y = element_text(size=13, color="white", face="bold"))+
 theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
-theme(axis.title.x = element_text(color="black", face="bold", size=13),
-axis.title.y = element_text(color="black", size=12, face="bold"),
+theme(axis.title.x = element_text(color="black", face="bold", size=15),
+axis.title.y = element_text(color="black", size=15, face="bold"),
 axis.text.y = element_text(color="black", size=10, face="bold"),
-axis.text.x = element_text(color="black", size=10, face="bold"),
-legend.text = element_text(color="black", size=10, face="bold"),
+axis.text.x = element_text(color="black", size=12, face="bold"),
+legend.text = element_text(color="black", size=12, face="bold"),
 legend.title = element_text(color="black", size=13, face="bold"))
+
+dev.off()
+
+
+tiff(file="beta_diversity_JSD_BC_genusbased_UWunifrac_Wunifrac_plot2.tiff", w=900, h=800)
 
 beta_diversity_data %>%
 filter(Days == "D0") %>%
@@ -161,23 +178,141 @@ filter(!(Days.y == "D0" & Subject_test=="Within Subject")) %>%
 ggboxplot(y="value",x="Days.y",color="Group_test", palette=c("#0073C2FF", "#EFC000FF"),
 # add = "jitter",
 # add.params = list(size = 0.05, jitter = 0.1),
-ylab ="microbiota beta-diversity",xlab="Days", ggtheme = theme_pubr()) +
+ylab ="Microbiota beta-diversity distance metrics",xlab="Days", ggtheme = theme_pubr()) +
 theme(legend.position = 'bottom')+
 facet_grid(variable~Product_dose.x, scales = "free_y")+
 theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
 theme(strip.text.y = element_text(size=13, color="white", face="bold"))+
 theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
-theme(axis.title.x = element_text(color="black", face="bold", size=13),
-axis.title.y = element_text(color="black", size=12, face="bold"),
+theme(axis.title.x = element_text(color="black", face="bold", size=15),
+axis.title.y = element_text(color="black", size=15, face="bold"),
 axis.text.y = element_text(color="black", size=10, face="bold"),
-axis.text.x = element_text(color="black", size=10, face="bold"),
-legend.text = element_text(color="black", size=10, face="bold"),
+axis.text.x = element_text(color="black", size=12, face="bold"),
+legend.text = element_text(color="black", size=12, face="bold"),
 legend.title = element_text(color="black", size=13, face="bold"))
 
-
+dev.off()
 
 ```
 
 
 
+```{r}
+
+# beta-diversity from OTUs and plots generation
+
+tolerance_otu_JSD %>% 
+  as.matrix() %>%
+  reshape2::melt(value.name = "JSD (OTU-based)") %>%
+  
+  merge(tolerance_otu_BC %>% 
+  as.matrix() %>%
+  reshape2::melt(value.name = "BrayCurtis (OTU-based)") , by=c("Var1","Var2")) %>%
+  
+  merge(tolerance_unifrac %>% 
+  as.matrix() %>%
+  reshape2::melt(value.name = "W-UNIFRAC") , by=c("Var1","Var2")) %>%
+  
+  merge(tolerance_unifrac_UW %>% 
+  as.matrix() %>%
+  reshape2::melt(value.name = "UW-UNIFRAC") , by=c("Var1","Var2")) %>%
+  
+  reshape2::melt(id.vars=c("Var1","Var2")) %>%
+  
+  
+  
+  merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var1", by.y="samplenr") %>%
+    merge(.,
+        Tolerance::sample_metadata %>% select(samplenr,Subject,Visit,Groupe_dose), 
+        by.x="Var2", by.y="samplenr") %>%
+  mutate(
+    Subject_test = case_when(
+    Subject.x == Subject.y ~ "Within Subject",
+    Subject.x != Subject.y ~ "Between Subject"
+      ) ,
+    Group_test = case_when(
+      Groupe_dose.x == Groupe_dose.y ~ "Within Group",
+      Groupe_dose.x != Groupe_dose.y ~ "Between Group"
+      
+    ) ,
+    Visit_test = case_when(
+      Visit.x == Visit.y ~ "Within Visit",
+      Visit.x != Visit.y ~ "Between Visit"
+      
+    ) 
+    
+    
+  ) -> beta_diversity_data
+
+
+
+save(beta_diversity_data, file="beta_diversity_data_OTU_based.rda")
+
+
+# plots generation
+
+
+beta_diversity_data$Visit.x = as.factor(beta_diversity_data$Visit.x)
+beta_diversity_data  = transform(beta_diversity_data, Days = factor(Visit.x, labels=c("D0","D14","D28","D56"), ordered =TRUE))
+
+
+beta_diversity_data$Groupe_dose.x = as.factor(beta_diversity_data$Groupe_dose.x)
+beta_diversity_data  = transform(beta_diversity_data, Product_dose.x = factor(Groupe_dose.x, labels=c("FMP.1","FMP.3","CP.1","CP.3"), ordered =TRUE))
+
+beta_diversity_data$Visit.y = as.factor(beta_diversity_data$Visit.y)
+beta_diversity_data  = transform(beta_diversity_data, Days.y = factor(Visit.y, labels=c("D0","D14","D28","D56"), ordered =TRUE))
+
+
+
+tiff(file="beta_diversity_JSD_BC_OTU_based_UWunifrac_Wunifrac_plot1.tiff", w=900, h=800)
+
+beta_diversity_data %>%
+filter(Days == "D0",Group_test=="Within Group") %>%
+filter(!(Days.y == "D0" & Subject_test=="Within Subject")) %>%
+ggboxplot(y="value",x="Days.y",color="Subject_test", palette=c("#0073C2FF", "#EFC000FF"),
+# add = "jitter",
+# add.params = list(size = 0.05, jitter = 0.1),
+ylab ="Microbiota beta-diversity distance metrics",xlab="Days", ggtheme = theme_pubr()) +
+theme(legend.position = 'bottom')+
+facet_grid(variable~Product_dose.x, scales = "free_y")+
+theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.text.y = element_text(size=13, color="white", face="bold"))+
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+theme(axis.title.x = element_text(color="black", face="bold", size=15),
+axis.title.y = element_text(color="black", size=15, face="bold"),
+axis.text.y = element_text(color="black", size=10, face="bold"),
+axis.text.x = element_text(color="black", size=12, face="bold"),
+legend.text = element_text(color="black", size=12, face="bold"),
+legend.title = element_text(color="black", size=13, face="bold"))
+
+dev.off()
+
+
+tiff(file="beta_diversity_JSD_BC_OTU_based_UWunifrac_Wunifrac_plot2.tiff", w=900, h=800)
+
+beta_diversity_data %>%
+filter(Days == "D0") %>%
+filter(!(Days.y == "D0" & Subject_test=="Within Subject")) %>%
+ggboxplot(y="value",x="Days.y",color="Group_test", palette=c("#0073C2FF", "#EFC000FF"),
+# add = "jitter",
+# add.params = list(size = 0.05, jitter = 0.1),
+ylab ="Microbiota beta-diversity distance metrics",xlab="Days", ggtheme = theme_pubr()) +
+theme(legend.position = 'bottom')+
+facet_grid(variable~Product_dose.x, scales = "free_y")+
+theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.text.y = element_text(size=13, color="white", face="bold"))+
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+theme(axis.title.x = element_text(color="black", face="bold", size=15),
+axis.title.y = element_text(color="black", size=15, face="bold"),
+axis.text.y = element_text(color="black", size=10, face="bold"),
+axis.text.x = element_text(color="black", size=12, face="bold"),
+legend.text = element_text(color="black", size=12, face="bold"),
+legend.title = element_text(color="black", size=13, face="bold"))
+
+dev.off()
+
+
+```
 
