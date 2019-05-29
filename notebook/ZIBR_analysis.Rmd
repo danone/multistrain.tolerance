@@ -1,0 +1,348 @@
+---
+title: "ZIBR analysis"
+output: html_notebook
+---
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(ZIBR) #devtools::install_github("chvlyl/ZIBR")
+
+devtools::load_all(reset=FALSE)
+
+
+```
+
+```{r}
+
+data(sample_metadata)  
+
+load("genus.rda")
+
+genus
+
+
+```
+
+
+
+
+
+```{r}
+genus %>%
+  reshape2::melt(id.vars="genus") %>%
+  group_by(variable) %>%
+  mutate(nbReads=sum(value)) %>%
+  mutate(prop = value/nbReads) %>% 
+  #ungroup() %>%
+  group_by(genus) %>%
+  summarize(prop_max=max(na.omit(prop)), zero=sum(na.omit(value)>0)/length(value)) -> genus_stat_summary
+
+genus_stat_summary %>%
+  filter(prop_max>0.01, zero > 0.1 & zero < 0.9) %>% View()
+
+genus_stat_summary %>%
+  filter(prop_max>0.01, zero < 0.9) %>% View()
+
+genus %>%
+  reshape2::melt(id.vars="genus") %>%
+  group_by(variable) %>%
+  mutate(nbReads=sum(value)) %>%
+  mutate(Offset=log(nbReads)) %>%
+  merge(., sample_metadata,  by.x="variable", by.y="samplenr") %>%
+  filter(Groupe %in% c("ATN","CP")) %>%
+  mutate(fx = ifelse(Groupe=="ATN",1,0)) %>%
+  mutate(fx2 = ifelse(Groupe_dose=="ATN.3",1,0)) %>%
+  ungroup() %>%  
+  #group_by(variable,Subject, taxonomy1, taxonomy2,taxonomy3, 
+  #         taxonomy4, taxonomy5, taxonomy6) %>%
+  #mutate(baseline=ifelse(Visit=="V2",value,value[Visit=="V2"])) %>%
+  #mutate(baseline=mean(tmp)) %>%
+  #select(-tmp) %>%
+  mutate(value=value/nbReads) %>%
+  mutate(Time = case_when(
+    Visit=="V2" ~ 0,
+    Visit=="V3" ~ 1,
+    Visit=="V4" ~ 2,
+    Visit=="V5" ~ 4
+  )) %>%
+  mutate(Challenge = case_when(
+    Visit=="V2" ~ 0,
+    Visit=="V3" ~ 1,
+    Visit=="V4" ~ 1,
+    Visit=="V5" ~ 0
+  ))  %>%
+  mutate(fx3 = case_when(
+    fx=="1" & fx2=="1" ~ 3,
+    fx=="1" & fx2=="0" ~ 1,
+    fx=="0" & fx2=="0" ~ 0
+    
+  )) -> genus_metadata
+
+genus_metadata_baseline =
+genus_metadata %>%
+  filter(Visit=="V2") %>%
+  select(Subject,genus,value) %>%
+  dplyr::rename(baseline=value) %>%
+  merge(genus_metadata, by=c("Subject","genus")) %>%
+  filter(Time > 0) %>%
+  group_by(Subject,genus) %>%
+  mutate(n=n()) %>%
+  filter(n==3) %>% ungroup()
+
+
+```
+
+```{r}
+
+spe="D_0__Bacteria; D_1__Firmicutes; D_2__Bacilli; D_3__Lactobacillales; D_4__Lactobacillaceae; D_5__Lactobacillus"
+
+#spe = "D_0__Bacteria; D_1__Proteobacteria; D_2__Gammaproteobacteria; D_3__Enterobacteriales; D_4__Enterobacteriaceae; D_5__Escherichia-Shigella"
+
+#spe="D_0__Bacteria; D_1__Bacteroidetes; D_2__Bacteroidia; D_3__Bacteroidales; D_4__Prevotellaceae; D_5__uncultured"
+
+
+spe_df =
+  genus_metadata_baseline %>%  
+  filter(genus==spe)
+
+est1 <- zibr(logistic.cov = spe_df %>% select(baseline,Challenge,fx3), 
+            beta.cov     =  spe_df %>% select(baseline,Challenge,fx3),
+            Y            =  spe_df %>% pull(value),
+            subject.ind  =  spe_df %>% pull(Subject),
+            time.ind     =  spe_df %>% pull(Time),
+            quad.n=30,verbose=TRUE)
+
+est1
+
+
+
+
+spe_df %>% 
+  mutate(Ylogit=value %>% car::logit(adjust=0)) %>% 
+  ggplot() + 
+  geom_boxplot(aes(y=Ylogit,x=Time%>%as.character(),fill=fx3%>%as.character()))
+
+spe_df %>% 
+  group_by(fx3,Time) %>%
+  summarise(p = value %>% (function(x)(table(x>0)["TRUE"]/length(x)))) %>%
+  ggplot() + 
+  geom_bar(aes(x=Time%>%as.character(),fill=fx3%>%as.character(),y=p), 
+           position="dodge", stat="identity")
+
+
+```
+
+
+
+
+```{r}
+
+## make a big loop
+
+genus_stat_summary %>%
+  filter(prop_max>0.001 & zero > 0.1) %>%
+  mutate(genus_id=genus) %>% 
+  pull(genus_id) -> genus_select
+
+zibr_est_list=vector("list",length(genus_select))
+
+
+for(i in seq_along(genus_select)) {
+
+spe=genus_select[i]
+
+spe_df =
+  genus_metadata_baseline %>%  
+  mutate(genus_id=genus) %>% 
+  filter(genus_id==spe)
+
+est1 <- zibr(logistic.cov = spe_df %>% select(baseline,Challenge,fx3), 
+            beta.cov     =  spe_df %>% select(baseline,Challenge,fx3),
+            Y            =  spe_df %>% pull(value),
+            subject.ind  =  spe_df %>% pull(Subject),
+            time.ind     =  spe_df %>% pull(Time),
+            quad.n=30,verbose=TRUE)
+
+zibr_est_list[[i]] <- est1
+
+cat(i,"\n")
+
+}
+
+zibr_est_list %>% sapply(unlist) -> zibr_est_df
+
+# 
+# 
+# 
+# rownames(zibr_est_df)[1:10]  =
+# paste("logistic.est", 
+#       c(rep("estimate",5), rep("Pvalue",5)),
+#       rep(c("Intercept","Baseline","Challenge","fx3"),2), sep=".")
+# 
+# rownames(zibr_est_df)[12:21]  =
+# paste("beta.est", 
+#       c(rep("estimate",5), rep("Pvalue",5)),
+#       rep(c("Intercept","Baseline","Challenge","fx3"),2), sep=".")
+# 
+
+colnames(zibr_est_df) = genus_select
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  write.csv2(file="result_ZIBR.csv")
+
+
+```
+
+
+
+```{r}
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  arrange(joint.p.fx3) %>%
+  mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
+  filter(joint.p.fx3 < 0.05)
+
+
+
+
+```
+
+
+```{r}
+
+
+
+spe="D_0__Bacteria; D_1__Actinobacteria; D_2__Actinobacteria; D_3__Actinomycetales; D_4__Actinomycetaceae; D_5__Actinomyces"
+
+
+spe_df =
+  genus_metadata_baseline %>%  
+  filter(genus==spe)
+
+
+spe_df %>% 
+  mutate(Ylogit=value %>% car::logit(adjust=0)) %>% 
+  ggplot() + 
+  geom_boxplot(aes(y=Ylogit,x=Time%>%as.character(),fill=fx3%>%as.character()))
+
+spe_df %>% 
+  group_by(fx3,Time) %>%
+  summarise(p = value %>% (function(x)(table(x>0)["TRUE"]/length(x)))) %>%
+  ggplot() + 
+  geom_bar(aes(x=Time%>%as.character(),fill=fx3%>%as.character(),y=p), 
+           position="dodge", stat="identity")
+
+
+
+```
+
+
+
+
+```{r}
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  mutate(joint.p.Time.fdr=p.adjust(joint.p.Time, method = "fdr"),
+         joint.p.fx.fdr=p.adjust(joint.p.fx, method = "fdr"),
+         joint.p.fx2.fdr=p.adjust(joint.p.fx2, method = "fdr"),
+         joint.p.baseline.fdr=p.adjust(joint.p.baseline, method = "fdr")) %>%
+write.csv2(file="result_ZIBR_fdr.csv")
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>%
+  mutate(joint.p.Time.fdr=p.adjust(joint.p.Time, method = "fdr"),
+         joint.p.fx.fdr=p.adjust(joint.p.fx, method = "fdr"),
+         joint.p.fx2.fdr=p.adjust(joint.p.fx2, method = "fdr"),
+         joint.p.baseline.fdr=p.adjust(joint.p.baseline, method = "fdr")) %>%
+  filter(joint.p.fx.fdr <0.05 | joint.p.fx2.fdr <0.05) 
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>%
+  mutate(joint.p.Time.fdr=p.adjust(joint.p.Time, method = "fdr"),
+         joint.p.fx.fdr=p.adjust(joint.p.fx, method = "fdr"),
+         joint.p.fx2.fdr=p.adjust(joint.p.fx2, method = "fdr"),
+         joint.p.baseline.fdr=p.adjust(joint.p.baseline, method = "fdr")) %>%
+  filter(joint.p.fx.fdr <0.05) 
+
+
+
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>%
+  filter(joint.p.Time < 0.05|joint.p.fx <0.05 | joint.p.fx2 <0.05) %>%
+  #arrange(desc(abs(beta.est.estimate.fx))) %>%
+  top_n(5,abs(beta.est.estimate.fx)) %>%
+  select(genus, beta.est.estimate.fx)
+
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>%
+  filter(joint.p.Time < 0.05 & joint.p.fx2 <0.05 ) %>%
+  select(genus)
+  
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>%
+  filter(joint.p.Time <0.05 & (joint.p.fx <0.05|joint.p.fx2 <0.05) ) %>%
+  select(genus,joint.p.Time, joint.p.fx, joint.p.fx2)
+
+
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>%
+  ggplot() + geom_point(aes(y=beta.est.estimate.fx,x=logistic.est.estimate.fx))
+
+```
+
+
+
+```{r}
+
+spe="D_0__BacteriaD_1__FirmicutesD_2__BacilliD_3__LactobacillalesD_4__LactobacillaceaeD_5__Lactobacillus"
+
+  
+spe_df =
+  genus_metadata_baseline %>%  
+  mutate(genus_id=paste0(taxonomy1, taxonomy2,taxonomy3, 
+                         taxonomy4, taxonomy5, taxonomy6)) %>% 
+  filter(genus_id==spe)
+
+
+spe_df %>% 
+  mutate(Ylogit=value %>% car::logit(adjust=0)) %>% 
+  ggplot() + 
+  geom_boxplot(aes(y=Ylogit,x=Time%>%as.character(),fill=Groupe_dose%>% as.character()))
+
+spe_df %>% 
+  group_by(Groupe_dose,Time) %>%
+  summarise(p = value %>% (function(x)(table(x>0)["TRUE"]/length(x)))) %>%
+  ggplot() + 
+  geom_bar(aes(x=Time%>%as.character(),fill=Groupe_dose%>% as.character(),y=p), 
+           position="dodge", stat="identity")
+
+```
+
