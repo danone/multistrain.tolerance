@@ -372,43 +372,74 @@ results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV5","Groupe_doseCP.3.V
 save(res_ATN3_CP3_v2v5, file="res_ATN3_CP3_v2v5_p0.05.rda")
 
 
+## Effet temps CP  --------------
+
+
+# CP3 Vs baseline
+res_CP3_v2v3= 
+  results(dds2_res2, contrast = list("Groupe_doseCP.3.VisitV3", "Groupe_doseCP.3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP3_v2v3, file="res_CP3_v2v3_p0.05.rda")
+
+res_CP3_v2v4=
+results(dds2_res2, contrast = list("Groupe_doseCP.3.VisitV4", "Groupe_doseCP.3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP3_v2v4, file="res_CP3_v2v4_p0.05.rda")
+
+res_CP3_v2v5=
+results(dds2_res2, contrast = list("Groupe_doseCP.3.VisitV5", "Groupe_doseCP.3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP3_v2v5, file="res_CP3_v2v5_p0.05.rda")
+
+
+# CP1 Vs baseline
+
+res_CP1_v2v3= 
+  results(dds2_res2, contrast = list("Groupe_doseCP.1.VisitV3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP1_v2v3, file="res_CP1_v2v3_p0.05.rda")
+
+res_CP1_v2v4=
+results(dds2_res2, contrast = list("Groupe_doseCP.1.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP1_v2v4, file="res_CP1_v2v4_p0.05.rda")
+
+res_CP1_v2v5=
+results(dds2_res2, contrast = list("Groupe_doseCP.1.VisitV5"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP1_v2v5, file="res_CP1_v2v5_p0.05.rda")
+
+
+
+## Effet dose CP  --------------
+
+# CP3 vs CP1 by Visit
+
+res_CP3_CP1_v2=
+results(dds2_res2, contrast = list("Groupe_doseCP.3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP3_CP1_v2, file="res_CP3_CP1_v2_p0.05.rda")
+
+res_CP3_CP1_v2v3=
+results(dds2_res2, contrast = list("Groupe_doseCP.3.VisitV3","Groupe_doseCP.1.VisitV3"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP3_CP1_v2v3, file="res_CP3_CP1_v2v3_p0.05.rda")
+
+res_CP3_CP1_v2v4=
+results(dds2_res2, contrast = list("Groupe_doseCP.3.VisitV4","Groupe_doseCP.1.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP3_CP1_v2v4, file="res_CP3_CP1_v2v4_p0.05.rda")
+
+res_CP3_CP1_v2v5=
+results(dds2_res2, contrast = list("Groupe_doseCP.3.VisitV5","Groupe_doseCP.1.VisitV5"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_CP3_CP1_v2v5, file="res_CP3_CP1_v2v5_p0.05.rda")
+
+
+
 
 ```
 
 
-
-
-
-```{r}
-
-res_ATN1_v2v3
-res_ATN1_v2v4
-res_ATN1_v2v5
-
-res_ATN3_v2v3
-res_ATN3_v2v4
-res_ATN3_v2v5
-
-res_ATN3_ATN1_v2
-res_ATN3_ATN1_v2v3
-res_ATN3_ATN1_v2v4
-res_ATN3_ATN1_v2v5
-
-res_ATN1_CP1_v2
-res_ATN1_CP1_v2v3
-res_ATN1_CP1_v2v4
-res_ATN1_CP1_v2v5
-
-
-res_ATN3_CP3_v2
-res_ATN3_CP3_v2v3
-res_ATN3_CP3_v2v4
-res_ATN3_CP3_v2v5
-
-
-
-
-
-```
 
 
