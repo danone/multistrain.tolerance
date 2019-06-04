@@ -39,11 +39,11 @@ genus %>%
   group_by(genus) %>%
   summarize(prop_max=max(na.omit(prop)), zero=sum(na.omit(value)>0)/length(value)) -> genus_stat_summary
 
-genus_stat_summary %>%
-  filter(prop_max>0.01, zero > 0.1 & zero < 0.9) %>% View()
+#genus_stat_summary %>%
+#  filter(prop_max>0.01, zero > 0.1 & zero < 0.9) %>% View()
 
-genus_stat_summary %>%
-  filter(prop_max>0.01, zero < 0.9) %>% View()
+#genus_stat_summary %>%
+#  filter(prop_max>0.01, zero < 0.9) %>% View()
 
 genus %>%
   reshape2::melt(id.vars="genus") %>%
@@ -70,7 +70,7 @@ genus %>%
   mutate(Challenge = case_when(
     Visit=="V2" ~ 0,
     Visit=="V3" ~ 1,
-    Visit=="V4" ~ 1,
+    Visit=="V4" ~ 2,
     Visit=="V5" ~ 0
   ))  %>%
   mutate(fx3 = case_when(
@@ -151,6 +151,8 @@ zibr_est_list=vector("list",length(genus_select))
 
 for(i in seq_along(genus_select)) {
 
+cat(i,"start \n")  
+  
 spe=genus_select[i]
 
 spe_df =
@@ -167,11 +169,13 @@ est1 <- zibr(logistic.cov = spe_df %>% select(baseline,Challenge,fx3),
 
 zibr_est_list[[i]] <- est1
 
-cat(i,"\n")
+cat(i,"done \n")
 
 }
 
 zibr_est_list %>% sapply(unlist) -> zibr_est_df
+
+save(zibr_est_df, file="zibr_est_df.rda")
 
 # 
 # 
@@ -207,22 +211,58 @@ zibr_est_df %>%
   t %>%
   as.data.frame() %>%
   tibble::rownames_to_column("genus") %>% 
+  #select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  arrange(joint.p.fx3) %>%
+  mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
+  #filter((beta.est.table4 < 0 & beta.est.table3 < 0) | (beta.est.table4 > 0 & beta.est.table3 > 0) |  (logistic.est.table4 < 0 & logistic.est.table3 < 0) | (logistic.est.table4 > 0 & logistic.est.table3 > 0)   ) %>%
+  filter((beta.est.table4 < 0 & beta.est.table3 < -0.1 ) | (beta.est.table4 > 0 & beta.est.table3 > 0.1) ) %>%
+  filter(joint.p.Challenge < 0.05 | joint.p.fx3 < 0.05)
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  #select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  arrange(joint.p.fx3) %>%
+  mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), 
+         joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr"),
+         beta.est.table7 = beta.est.table7 %>% p.adjust(method = "fdr"),
+         beta.est.table8 = beta.est.table8 %>% p.adjust(method = "fdr")) %>%
+  filter(beta.est.table7 < 0.05 | beta.est.table8 < 0.05) %>%
+  filter((beta.est.table4 < 0 & beta.est.table3 < 0) | (beta.est.table4 > 0 & beta.est.table3 > 0) )
+
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
   select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
   arrange(joint.p.fx3) %>%
   mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
-  filter(joint.p.fx3 < 0.05)
+  ggplot() + geom_point(aes(x=-log10(joint.p.fx3+10^-6),y=-log10(joint.p.Challenge+10^-6)))
 
 
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  #select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  arrange(joint.p.fx3) %>%
+  mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
+  ggplot() + geom_point(aes(x=beta.est.table4,y=-log10(beta.est.table8)))
 
 
 ```
 
 
-```{r}
+
+
+```{r fig.height=5, fig.width=10}
 
 
 
-spe="D_0__Bacteria; D_1__Actinobacteria; D_2__Actinobacteria; D_3__Actinomycetales; D_4__Actinomycetaceae; D_5__Actinomyces"
+spe="D_0__Bacteria; D_1__Firmicutes; D_2__Clostridia; D_3__Clostridiales; D_4__Peptococcaceae; D_5__Peptococcus"
 
 
 spe_df =
@@ -230,18 +270,20 @@ spe_df =
   filter(genus==spe)
 
 
-spe_df %>% 
+p1=spe_df %>% 
   mutate(Ylogit=value %>% car::logit(adjust=0)) %>% 
   ggplot() + 
   geom_boxplot(aes(y=Ylogit,x=Time%>%as.character(),fill=fx3%>%as.character()))
 
-spe_df %>% 
+p2=spe_df %>% 
   group_by(fx3,Time) %>%
   summarise(p = value %>% (function(x)(table(x>0)["TRUE"]/length(x)))) %>%
   ggplot() + 
   geom_bar(aes(x=Time%>%as.character(),fill=fx3%>%as.character(),y=p), 
            position="dodge", stat="identity")
 
+
+cowplot::plot_grid(p1,p2)
 
 
 ```
