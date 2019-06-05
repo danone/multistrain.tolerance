@@ -1,0 +1,30 @@
+---
+title: "DESeq_separate_analysis"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+devtools::load_all(reset=FALSE)
+
+```
+
+
+```{r}
+# Function to get the new subject id
+Get_New_Subject_ID = function(data_temp) {
+  old = factor(data_temp$Subject)
+  new_sub = paste0("S", 1:length(levels(old)))
+  names(new_sub) = levels(old)
+  return(data.frame(new_sub))
+}
+
+
+
+```
+
+
+
