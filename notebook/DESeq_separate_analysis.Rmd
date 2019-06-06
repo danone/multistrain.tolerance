@@ -23,8 +23,50 @@ Get_New_Subject_ID = function(data_temp) {
 }
 
 
+```
+
+
+```{r}
+
+load("genus.rda")
+
+Tolerance::sample_metadata %>% head
+
+sample_metadata$Groupe = as.factor(sample_metadata$Groupe)
+str(sample_metadata$Groupe)
+sample_metadata$Groupe = relevel(sample_metadata$Groupe, ref = "CP") 
+# > str(sample_metadata$Groupe)
+#  Factor w/ 2 levels "CP","ATN": 1 2 2 1 2 2 2 1 2 1 ...
+sample_metadata$Groupe_dose = as.factor(sample_metadata$Groupe_dose)
+sample_metadata$Groupe_dose = relevel(sample_metadata$Groupe_dose, ref = "CP.1") 
+
 
 ```
 
 
+```{r}
+
+# separate dose group in genus and sample_metadata files
+
+## sample_metadata file
+
+sample_metadata_dose3 = sample_metadata[sample_metadata$Doses=="3",]
+sample_metadata_dose3$Groupe = relevel(sample_metadata_dose3$Groupe, ref = "CP") 
+sample_metadata_dose3$Groupe_dose = relevel(sample_metadata_dose3$Groupe_dose, ref = "CP.3") 
+sample_metadata_dose3 %>% head
+save(sample_metadata_dose3, file="sample_metadata_dose3.rda")
+
+sample_metadata_dose1 = sample_metadata[sample_metadata$Doses=="1",]
+sample_metadata_dose1$Groupe = relevel(sample_metadata_dose1$Groupe, ref = "CP") 
+sample_metadata_dose1$Groupe_dose = relevel(sample_metadata_dose1$Groupe_dose, ref = "CP.1") 
+sample_metadata_dose1 %>% head
+save(sample_metadata_dose1, file="sample_metadata_dose1.rda")
+
+
+## genus file
+
+str(genus)
+genus_dose3 = 
+
+```
 
