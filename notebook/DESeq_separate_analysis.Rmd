@@ -66,7 +66,13 @@ save(sample_metadata_dose1, file="sample_metadata_dose1.rda")
 ## genus file
 
 str(genus)
-genus_dose3 = 
+rownames(genus)=genus$genus
+genus_tmp = genus[,-1]
+genus_dose3 = genus_tmp[match(sample_metadata_dose3$samplenr, colnames(genus_tmp))]
+genus_dose3$genus= rownames(genus_dose3)
+
+save(genus_dose3, file="genus_dose3.rda")
+
 
 ```
 
