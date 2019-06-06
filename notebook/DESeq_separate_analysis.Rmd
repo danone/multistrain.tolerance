@@ -54,13 +54,13 @@ sample_metadata_dose3 = sample_metadata[sample_metadata$Doses=="3",]
 sample_metadata_dose3$Groupe = relevel(sample_metadata_dose3$Groupe, ref = "CP") 
 sample_metadata_dose3$Groupe_dose = relevel(sample_metadata_dose3$Groupe_dose, ref = "CP.3") 
 sample_metadata_dose3 %>% head
-save(sample_metadata_dose3, file="sample_metadata_dose3.rda")
+save(sample_metadata_dose3, file="../data/sample_metadata_dose3.rda")
 
 sample_metadata_dose1 = sample_metadata[sample_metadata$Doses=="1",]
 sample_metadata_dose1$Groupe = relevel(sample_metadata_dose1$Groupe, ref = "CP") 
 sample_metadata_dose1$Groupe_dose = relevel(sample_metadata_dose1$Groupe_dose, ref = "CP.1") 
 sample_metadata_dose1 %>% head
-save(sample_metadata_dose1, file="sample_metadata_dose1.rda")
+save(sample_metadata_dose1, file="../data/sample_metadata_dose1.rda")
 
 
 ## genus file
@@ -70,9 +70,31 @@ rownames(genus)=genus$genus
 genus_tmp = genus[,-1]
 genus_dose3 = genus_tmp[match(sample_metadata_dose3$samplenr, colnames(genus_tmp))]
 genus_dose3$genus= rownames(genus_dose3)
-
-save(genus_dose3, file="genus_dose3.rda")
-
+genus= genus_dose3
+save(genus, file="genus_dose3.rda")
 
 ```
 
+## Filter abundant taxa
+```{r}
+# for genus dose 3x
+
+genus %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("genus") %>%
+  BiotypeR::noise.removal(percent=0.1) %>% rownames() -> genus_select
+
+
+
+genus %>%
+  filter(genus %in% genus_select) %>%
+  tibble::column_to_rownames("genus") %>%
+  t %>% as.data.frame-> genus_count
+
+
+Tolerance::sample_metadata_dose3 %>%
+  tibble::column_to_rownames("samplenr") %>% head
+  
+
+
+```
