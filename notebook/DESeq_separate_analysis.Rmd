@@ -268,7 +268,7 @@ save(res_ATN3_CP3_v2v5, file="res_ATN3_CP3_v2v5_p0.05_separate.rda")
 
 ```{r}
 
-tiff(file="DESeq2_ATN3_CP3_allvisits.tiff", w=1500, h=500) 
+tiff(file="DESeq2_ATN3_CP3_separate_analysis.tiff", w=1500, h=500) 
 rbind(
     data.frame(res_ATN3_CP3_v2,visit="D0"), 
     data.frame(res_ATN3_CP3_v2v3,visit="D14"),
@@ -300,3 +300,187 @@ theme(strip.background = element_rect(colour="white", fill="gray48", linetype="s
 dev.off()
 
 ```
+
+
+
+
+
+# separate dose group and visits in genus and sample_metadata files
+# test with ATN3/CP3 v2-v4
+
+```{r}
+
+## sample_metadata file
+
+sample_metadata_dose3 = sample_metadata[sample_metadata$Doses=="3",]
+sample_metadata_dose3$Groupe = relevel(sample_metadata_dose3$Groupe, ref = "CP") 
+sample_metadata_dose3$Groupe_dose = relevel(sample_metadata_dose3$Groupe_dose, ref = "CP.3") 
+sample_metadata_dose3 %>% head
+# save(sample_metadata_dose3, file="../data/sample_metadata_dose3.rda")
+
+sample_metadata_dose3$Visit = as.factor(sample_metadata_dose3$Visit)
+sample_metadata_dose3_v2v4 = sample_metadata_dose3[sample_metadata_dose3$Visit=="V2" | sample_metadata_dose3$Visit=="V4",]
+save(sample_metadata_dose3_v2v4, file="../data/sample_metadata_dose3_v2v4.rda")
+
+
+
+## genus file
+
+load("genus.rda")
+
+str(genus)
+rownames(genus)=genus$genus
+genus_tmp = genus[,-1]
+genus_dose3_v2v4 = genus_tmp[match(sample_metadata_dose3_v2v4$samplenr, colnames(genus_tmp))]
+genus_dose3_v2v4$genus= rownames(genus_dose3_v2v4)
+genus= genus_dose3_v2v4
+save(genus, file="genus_dose3_v2v4.rda")
+
+
+genus %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("genus") %>%
+  BiotypeR::noise.removal(percent=0.1) %>% rownames() -> genus_select
+
+
+genus %>%
+  filter(genus %in% genus_select) %>%
+  tibble::column_to_rownames("genus") %>%
+  t %>% as.data.frame-> genus_count
+
+
+Tolerance::sample_metadata_dose3_v2v4 %>%
+  tibble::column_to_rownames("samplenr") %>% head
+
+
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(genus_count[Tolerance::sample_metadata_dose3_v2v4$samplenr,]), 
+  colData = Tolerance::sample_metadata_dose3_v2v4 %>% tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Subject)
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Subject)
+
+
+save(dds_res1, file="deseq2_dds_res1_separate_analysis_v2v4.rda")
+
+
+temp <- Tolerance::sample_metadata_dose3_v2v4 #%>% tibble::column_to_rownames("samplenr")
+temp <- temp[with(temp, order(Groupe_dose, Subject)), ]
+new_sub <- data.frame(Reduce(rbind, 
+                            by(as.data.frame(temp), 
+                                temp$Groupe_dose, 
+                                Get_New_Subject_ID, 
+                                simplify = FALSE)))
+names(new_sub) = "subject.n"
+new_sub[, "Subject"] <- factor(rownames(new_sub))
+temp = full_join(temp, 
+                  new_sub, 
+                  by = "Subject")
+rownames(temp) <- temp$samplenr
+
+temp # need here to force level factor
+
+temp$Groupe_dose = as.factor(temp$Groupe_dose)
+temp$Groupe_dose = relevel(temp$Groupe_dose, ref = "CP.3") 
+
+temp$Groupe = as.factor(temp$Groupe)
+temp$Groupe = relevel(temp$Groupe, ref = "CP") 
+
+
+# DESeq2 object and design matrices
+dds2 <- dds
+dds2 <- estimateSizeFactors(dds2, type="poscounts")
+
+# Full design matrix
+mod <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose + Groupe_dose:Visit, temp)
+mod <- mod[,colSums(mod)>0]
+dds2 <- estimateDispersions(dds2, modelMatrix = mod)
+
+# Reduced design matrix
+mod2 <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose, temp)
+mod2 = mod2[, colSums(mod2)>0]
+
+
+dds2_res1 <- nbinomLRT(dds2, full = mod, reduced = mod2)
+
+# using supplied model matrix
+#67 rows did not converge in beta, labelled in mcols(object)$fullBetaConv. Use larger maxit argument with nbinomLRT
+
+save(dds2_res1, file="deseq2_dds2_res1_separate_analysis_v2v4.rda")
+
+# Group comparisons at each time point
+dds2_res2 = nbinomWaldTest(dds2, modelMatrix = mod, betaPrior = FALSE)
+# using supplied model matrix
+# 22 rows did not converge in beta, labelled in mcols(object)$betaConv. Use larger maxit argument with nbinomWaldTest
+
+DESeq2::resultsNames(dds2_res2)
+# 1] "Intercept"                     "Groupe_doseATN.3"              "Groupe_doseCP.3.subject.nS10" 
+#  [4] "Groupe_doseATN.3.subject.nS10" "Groupe_doseCP.3.subject.nS11"  "Groupe_doseATN.3.subject.nS11"
+#  [7] "Groupe_doseCP.3.subject.nS12"  "Groupe_doseATN.3.subject.nS12" "Groupe_doseCP.3.subject.nS13" 
+# [10] "Groupe_doseATN.3.subject.nS13" "Groupe_doseCP.3.subject.nS14"  "Groupe_doseATN.3.subject.nS14"
+# [13] "Groupe_doseCP.3.subject.nS15"  "Groupe_doseATN.3.subject.nS15" "Groupe_doseCP.3.subject.nS16" 
+# [16] "Groupe_doseATN.3.subject.nS16" "Groupe_doseCP.3.subject.nS17"  "Groupe_doseATN.3.subject.nS17"
+# [19] "Groupe_doseCP.3.subject.nS18"  "Groupe_doseATN.3.subject.nS18" "Groupe_doseCP.3.subject.nS19" 
+# [22] "Groupe_doseATN.3.subject.nS19" "Groupe_doseCP.3.subject.nS2"   "Groupe_doseATN.3.subject.nS2" 
+# [25] "Groupe_doseCP.3.subject.nS20"  "Groupe_doseATN.3.subject.nS20" "Groupe_doseCP.3.subject.nS21" 
+# [28] "Groupe_doseATN.3.subject.nS21" "Groupe_doseCP.3.subject.nS22"  "Groupe_doseATN.3.subject.nS22"
+# [31] "Groupe_doseCP.3.subject.nS23"  "Groupe_doseATN.3.subject.nS23" "Groupe_doseCP.3.subject.nS24" 
+# [34] "Groupe_doseCP.3.subject.nS3"   "Groupe_doseATN.3.subject.nS3"  "Groupe_doseCP.3.subject.nS4"  
+# [37] "Groupe_doseATN.3.subject.nS4"  "Groupe_doseCP.3.subject.nS5"   "Groupe_doseATN.3.subject.nS5" 
+# [40] "Groupe_doseCP.3.subject.nS6"   "Groupe_doseATN.3.subject.nS6"  "Groupe_doseCP.3.subject.nS7"  
+# [43] "Groupe_doseATN.3.subject.nS7"  "Groupe_doseCP.3.subject.nS8"   "Groupe_doseATN.3.subject.nS8" 
+# [46] "Groupe_doseCP.3.subject.nS9"   "Groupe_doseATN.3.subject.nS9"  "Groupe_doseCP.3.VisitV4"      
+# [49] "Groupe_doseATN.3.VisitV4"    
+
+# DESeq2::resultsNames(dds2_res2)[grep("ATN.1",DESeq2::resultsNames(dds2_res2))]
+
+save(dds2_res2, file="deseq2_dds2_res2_separate_analysis_v2v4.rda" )
+
+```
+
+
+```{r}
+# ATN3 vs CP3 by Visit
+
+
+res_ATN3_CP3_v2v4=
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+save(res_ATN3_CP3_v2v4, file="res_ATN3_CP3_v2v4_p0.05_separate_v2v4.rda")
+
+
+```
+
+```{r}
+
+tiff(file="DESeq2_ATN3_CP3_separate_analysis_v2v4.tiff", w=1500, h=500) 
+rbind(
+    data.frame(res_ATN3_CP3_v2v4,visit="D28")) %>%
+  
+    tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","Family","Genus"), sep="; ")%>%
+filter(Domain != "Unassigned") %>%
+# mutate(Genus = Genus %>% gsub("","Unassigned",.)) %>%  # je n'arrive pas à remplacer la cellule "vide" par unassigned"
+mutate(Genus = Genus %>% gsub("D_5__","",.)) %>%
+mutate(Family = Family %>% gsub("D_4__","",.)) %>%
+mutate(Phylum = Phylum %>% gsub("D_1__","",.)) %>% 
+filter(Genus != "Ambiguous_taxa") %>% 
+
+    ggplot(aes(x=Genus,y=log2FoldChange, color=Phylum)) + geom_point(size=3) +
+    theme_set(theme_bw())+
+  geom_hline(yintercept=0, color = "gray", linetype="dashed") +
+  theme(axis.text.x = element_text(angle = -90, hjust=0))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=12, face="bold")) + facet_wrap(~visit, scale="free_x", nrow=1)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))
+
+dev.off()
+
+```
+
+
