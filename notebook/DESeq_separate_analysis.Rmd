@@ -56,6 +56,7 @@ sample_metadata_dose3$Groupe_dose = relevel(sample_metadata_dose3$Groupe_dose, r
 sample_metadata_dose3 %>% head
 save(sample_metadata_dose3, file="../data/sample_metadata_dose3.rda")
 
+
 sample_metadata_dose1 = sample_metadata[sample_metadata$Doses=="1",]
 sample_metadata_dose1$Groupe = relevel(sample_metadata_dose1$Groupe, ref = "CP") 
 sample_metadata_dose1$Groupe_dose = relevel(sample_metadata_dose1$Groupe_dose, ref = "CP.1") 
@@ -237,6 +238,7 @@ DESeq2::resultsNames(dds2_res2)
 # DESeq2::resultsNames(dds2_res2)[grep("ATN.1",DESeq2::resultsNames(dds2_res2))]
 
 save(dds2_res2, file="deseq2_dds2_res2_separate_analysis.rda" )
+load("deseq2_dds2_res2_separate_analysis.rda")
 
 ```
 
@@ -263,6 +265,7 @@ res_ATN3_CP3_v2v5=
 results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV5","Groupe_doseCP.3.VisitV5"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN3_CP3_v2v5, file="res_ATN3_CP3_v2v5_p0.05_separate.rda")
+
 
 ```
 
@@ -298,6 +301,41 @@ filter(Genus != "Ambiguous_taxa") %>%
 theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))
 
 dev.off()
+
+
+
+tiff(file="DESeq2_ATN3_CP3_separate_analysis_noDO.tiff", w=1500, h=500) 
+rbind(
+    data.frame(res_ATN3_CP3_v2v3,visit="D14"),
+    data.frame(res_ATN3_CP3_v2v4,visit="D28"), 
+    data.frame(res_ATN3_CP3_v2v5,visit="D56")
+              ) %>%
+  
+    tidyr::separate(col="genus", into=c("Domain","Phylum","Class","Order","Family","Genus"), sep="; ")%>%
+filter(Domain != "Unassigned") %>%
+# mutate(Genus = Genus %>% gsub("","Unassigned",.)) %>%  # je n'arrive pas à remplacer la cellule "vide" par unassigned"
+mutate(Genus = Genus %>% gsub("D_5__","",.)) %>%
+mutate(Family = Family %>% gsub("D_4__","",.)) %>%
+mutate(Phylum = Phylum %>% gsub("D_1__","",.)) %>% 
+filter(Genus != "Ambiguous_taxa") %>% 
+
+    ggplot(aes(x=Genus,y=log2FoldChange, color=Phylum)) + geom_point(size=3) +
+    theme_set(theme_bw())+
+  geom_hline(yintercept=0, color = "gray", linetype="dashed") +
+  theme(axis.text.x = element_text(angle = -90, hjust=0))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=12, face="bold")) + facet_wrap(~visit, scale="free_x", nrow=1)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))
+
+dev.off()
+
+
+
 
 ```
 
@@ -482,5 +520,12 @@ theme(strip.background = element_rect(colour="white", fill="gray48", linetype="s
 dev.off()
 
 ```
+
+
+# ------- DESeq2 for genus dose 1x (ATN1 vs CP1)------
+
+
+
+
 
 
