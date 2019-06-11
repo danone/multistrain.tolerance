@@ -196,8 +196,6 @@ mod2 = mod2[, colSums(mod2)>0]
 
 dds2_res1 <- nbinomLRT(dds2, full = mod, reduced = mod2)
 
-# using supplied model matrix
-#67 rows did not converge in beta, labelled in mcols(object)$fullBetaConv. Use larger maxit argument with nbinomLRT
 
 save(dds2_res1, file="deseq2_dds2_res1_separate_analysis_dose3.rda")
 
