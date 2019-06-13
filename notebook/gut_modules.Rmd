@@ -1,0 +1,19 @@
+---
+title: "gut modules"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+library(omixerRpm)
+devtools::load_all(reset=FALSE)
+
+```
+
+```{r}
+
+
+```
