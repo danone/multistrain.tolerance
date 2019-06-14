@@ -1,0 +1,32 @@
+---
+title: "scaled gene count matrix preprocessing"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+library(foreach)
+library(readr)
+library(momr)
+source("/home/alvareao/momr_1.1_corrections_v2.R")
+devtools::load_all(reset=FALSE)
+
+```
+
+
+```{r}
+
+tolerance_gene_matrix_scaled = read_tsv("/home/alvareao/tolerance/data-raw/scaled_normalization_counts.txt")
+class(tolerance_gene_matrix_scaled)
+tolerance_gene_matrix_scaled = as.data.frame(tolerance_gene_matrix_scaled)
+tolerance_gene_matrix_scaled  %>% head
+rownames(tolerance_gene_matrix_scaled) = tolerance_gene_matrix_scaled$X1
+profile = tolerance_gene_matrix_scaled[-1,-1]
+save(profile, file="tolerance_gene_matrix_scaled.rda")
+profile %>% head
+
+```
+
