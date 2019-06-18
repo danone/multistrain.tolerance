@@ -228,8 +228,8 @@ zibr_est_df %>%
          joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr"),
          beta.est.table7 = beta.est.table7 %>% p.adjust(method = "fdr"),
          beta.est.table8 = beta.est.table8 %>% p.adjust(method = "fdr")) %>%
-  filter(beta.est.table7 < 0.05 | beta.est.table8 < 0.05) %>%
-  filter((beta.est.table4 < 0 & beta.est.table3 < 0) | (beta.est.table4 > 0 & beta.est.table3 > 0) )
+  #filter(beta.est.table7 < 0.05 | beta.est.table8 < 0.05) %>%
+  filter((beta.est.table4 < -0.2 & beta.est.table3 < -0.2) | (beta.est.table4 > 0.2 & beta.est.table3 > 0.2) )
 
 
 zibr_est_df %>%
@@ -243,14 +243,43 @@ zibr_est_df %>%
 
 
 
+
+
+
+
 zibr_est_df %>%
   t %>%
   as.data.frame() %>%
   tibble::rownames_to_column("genus") %>% 
   #select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
   arrange(joint.p.fx3) %>%
-  mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
+  #mutate(beta.est.table7 = beta.est.table7 %>% p.adjust(method = "fdr"), beta.est.table8 = beta.est.table8 %>% p.adjust(method = "fdr")) %>%
+  ggplot() + geom_point(aes(x=beta.est.table3,y=-log10(beta.est.table7)))
+
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  #select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  arrange(joint.p.fx3) %>%
+  #mutate(beta.est.table7 = beta.est.table7 %>% p.adjust(method = "fdr"), beta.est.table8 = beta.est.table8 %>% p.adjust(method = "fdr")) %>%
   ggplot() + geom_point(aes(x=beta.est.table4,y=-log10(beta.est.table8)))
+
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  #select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  arrange(joint.p.fx3) %>%
+  mutate(beta.est.table7 = beta.est.table7 %>% p.adjust(method = "fdr"), beta.est.table8 = beta.est.table8 %>% p.adjust(method = "fdr")) %>%
+  ggplot() + 
+  geom_point(aes(x=beta.est.table4,y=beta.est.table3, col = (beta.est.table7 < 0.05 | beta.est.table8 < 0.05)  )) +
+  ylab("Challenge effect (beta est.)") + 
+  xlab("Dose effect (beta est.)") + 
+  scale_color_discrete("fdr < 0.05")
+
 
 
 ```
@@ -262,7 +291,7 @@ zibr_est_df %>%
 
 
 
-spe="D_0__Bacteria; D_1__Firmicutes; D_2__Clostridia; D_3__Clostridiales; D_4__Peptococcaceae; D_5__Peptococcus"
+spe="D_0__Bacteria; D_1__Firmicutes; D_2__Bacilli; D_3__Lactobacillales; D_4__Streptococcaceae; D_5__Streptococcus"
 
 
 spe_df =

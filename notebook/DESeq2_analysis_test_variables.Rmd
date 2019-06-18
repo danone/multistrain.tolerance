@@ -414,6 +414,12 @@ save(res_ATN_CP_v2v4, file="res_ATN_CP_v2v4_p0.05_pool_CP_ATN.rda")
 
 ```{r}
 
+sample_metadata_dose3v4 = sample_metadata[sample_metadata$Doses=="3" & sample_metadata$Visit=="V4",]
+sample_metadata_dose3v4$Groupe = relevel(sample_metadata_dose3v4$Groupe, ref = "CP") 
+sample_metadata_dose3v4$Groupe_dose = relevel(sample_metadata_dose3v4$Groupe_dose, ref = "CP.3") 
+sample_metadata_dose3v4 %>% head
+save(sample_metadata_dose3v4, file="../data/sample_metadata_dose3v4.rda")
+
 load("genus.rda")
 str(genus)
 rownames(genus)=genus$genus
@@ -430,11 +436,7 @@ sample_metadata$Visit = as.factor(sample_metadata$Visit)
 sample_metadata$Groupe_dose = as.factor(sample_metadata$Groupe_dose)
 sample_metadata$Doses = as.factor(sample_metadata$Doses)
 
-sample_metadata_dose3v4 = sample_metadata[sample_metadata$Doses=="3" & sample_metadata$Visit=="V4",]
-sample_metadata_dose3v4$Groupe = relevel(sample_metadata_dose3v4$Groupe, ref = "CP") 
-sample_metadata_dose3v4$Groupe_dose = relevel(sample_metadata_dose3v4$Groupe_dose, ref = "CP.3") 
-sample_metadata_dose3v4 %>% head
-save(sample_metadata_dose3v4, file="../data/sample_metadata_dose3v4.rda")
+
 
 
 genus %>%
@@ -449,14 +451,14 @@ genus %>%
   t %>% as.data.frame-> genus_count
 
 
-Tolerance::sample_metadata_dose3v4 %>%
+sample_metadata_dose3v4 %>%
   tibble::column_to_rownames("samplenr") %>% head
   
 sample_metadata_dose3v4 %>% head
 
 dds = DESeq2::DESeqDataSetFromMatrix(
-  countData = t(genus_count[Tolerance::sample_metadata_dose3v4$samplenr,]), 
-  colData = Tolerance::sample_metadata_dose3v4 %>% tibble::column_to_rownames("samplenr"), 
+  countData = t(genus_count[sample_metadata_dose3v4$samplenr,]), 
+  colData = sample_metadata_dose3v4 %>% tibble::column_to_rownames("samplenr"), 
   design = ~ Groupe_dose)
 
 # converting counts to integer mode
@@ -466,7 +468,7 @@ dds2 <- dds
 dds2 <- estimateSizeFactors(dds2, type="poscounts")
 
 
-temp <- Tolerance::sample_metadata_dose3v4 #%>% tibble::column_to_rownames("samplenr")
+temp <- sample_metadata_dose3v4 #%>% tibble::column_to_rownames("samplenr")
 temp <- temp[with(temp, order(Groupe_dose, Subject)), ]
 new_sub <- data.frame(Reduce(rbind, 
                             by(as.data.frame(temp), 
@@ -488,7 +490,7 @@ temp$Visit = as.factor(temp$Visit)
 temp$Groupe = relevel(temp$Groupe_dose, ref = "CP.3")
 
 
-mod <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose + Groupe_dose:Visit, temp)
+mod <- model.matrix(~ Groupe_dose , temp)
 mod <- mod[,colSums(mod)>0]
 dds2 <- estimateDispersions(dds2, modelMatrix = mod)
 
@@ -498,11 +500,23 @@ dds2 <- estimateDispersions(dds2, modelMatrix = mod)
   
   
 # Reduced design matrix
-mod2 <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose, temp)
-mod2 = mod2[, colSums(mod2)>0]
+#mod2 <- model.matrix(~ Groupe_dose:subject.n , temp)
+#mod2 = mod2[, colSums(mod2)>0]
 
 
-dds2_res1 <- nbinomLRT(dds2, full = mod, reduced = mod2)
+#dds2_res1 <- nbinomLRT(dds2, full = mod, reduced = mod2)
+
+# Group comparisons at each time point
+dds2_res2 = nbinomWaldTest(dds2, modelMatrix = mod, betaPrior = FALSE)
+
+#using supplied model matrix
+#67 rows did not converge in beta, labelled in mcols(object)$betaConv. Use larger maxit argument with nbinomWaldTest
+
+DESeq2::resultsNames(dds2_res2)
+
+results(dds2_res2, alpha = 0.05) %>%
+  data.frame() %>% tibble::rownames_to_column("genus") 
+
 
 
 ```
