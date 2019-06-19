@@ -28,5 +28,31 @@ profile = tolerance_gene_matrix_scaled[-1,-1]
 save(profile, file="tolerance_gene_matrix_scaled.rda")
 profile %>% head
 
+# round
+profile_rounded = round(profile)
+save(profile_rounded, file="tolerance_gene_matrix_scaled_rounded.rda")
+
+# downsizing
+
+summary(colSums(profile_rounded))
+ #  Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+ # 9482295 16346789 18820509 18908470 21030982 29486708 
+ plot(sort(colSums(profile_rounded)), ylab="Mapped reads", main="downsizing_threshold") 
+
+profile_rounded_dwzn13.2M = downsizeMatrix(data=profile_rounded, level=13200000, HQ_reads=NULL,repetitions=1)
+# !!!!!  Error in mat.sampled[match(names(tmp), rownames(mat.sampled)), step] <- tmp : 
+#   NAs are not allowed in subscripted assignments
+
+save(profile_rounded_dwzn13.2M, file="tolerance_gene_matrix_scaled_rounded_dwzn13.2M.rda", compress=T)
+     
+profile_rounded_dwzn13.2M[,which(is.na(profile_rounded_dwzn13.2M[1,]))] = profile_rounded[,which(is.na(profile_rounded_dwzn13.2M[1,]))]
+save(profile_rounded_dwzn13.2M, file="profile_rounded_dwzn13.2M_final.RData", compress=T)
+ 
+
+```
+
+```{r}
+
+
 ```
 
