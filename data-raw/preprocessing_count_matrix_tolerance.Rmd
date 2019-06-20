@@ -1,59 +1,69 @@
----
+#---
 title: "scaled gene count matrix preprocessing"
 output: html_notebook
----
-
+#---
 
 ```{r message=FALSE, warning=FALSE}
-# library(dplyr)
-# library(DESeq2)
-# library(ggplot2)
-# library(foreach)
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+library(foreach)
 library(readr)
 library(momr)
 source("/home/alvareao/momr_1.1_corrections_v2.R")
-# devtools::load_all(reset=FALSE)
-# 
-# ```
-# 
-# 
-# ```{r}
-# 
-# profile_tolerance_scaled_raw = read_tsv("/home/alvareao/tolerance/data-raw/scaled_normalization_counts.txt")
-# 
-# profile_tolerance_scaled_raw = as.data.frame(profile_tolerance_scaled_raw)
-# save(profile_tolerance_scaled_raw, file="profile_tolerance_scaled_raw.rda")
-# 
-# # rownames(tolerance_gene_matrix_scaled) = tolerance_gene_matrix_scaled$X1
-# profile_tolerance_scaled = profile_tolerance_scaled_raw[-1,-1]
-# profile_tolerance_scaled = as.matrix(profile_tolerance_scaled)
-# save(profile_tolerance_scaled, file="profile_tolerance_scaled.rda")
-# 
-# profile_tolerance_scaled_rounded = round(profile_tolerance_scaled)
-# save(profile_tolerance_scaled_rounded, file="profile_tolerance_scaled_rounded.rda")
-
-load("/home/alvareao/tolerance/data-raw/profile_tolerance_scaled_rounded.rda")
-# 
-# summary(colSums(profile_tolerance_scaled_rounded))
-#  #  Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#  # 9482295 16346789 18820509 18908470 21030982 29486708 
-# 
-# plot(sort(colSums(profile_tolerance_scaled_rounded)), ylab="Mapped reads", main="downsizing_threshold")
- 
-profile_tolerance_scaled_rounded_dwzn13.2M = downsizeMatrix(data=profile_tolerance_scaled_rounded, level=13200000, HQ_reads=NULL,repetitions=1)
-
-save(profile_tolerance_scaled_rounded_dwzn13.2M, file="profile_tolerance_scaled_rounded_dwzn13.2M.rda", compress=T)
-
-
-profile_tolerance_scaled_rounded_dwzn13.2M[,which(is.na(profile_tolerance_scaled_rounded_dwzn13.2M[1,]))] = profile_tolerance_scaled_rounded[,which(is.na(profile_tolerance_scaled_rounded_dwzn13.2M[1,]))]
-save(profile_tolerance_scaled_rounded_dwzn13.2M, file="profile_tolerance_scaled_rounded_dwzn13.2M_final.RData", compress=T)
- 
-# rownames(profile_rounded)= gsub('\\|MetaHIT$',"",rownames(profile_rounded))
+devtools::load_all(reset=FALSE)
 
 ```
 
 ```{r}
 
+profile_tolerance_scaled_raw = read_tsv("/home/alvareao/tolerance/data-raw/scaled_normalization_counts.txt")
+
+profile_tolerance_scaled_raw = as.data.frame(profile_tolerance_scaled_raw)
+save(profile_tolerance_scaled_raw, file="profile_tolerance_scaled_raw.rda")
+
+# rownames(tolerance_gene_matrix_scaled) = tolerance_gene_matrix_scaled$X1
+profile_tolerance_scaled = profile_tolerance_scaled_raw[-1,-1]
+profile_tolerance_scaled = as.matrix(profile_tolerance_scaled)
+save(profile_tolerance_scaled, file="profile_tolerance_scaled.rda")
+
+profile_tolerance_scaled_rounded = round(profile_tolerance_scaled)
+save(profile_tolerance_scaled_rounded, file="profile_tolerance_scaled_rounded.rda")
+
+load("/home/alvareao/tolerance/data-raw/profile_tolerance_scaled_rounded.rda")
+
+summary(colSums(profile_tolerance_scaled_rounded))
+#   Min.  1st Qu.   Median     Mean  3rd Qu.     Max.
+#  9482295 16346789 18820509 18908470 21030982 29486708
+
+plot(sort(colSums(profile_tolerance_scaled_rounded)), ylab="Mapped reads", main="downsizing_threshold")
+
+profile_tolerance_scaled_rounded_dwzn13.2M = downsizeMatrix(data=profile_tolerance_scaled_rounded, level=13200000, HQ_reads=NULL,repetitions=1)
+
+ 
+save(profile_tolerance_scaled_rounded_dwzn13.2M, file="profile_tolerance_scaled_rounded_dwzn13.2M.rda", compress=T)
+
+profile_tolerance_scaled_rounded_dwzn13.2M[,which(is.na(profile_tolerance_scaled_rounded_dwzn13.2M[1,]))] = profile_tolerance_scaled_rounded[,which(is.na(profile_tolerance_scaled_rounded_dwzn13.2M[1,]))]
+save(profile_tolerance_scaled_rounded_dwzn13.2M, file="profile_tolerance_scaled_rounded_dwzn13.2M_final.RData", compress=T)
+
+load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_dwzn13.2M_final.RData")
+
+# summary(colSums(profile_tolerance_scaled_rounded_dwzn13.2M))
+#     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+#  9482295 13200000 13200000 13085256 13200000 13200000 
+
+load("~/tolerance/data-raw/profile_tolerance_scaled_raw.rda")
+rownames(profile_tolerance_scaled_raw) = profile_tolerance_scaled_raw$X1
+profile_tolerance_scaled_raw = profile_tolerance_scaled_raw[-1,-1]
+
+rownames(profile_tolerance_scaled_rounded_dwzn13.2M)= gsub('\\|MetaHIT$',"",rownames(profile_tolerance_scaled_raw))
+
+
+Tolerance::sample_metadata_metaG %>% head
+
+colnames(profile_tolerance_scaled_rounded_dwzn13.2M) = sample_metadata_metaG$samplenr
+head(profile_tolerance_scaled_rounded_dwzn13.2M)
 
 ```
+
 
