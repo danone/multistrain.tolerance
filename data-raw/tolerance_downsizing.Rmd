@@ -1,0 +1,68 @@
+---
+title: "downsizing"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+library(foreach)
+library(readr)
+library(momr)
+source("/home/alvareao/momr_1.1_corrections_v2.R")
+devtools::load_all(reset=FALSE)
+
+```
+
+
+
+```{r}
+
+load("/home/alvareao/tolerance/data-raw/profile_tolerance_scaled_rounded.rda")
+
+summary(colSums(profile_tolerance_scaled_rounded))
+#   Min.  1st Qu.   Median     Mean  3rd Qu.     Max.
+#  9482295 16346789 18820509 18908470 21030982 29486708
+
+plot(sort(colSums(profile_tolerance_scaled_rounded)), ylab="Mapped reads", main="downsizing_threshold")
+
+# threshold 13.2M genes
+profile_tolerance_scaled_rounded_dwzn13.2M = downsizeMatrix(data=profile_tolerance_scaled_rounded, level=13200000, HQ_reads=NULL,repetitions=1)
+save(profile_tolerance_scaled_rounded_dwzn13.2M, file="profile_tolerance_scaled_rounded_dwzn13.2M.rda", compress=T)
+
+profile_tolerance_scaled_rounded_dwzn13.2M[,which(is.na(profile_tolerance_scaled_rounded_dwzn13.2M[1,]))] = profile_tolerance_scaled_rounded[,which(is.na(profile_tolerance_scaled_rounded_dwzn13.2M[1,]))]
+save(profile_tolerance_scaled_rounded_dwzn13.2M, file="profile_tolerance_scaled_rounded_dwzn13.2M_final.RData", compress=T)
+load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_dwzn13.2M_final.RData")
+
+
+## change of rownames and colnames of the downsized matrix -------------------
+load("~/tolerance/data-raw/profile_tolerance_scaled_raw.rda")
+rownames(profile_tolerance_scaled_raw) = profile_tolerance_scaled_raw$X1
+profile_tolerance_scaled_raw = profile_tolerance_scaled_raw[-1,-1]
+
+rownames(profile_tolerance_scaled_rounded_dwzn13.2M)= gsub('\\|MetaHIT$',"",rownames(profile_tolerance_scaled_raw))
+
+Tolerance::sample_metadata_metaG %>% head
+colnames(profile_tolerance_scaled_rounded_dwzn13.2M) = sample_metadata_metaG$samplenr
+head(profile_tolerance_scaled_rounded_dwzn13.2M)
+
+save(profile_tolerance_scaled_rounded_dwzn13.2M, file="profile_tolerance_scaled_rounded_dwzn13.2M_final.RData", compress=T)
+
+
+# threshold 16M genes
+
+profile_tolerance_scaled_rounded_dwzn16M = downsizeMatrix(data=profile_tolerance_scaled_rounded, level=16000000, HQ_reads=NULL,repetitions=1)
+save(profile_tolerance_scaled_rounded_dwzn16M, file="profile_tolerance_scaled_rounded_dwzn16M.RData", compress=T)
+load("/home/alvareao/tolerance/data-raw/profile_tolerance_scaled_rounded_dwzn16M.RData")
+
+profile_tolerance_scaled_rounded_dwzn16M[,which(is.na(profile_tolerance_scaled_rounded_dwzn16M[1,]))] = profile_tolerance_scaled_rounded[,which(is.na(profile_tolerance_scaled_rounded_dwzn16M[1,]))]
+
+rownames(profile_tolerance_scaled_rounded_dwzn16M) =  gsub('\\|MetaHIT$',"",rownames(profile_tolerance_scaled_raw))
+colnames(profile_tolerance_scaled_rounded_dwzn16M) = sample_metadata_metaG$samplenr
+head(profile_tolerance_scaled_rounded_dwzn16M)
+save(profile_tolerance_scaled_rounded_dwzn16M, file="profile_tolerance_scaled_rounded_dwzn16M_final.RData", compress=T)
+
+```
