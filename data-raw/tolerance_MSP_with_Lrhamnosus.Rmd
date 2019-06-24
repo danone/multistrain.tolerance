@@ -1,0 +1,73 @@
+---
+title: "MSP Lactobacillus rhamnosus integration"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+devtools::load_all(reset=FALSE)
+library(readr)
+library(foreach)
+library(doMC)
+registerDoMC(detectCores())
+
+```
+
+
+# Lactobacillus rhamnosus MSP integration
+```{r}
+
+# download L rhamnosus megablast file (blast 95 90 on the tolerance catalog fna)
+
+
+Lrhamnosus_blast = read.table("~/tolerance/data-raw/L_rhamnosus_pangenome_nonredundant_tolerance_catalog_megablast_9095.txt", header=F)
+
+
+MSP_Lrhamnosus = as.data.frame(Lrhamnosus_blast)
+
+MSP_Lrhamnosus$msp_name = "msp_lrhamnosus"
+MSP_Lrhamnosus$module_name = "core"
+MSP_Lrhamnosus$gene_id  = "NA"
+MSP_Lrhamnosus$gene_name = as.character(MSP_Lrhamnosus$V1)
+MSP_Lrhamnosus$gene_length = "NA"
+
+MSP_Lrhamnosus %>% head
+MSP_Lrhamnosus = MSP_Lrhamnosus[, c(13:17)]
+save(MSP_Lrhamnosus, file="MSP_Lrhamnosus.rda")
+
+
+# downlaod MSP catalog tolerance file (without L rhamnosus MSP)
+
+load("~/tolerance/data-raw/msp2018_tolerance_catalog_table.rda")
+msp2018_tolerance_catalog_table %>% head
+msp2018 = msp2018_tolerance_catalog_table
+
+
+# combine MSP catalog tolerance file and the MSP L rhamnosus
+
+tolerance_MSP_table = rbind(msp2018, MSP_Lrhamnosus)
+save(tolerance_MSP_table, file="~/tolerance/data-raw/tolerance_MSP_table.rda")
+
+```
+
+
+# MSP list
+
+```{r}
+
+
+msps2018_names=unique(tolerance_MSP_table$msp_name)
+
+msp2018_list=foreach(cur_msp_name=msps2018_names) %dopar%
+{
+  as.character(subset(tolerance_MSP_table, msp_name==cur_msp_name)$gene_id)
+  #subset(msp, msp_name==cur_msp_name)$gene_name
+}
+names(msp2018_list)=msps2018_names
+tolerance_MSP_list = msp2018_list
+save(tolerance_MSP_list, file="tolerance_MSP_list.rda")
+
+```
+
