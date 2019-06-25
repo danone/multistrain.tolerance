@@ -1,0 +1,72 @@
+---
+title: "MSP tolerance - abundance matrix generation"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+devtools::load_all(reset=FALSE)
+library(readr)
+library(foreach)
+library(doMC)
+registerDoMC(detectCores())
+
+```
+
+
+```{r}
+
+# download gene abundance matrix (scaled, rounded, no downsized)
+
+load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_final.RData")
+
+# download MSP tolerance table (containing L rhamnosus MSP)
+
+load("~/tolerance/data-raw/tolerance_MSP_table.rda")
+
+
+```
+
+
+```{r}
+
+# MSP abundance matrix generation
+
+
+msps_names=unique(tolerance_MSP_table$msp_name)
+
+
+msps.norm_abundance_tolerance=foreach(cur_msp_name=msps_names, .combine=rbind,.final=function(x) setNames(x,msps_names)) %do%
+  
+{
+  
+  msp=subset(tolerance_MSP_table, msp_name==cur_msp_name)
+  
+  msp.core_genes_names=subset(msp, module_name == 'core')$gene_name
+  
+  msp.best_core_genes_names=msp.core_genes_names[1:min(50,length(msp.core_genes_names))]
+  
+  msp.norm_abundance=apply(profile_tolerance_scaled_rounded[msp.best_core_genes_names,], 2, median)
+  
+  
+
+  msp.norm_abundance
+  
+}
+
+
+
+str(msps.norm_abundance_tolerance)
+rownames(msps.norm_abundance_tolerance) = msps_names
+head(msps.norm_abundance_tolerance)
+
+MSP_abundance_matrix = msps.norm_abundance_tolerance
+
+save(MSP_abundance_matrix, file="MSP_abundance_matrix.rda")
+write.csv2(MSP_abundance_matrix, file="MSP_abundance_matrix.csv")
+
+
+```
+

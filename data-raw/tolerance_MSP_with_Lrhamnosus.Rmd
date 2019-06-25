@@ -30,7 +30,7 @@ MSP_Lrhamnosus = as.data.frame(Lrhamnosus_blast)
 MSP_Lrhamnosus$msp_name = "msp_lrhamnosus"
 MSP_Lrhamnosus$module_name = "core"
 MSP_Lrhamnosus$gene_id  = "NA"
-MSP_Lrhamnosus$gene_name = as.character(MSP_Lrhamnosus$V1)
+MSP_Lrhamnosus$gene_name = as.character(MSP_Lrhamnosus$V2)
 MSP_Lrhamnosus$gene_length = "NA"
 
 MSP_Lrhamnosus %>% head
