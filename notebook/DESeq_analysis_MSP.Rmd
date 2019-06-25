@@ -1,0 +1,98 @@
+---
+title: "Differential analysis with MSP"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+devtools::load_all(reset=FALSE)
+
+```
+
+
+
+```{r}
+# Function to get the new subject id
+Get_New_Subject_ID = function(data_temp) {
+  old = factor(data_temp$Subject)
+  new_sub = paste0("S", 1:length(levels(old)))
+  names(new_sub) = levels(old)
+  return(data.frame(new_sub))
+}
+
+
+```
+
+
+
+```{r}
+
+load("~/tolerance/data/MSP_abundance_matrix.rda")
+MSP_abundance_matrix$msp = rownames(MSP_abundance_matrix)
+MSP_abundance_matrix %>% head
+
+Tolerance::sample_metadata_metaG %>% head
+str(sample_metadata_metaG$samplenr)
+sample_metadata_metaG$samplenr = as.character(sample_metadata_metaG$samplenr)
+str(sample_metadata_metaG$Subject)
+sample_metadata_metaG$Subject = as.character(sample_metadata_metaG$Subject)
+str(sample_metadata_metaG$Sample)
+sample_metadata_metaG$Sample = as.character(sample_metadata_metaG$Sample)
+
+sample_metadata_metaG$Groupe_dose = as.factor(sample_metadata_metaG$Groupe_dose)
+sample_metadata_metaG$Groupe_dose = relevel(sample_metadata_metaG$Groupe_dose, ref = "CP.3") 
+devtools::use_data(sample_metadata_metaG, overwrite = TRUE)
+
+```
+
+
+
+## Filter abundant MSP
+```{r}
+
+MSP_abundance_matrix %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("msp") %>%
+  BiotypeR::noise.removal(percent=0.1) %>% rownames() -> MSP_select
+
+# MSP_abundance_matrix %>%
+#   filter(MSP_abundance_matrix %in% MSP_select) %>%
+#   tibble::column_to_rownames("msp") %>%
+#   t %>% as.data.frame -> MSP_abundance_matrix_count
+
+MSP_abundance_matrix = MSP_abundance_matrix[MSP_select,]
+MSP_abundance_matrix = MSP_abundance_matrix[, -108]
+
+t(MSP_abundance_matrix) -> MSP_abundance_matrix_count
+MSP_abundance_matrix_count = as.data.frame (MSP_abundance_matrix_count)
+
+Tolerance::sample_metadata_metaG %>%
+  tibble::column_to_rownames("samplenr") %>% head
+  
+
+```
+
+
+## global time effect
+```{r}
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(MSP_abundance_matrix_count[Tolerance::sample_metadata_metaG$samplenr,]), 
+  colData = Tolerance::sample_metadata_metaG %>% tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Subject)
+
+Error in DESeqDataSet(se, design = design, ignoreRank) : 
+  some values in assay are not integers
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Subject)
+
+
+
+
+save(dds_res1, file="deseq2_dds_res1_analysis.rda")
+
+```
+
