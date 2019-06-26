@@ -251,3 +251,57 @@ results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.V
 # significant : msp_0127 (Ruminococcus)
 ```
 
+
+## supprime les v5 dans le sample_metadata_metaG file
+
+
+```{r}
+
+Tolerance::sample_metadata_metaG %>% head
+
+sample_metadata_metaG_v2v4 = sample_metadata_metaG[sample_metadata_metaG$Visit=="V2" | sample_metadata_metaG$Visit=="V4",]
+sample_metadata_metaG_v2v4 %>% head
+sample_metadata_metaG_v2v4$Groupe_dose = as.factor(sample_metadata_metaG_v2v4$Groupe_dose)
+sample_metadata_metaG_v2v4$Groupe_dose = relevel(sample_metadata_metaG_v2v4$Groupe_dose, ref = "CP.3") 
+devtools::use_data(sample_metadata_metaG_v2v4, overwrite = TRUE)
+
+
+load("~/tolerance/data/MSP_abundance_matrix_rounded.rda")
+
+MSP_abundance_matrix_rounded_v2v4 = MSP_abundance_matrix_rounded[match(sample_metadata_metaG_v2v4$samplenr, colnames(MSP_abundance_matrix_rounded))]
+
+MSP_abundance_matrix_rounded_v2v4$msp = rownames(MSP_abundance_matrix_rounded_v2v4)
+MSP_abundance_matrix_rounded_v2v4 %>% head
+
+
+MSP_abundance_matrix_rounded_v2v4 %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("msp") %>%
+  BiotypeR::noise.removal(percent=0.1) %>% rownames() -> MSP_select
+
+MSP_abundance_matrix_rounded_v2v4 = MSP_abundance_matrix_rounded_v2v4[MSP_select,]
+MSP_abundance_matrix_rounded_v2v4 = MSP_abundance_matrix_rounded_v2v4[, -86]
+
+t(MSP_abundance_matrix_rounded_v2v4) -> MSP_abundance_matrix_rounded_v2v4
+MSP_abundance_matrix_rounded_v2v4 = as.data.frame (MSP_abundance_matrix_rounded_v2v4)
+
+sample_metadata_metaG_v2v4 = as.data.frame(sample_metadata_metaG_v2v4)
+Tolerance::sample_metadata_metaG_v2v4 %>%
+  tibble::column_to_rownames("samplenr") %>% head
+# Error: `df` must be a data frame without row names in `column_to_rownames()`.
+# Call `rlang::last_error()` to see a backtrace
+
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(MSP_abundance_matrix_rounded_v2v4[Tolerance::sample_metadata_metaG_v2v4$samplenr,]) +1, 
+  colData = Tolerance::sample_metadata_metaG_v2v4 %>% tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Subject)
+
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Subject)
+
+
+```
+
+
+
