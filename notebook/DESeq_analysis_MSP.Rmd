@@ -29,7 +29,7 @@ Get_New_Subject_ID = function(data_temp) {
 
 ```{r}
 
-load("~/tolerance/data/MSP_abundance_matrix_rounded.rda")
+data(MSP_abundance_matrix_rounded)
 
 MSP_abundance_matrix_rounded$msp = rownames(MSP_abundance_matrix_rounded)
 MSP_abundance_matrix_rounded %>% head
@@ -266,7 +266,7 @@ sample_metadata_metaG_v2v4$Groupe_dose = relevel(sample_metadata_metaG_v2v4$Grou
 devtools::use_data(sample_metadata_metaG_v2v4, overwrite = TRUE)
 
 
-load("~/tolerance/data/MSP_abundance_matrix_rounded.rda")
+data(MSP_abundance_matrix_rounded)
 
 MSP_abundance_matrix_rounded_v2v4 = MSP_abundance_matrix_rounded[match(sample_metadata_metaG_v2v4$samplenr, colnames(MSP_abundance_matrix_rounded))]
 
@@ -284,11 +284,17 @@ MSP_abundance_matrix_rounded_v2v4 = MSP_abundance_matrix_rounded_v2v4[, -86]
 t(MSP_abundance_matrix_rounded_v2v4) -> MSP_abundance_matrix_rounded_v2v4
 MSP_abundance_matrix_rounded_v2v4 = as.data.frame (MSP_abundance_matrix_rounded_v2v4)
 
+<<<<<<< HEAD
 
 
 sample_metadata_metaG_v2v4 = as.data.frame(sample_metadata_metaG_v2v4)
+=======
+#sample_metadata_metaG_v2v4 = as.data.frame(sample_metadata_metaG_v2v4)
+>>>>>>> 02b71e04c2231935ff82ef584c6df833edacdf05
 
 Tolerance::sample_metadata_metaG_v2v4 %>%
+  tibble::as_tibble() %>%
+  as.data.frame() %>%
   tibble::column_to_rownames("samplenr") %>% head
 # Error: `df` must be a data frame without row names in `column_to_rownames()`.
 # Call `rlang::last_error()` to see a backtrace
