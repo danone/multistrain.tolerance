@@ -273,7 +273,6 @@ MSP_abundance_matrix_rounded_v2v4 = MSP_abundance_matrix_rounded[match(sample_me
 MSP_abundance_matrix_rounded_v2v4$msp = rownames(MSP_abundance_matrix_rounded_v2v4)
 MSP_abundance_matrix_rounded_v2v4 %>% head
 
-
 MSP_abundance_matrix_rounded_v2v4 %>%
   mutate_if(is.numeric,function(x)(x/sum(x))) %>%
   tibble::column_to_rownames("msp") %>%
@@ -285,7 +284,10 @@ MSP_abundance_matrix_rounded_v2v4 = MSP_abundance_matrix_rounded_v2v4[, -86]
 t(MSP_abundance_matrix_rounded_v2v4) -> MSP_abundance_matrix_rounded_v2v4
 MSP_abundance_matrix_rounded_v2v4 = as.data.frame (MSP_abundance_matrix_rounded_v2v4)
 
+
+
 sample_metadata_metaG_v2v4 = as.data.frame(sample_metadata_metaG_v2v4)
+
 Tolerance::sample_metadata_metaG_v2v4 %>%
   tibble::column_to_rownames("samplenr") %>% head
 # Error: `df` must be a data frame without row names in `column_to_rownames()`.
