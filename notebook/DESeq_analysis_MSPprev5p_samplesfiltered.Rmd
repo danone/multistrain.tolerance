@@ -239,3 +239,28 @@ save(res_ATN3_CP3_v2v4, file="res_ATN3_CP3_v2v4_p0.05.rda")
 
 
 ```
+
+```{r}
+sample_metadata_metaG_v2v4_allvisit$Subject = as.character(sample_metadata_metaG_v2v4_allvisit$Subject)
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(MSP_abundance_matrix_rounded_5p_v2v4_allvisit[Tolerance::sample_metadata_metaG_v2v4_allvisit$samplenr,]) +1, 
+  colData = Tolerance::sample_metadata_metaG_v2v4_allvisit %>%
+  tibble::as_tibble() %>%
+  as.data.frame() %>%
+  tibble::column_to_rownames("samplenr"), 
+  design = ~ Subject + Groupe_dose + Subject:Groupe_dose)
+
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Visit+Groupe, fitType='local')
+
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(MSP_abundance_matrix_rounded_5p_v2v4_allvisit[Tolerance::sample_metadata_metaG_v2v4_allvisit$samplenr,]) +1, 
+  colData = Tolerance::sample_metadata_metaG_v2v4_allvisit %>%
+  tibble::as_tibble() %>%
+  as.data.frame() %>%
+  tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Groupe + Visit:Groupe)
+
+```
