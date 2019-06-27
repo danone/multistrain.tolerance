@@ -82,6 +82,7 @@ genus_dose3 = genus_tmp[match(sample_metadata_dose3$samplenr, colnames(genus_tmp
 genus_dose3$genus= rownames(genus_dose3)
 genus= genus_dose3
 save(genus, file="genus_dose3.rda")
+load("genus_dose3.rda")
 
 rownames(genus)=genus$genus
 genus_tmp = genus[,-1]
@@ -252,7 +253,7 @@ DESeq2::resultsNames(dds2_res2)
 
 # DESeq2::resultsNames(dds2_res2)[grep("ATN.1",DESeq2::resultsNames(dds2_res2))]
 
-save(dds2_res2, file="deseq2_dds2_res2_separate_analysis_dose3.rda" )
+save(dds2_res2, file="deseq2_dds2_res2_separate_analysis_dose3.rda")
 load("deseq2_dds2_res2_separate_analysis_dose3.rda")
 
 ```
@@ -276,10 +277,45 @@ results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.V
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN3_CP3_v2v4, file="res_ATN3_CP3_v2v4_p0.05_separate.rda")
 
+
+res_ATN3_CP3_v2v4_genus_separate_all=
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")
+save(res_ATN3_CP3_v2v4_genus_separate_all, file="res_ATN3_CP3_v2v4_genus_separate_all.rda")
+write.csv2(res_ATN3_CP3_v2v4_genus_separate_all, file="res_ATN3_CP3_v2v4_genus_separate_all.csv")
+
 res_ATN3_CP3_v2v5=
 results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV5","Groupe_doseCP.3.VisitV5"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN3_CP3_v2v5, file="res_ATN3_CP3_v2v5_p0.05_separate.rda")
+
+
+```
+
+```{r}
+# pas appariement
+
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(genus_count[Tolerance::sample_metadata_dose3$samplenr,]) +1, 
+  colData = Tolerance::sample_metadata_dose3 %>%
+  tibble::as_tibble() %>%
+  as.data.frame() %>%
+  tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Groupe_dose + Visit:Groupe_dose)
+
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Visit+Groupe_dose, fitType='local')
+
+results(dds_res1) %>% as.data.frame() %>%
+      tibble::rownames_to_column("msp") %>% filter(padj < 0.05)
+
+
+dds_res1_genus_all_no_appariement = results(dds_res1) %>% as.data.frame() %>%
+      tibble::rownames_to_column("genus")
+save(dds_res1_genus_all_no_appariement, file="dds_res1_genus_all_no_appariement.rda")
+write.csv2(dds_res1_genus_all_no_appariement, file="dds_res1_genus_all_no_appariement.csv")
+
 
 
 ```
@@ -489,7 +525,7 @@ DESeq2::resultsNames(dds2_res2)
 # DESeq2::resultsNames(dds2_res2)[grep("ATN.1",DESeq2::resultsNames(dds2_res2))]
 
 save(dds2_res2, file="deseq2_dds2_res2_separate_analysis_v2v4.rda" )
-
+load("deseq2_dds2_res2_separate_analysis_v2v4.rda")
 ```
 
 
@@ -502,6 +538,12 @@ results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.V
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN3_CP3_v2v4, file="res_ATN3_CP3_v2v4_p0.05_separate_v2v4.rda")
 
+
+res_ATN3_CP3_v2v4_genus_all_v2v4only=
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")
+save(res_ATN3_CP3_v2v4_genus_all_v2v4only, file="res_ATN3_CP3_v2v4_genus_all_v2v4only.rda")
+write.csv2(res_ATN3_CP3_v2v4_genus_all_v2v4only, file="res_ATN3_CP3_v2v4_genus_all_v2v4only.csv")
 
 ```
 

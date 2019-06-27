@@ -55,7 +55,6 @@ genus %>%
   BiotypeR::noise.removal(percent=0.1) %>% rownames() -> genus_select
 
 
-
 genus %>%
   filter(genus %in% genus_select) %>%
   tibble::column_to_rownames("genus") %>%
@@ -124,7 +123,35 @@ results(dds_res1, alpha=0.05) %>%
 
 
 ```{r}
+# sans appariement
 
+
+
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(genus_count[Tolerance::sample_metadata$samplenr,]) +1, 
+  colData = Tolerance::sample_metadata %>%
+  tibble::as_tibble() %>%
+  as.data.frame() %>%
+  tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Groupe_dose + Visit:Groupe_dose)
+
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Visit+Groupe_dose, fitType='local')
+
+
+dds_res1_genus_all_alldose_no_appariement = results(dds_res1) %>% as.data.frame() %>%
+      tibble::rownames_to_column("genus")
+save(dds_res1_genus_all_alldose_no_appariement, file="dds_res1_genus_all_alldose_no_appariement.rda")
+write.csv2(dds_res1_genus_all_alldose_no_appariement, file="dds_res1_genus_all_alldose_no_appariement.csv")
+
+
+
+
+
+
+
+# avec appariement
 
 temp <- Tolerance::sample_metadata #%>% tibble::column_to_rownames("samplenr")
 temp <- temp[with(temp, order(Groupe_dose, Subject)), ]
@@ -365,6 +392,13 @@ res_ATN3_CP3_v2v4=
 results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
 save(res_ATN3_CP3_v2v4, file="res_ATN3_CP3_v2v4_p0.05.rda")
+
+
+res_ATN3_CP3_v2v4_all=
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus") 
+save(res_ATN3_CP3_v2v4_all, file="res_ATN3_CP3_v2v4_all.rda")
+write.csv2(res_ATN3_CP3_v2v4_all, file="res_ATN3_CP3_v2v4_all.csv")
 
 res_ATN3_CP3_v2v5=
 results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV5","Groupe_doseCP.3.VisitV5"), alpha = 0.05) %>% 

@@ -71,10 +71,11 @@ MSP_abundance_matrix_rounded %>%
 #   BiotypeR::noise.removal(percent=0.5) %>% rownames() -> MSP_select
 # #412
 
-# MSP_abundance_matrix %>%
-#   filter(MSP_abundance_matrix %in% MSP_select) %>%
-#   tibble::column_to_rownames("msp") %>%
-#   t %>% as.data.frame -> MSP_abundance_matrix_count
+MSP_abundance_matrix_rounded %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("msp") %>%
+  BiotypeR::noise.removal(percent=1) %>% rownames() -> MSP_select
+#292 MSP
 
 MSP_abundance_matrix_rounded = MSP_abundance_matrix_rounded[MSP_select,]
 MSP_abundance_matrix_rounded = MSP_abundance_matrix_rounded[, -108]
@@ -149,6 +150,8 @@ results(dds_res1_fittypelocal, alpha=0.05) %>%
   arrange(padj)
 # signicant : L rhamnosus (+), L casei paracasei (+), Clostridium leptum (-)
 
+## test percent = 1 (292MSP), le rhamno ne ressort plus
+## test percent = 0.1, prevalence = 5%
 ```
 
 
@@ -284,20 +287,21 @@ MSP_abundance_matrix_rounded_v2v4 = MSP_abundance_matrix_rounded_v2v4[, -86]
 t(MSP_abundance_matrix_rounded_v2v4) -> MSP_abundance_matrix_rounded_v2v4
 MSP_abundance_matrix_rounded_v2v4 = as.data.frame (MSP_abundance_matrix_rounded_v2v4)
 
-<<<<<<< HEAD
 
 
 sample_metadata_metaG_v2v4 = as.data.frame(sample_metadata_metaG_v2v4)
-=======
-#sample_metadata_metaG_v2v4 = as.data.frame(sample_metadata_metaG_v2v4)
->>>>>>> 02b71e04c2231935ff82ef584c6df833edacdf05
 
 Tolerance::sample_metadata_metaG_v2v4 %>%
   tibble::as_tibble() %>%
   as.data.frame() %>%
   tibble::column_to_rownames("samplenr") %>% head
-# Error: `df` must be a data frame without row names in `column_to_rownames()`.
-# Call `rlang::last_error()` to see a backtrace
+
+
+Tolerance::sample_metadata_metaG_v2v4 %>%
+  tibble::as_tibble() %>%
+  as.data.frame() %>%
+  tibble::column_to_rownames("samplenr") %>% head
+
 
 
 dds = DESeq2::DESeqDataSetFromMatrix(
@@ -307,6 +311,9 @@ dds = DESeq2::DESeqDataSetFromMatrix(
 
 
 dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Subject)
+
+
+
 
 
 ```
