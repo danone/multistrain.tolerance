@@ -1,5 +1,5 @@
 ---
-title: "MSP tolerance - genus abundance matrix"
+title: "MSP tolerance - genus count and relative abundance matrix"
 output: html_notebook
 ---
 
@@ -63,11 +63,11 @@ createTaxaMatrix = function(data, taxo_data, taxo_level, unknown = NULL){
 
 # load MSP matrix rounded
 
-load("~/tolerance/data/MSP_abundance_matrix_rounded.rda")
+load("~/tolerance/data/MSP_count_matrix_rounded.rda")
 
 # load MSP matrix rounded prevalence 5%
 
-load("~/tolerance/data/MSP_abundance_matrix_rounded_5p.rda")
+load("~/tolerance/data/MSP_count_matrix_rounded_5p.rda")
 
 # load MSP taxonomy file 
 
@@ -84,7 +84,7 @@ rownames(taxo_1662MSP) = taxo_1662MSP$X
 # create genus matrix 
 
 genus_count_matrix_rounded =
-createTaxaMatrix(MSP_abundance_matrix_rounded,taxo_1662MSP, 'genus')
+createTaxaMatrix(MSP_count_matrix_rounded,taxo_1662MSP, 'genus')
 save(genus_count_matrix_rounded, file='~/tolerance/data/genus_count_matrix_rounded.rda')
 
 genus_count_matrix_rounded %>% head
@@ -93,7 +93,7 @@ load("~/tolerance/data/genus_count_matrix_rounded.rda")
 # create genus matrix prevalence 5% (from MSP prevalence 5%)
 
 genus_count_matrix_rounded_5p =
-createTaxaMatrix(MSP_abundance_matrix_rounded_5p,taxo_1662MSP, 'genus')
+createTaxaMatrix(MSP_count_matrix_rounded_5p,taxo_1662MSP, 'genus')
 save(genus_count_matrix_rounded_5p, file='~/tolerance/data/genus_count_matrix_rounded_5p.rda')
 
 genus_count_matrix_rounded_5p %>% head

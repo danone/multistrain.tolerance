@@ -1,5 +1,5 @@
 ---
-title: "MSP tolerance - abundance matrix generation"
+title: "MSP tolerance - count and relative abundance matrix"
 output: html_notebook
 ---
 
@@ -22,17 +22,21 @@ registerDoMC(detectCores())
 
 load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_final.RData")
 
+
 # download MSP tolerance table (containing L rhamnosus MSP)
 
 load("~/tolerance/data-raw/tolerance_MSP_table.rda")
 
+# metadata file - metaG
+
+Tolerance::sample_metadata_metaG
 
 ```
 
 
 ```{r}
 
-# MSP abundance matrix generation
+# MSP matrix generation
 
 
 msps_names=unique(tolerance_MSP_table$msp_name)
@@ -57,7 +61,6 @@ msps.norm_abundance_tolerance=foreach(cur_msp_name=msps_names, .combine=rbind,.f
 }
 
 
-
 str(msps.norm_abundance_tolerance)
 rownames(msps.norm_abundance_tolerance) = msps_names
 head(msps.norm_abundance_tolerance)
@@ -67,6 +70,60 @@ MSP_abundance_matrix = msps.norm_abundance_tolerance
 save(MSP_abundance_matrix, file="MSP_abundance_matrix.rda")
 write.csv2(MSP_abundance_matrix, file="MSP_abundance_matrix.csv")
 
+MSP_abundance_matrix = as.data.frame(MSP_abundance_matrix)
+MSP_abundance_matrix %>% head
+save(MSP_abundance_matrix, file="~/tolerance/data/MSP_abundance_matrix.rda")
+
+MSP_abundance_matrix_rounded = round(MSP_abundance_matrix)
+save(MSP_abundance_matrix_rounded, file="MSP_abundance_matrix_rounded.rda")
+
+prevalent_msp= which(rowSums(MSP_abundance_matrix_rounded>0) >= 0.05*nrow(sample_metadata_metaG))
+MSP_abundance_matrix_rounded_5p =MSP_abundance_matrix_rounded[prevalent_msp,]
+save(MSP_abundance_matrix_rounded_5p, file="~/tolerance/data/MSP_abundance_matrix_rounded_5p.rda")
+
+# msp_count_tolerance = colSums(msps.norm_abundance_tolerance > 0)
+# save(msp_count_tolerance, file="msp_count_tolerance.rda")
+# write.csv2(msp_count_tolerance, file="msp_count_tolerance.csv")
+
+
+# rename matrix file : count 
+
+load("/home/alvareao/tolerance/data/MSP_abundance_matrix.rda")
+
+MSP_count_matrix = MSP_abundance_matrix
+MSP_count_matrix_rounded = round(MSP_count_matrix)
+save(MSP_count_matrix_rounded, file="~/tolerance/data/MSP_count_matrix_rounded.rda")
+
+prevalent_msp= which(rowSums(MSP_count_matrix_rounded>0) >= 0.05*nrow(sample_metadata_metaG))
+MSP_count_matrix_rounded_5p = MSP_count_matrix_rounded[prevalent_msp,]
+save(MSP_count_matrix_rounded_5p, file="~/tolerance/data/MSP_count_matrix_rounded_5p.rda")
 
 ```
 
+```{r}
+
+#  create MSP relative abundance matrix
+
+MSP_relative_abundance_matrix_rounded = 
+MSP_count_matrix_rounded %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) 
+
+MSP_relative_abundance_matrix_rounded %>% head
+rownames(MSP_relative_abundance_matrix_rounded) = rownames(MSP_count_matrix_rounded)
+
+save(MSP_relative_abundance_matrix_rounded, file='~/tolerance/data/MSP_relative_abundance_matrix_rounded.rda')
+
+
+# create MSP relative abundance matrix prevalence 5%
+
+MSP_relative_abundance_matrix_rounded_5p = 
+MSP_count_matrix_rounded_5p %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) 
+
+MSP_relative_abundance_matrix_rounded_5p %>% head
+rownames(MSP_relative_abundance_matrix_rounded_5p) = rownames(MSP_count_matrix_rounded_5p)
+
+save(MSP_relative_abundance_matrix_rounded_5p, file='~/tolerance/data/MSP_relative_abundance_matrix_rounded_5p.rda')
+
+
+```
