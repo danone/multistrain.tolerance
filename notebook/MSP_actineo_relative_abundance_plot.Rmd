@@ -1,0 +1,97 @@
+---
+title: "MSP actineo abundance plot"
+output: html_notebook
+---
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(ggsignif)
+library(reshape2)
+install.packages("viridis") 
+library(viridis)
+devtools::load_all(reset=FALSE)
+
+```
+
+
+# combine metadata file and MSP relative abundance matrix
+```{r}
+
+# load MSP relative abundance matrix
+load('~/tolerance/data/MSP_relative_abundance_matrix_rounded.rda')
+
+# load metadata file 
+Tolerance::sample_metadata_metaG
+
+sample_metadata_metaG = sample_metadata_metaG[match(colnames(MSP_relative_abundance_matrix_rounded),sample_metadata_metaG$samplenr),] 
+all.equal(colnames(MSP_relative_abundance_matrix_rounded),sample_metadata_metaG$samplenr)
+
+MSP_relative_abundance_matrix_rounded_t = 
+MSP_relative_abundance_matrix_rounded %>% t() %>% as.data.frame()
+
+MSP_relative_abundance_matrix_rounded_t$sample = rownames(MSP_relative_abundance_matrix_rounded_t)  
+
+sample_metadata_metaG_MSP_RA = merge(sample_metadata_metaG, MSP_relative_abundance_matrix_rounded_t, by.x="samplenr", by.y="sample")
+
+sample_metadata_metaG_MSP_RA = as.data.frame(sample_metadata_metaG_MSP_RA)
+save(sample_metadata_metaG_MSP_RA, file="~/tolerance/data/sample_metadata_metaG_MSP_RA_combined.rda")
+
+```
+
+
+# plot relative abundance of actineo MSP
+
+```{r}
+# msp_lrhamnosus
+# msp_1200 Lactobacillus delbruckii
+# msp_1025 Lactobacillus casei paracasei
+# msp_0970 Streptococcus thermophilus
+
+data_msp_lrhamnosus = data.frame(sample_metadata_metaG_MSP_RA[,c("Visit","Groupe_dose", "Groupe", "group","msp_lrhamnosus")])
+m.data_msp_lrhamnosus = melt(data_msp_lrhamnosus)
+m.data_msp_lrhamnosus =  transform(m.data_msp_lrhamnosus, variable = factor(variable, labels=c("Lactobacillus rhamnosus")))
+m.data_msp_lrhamnosus =  transform(m.data_msp_lrhamnosus, Visit = factor(Visit, labels=c("D0", "D28", "D56"), ordered=TRUE))
+m.data_msp_lrhamnosus =  transform(m.data_msp_lrhamnosus, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.data_msp_lrhamnosus$value[m.data_msp_lrhamnosus$value == 0 ]=1e-11
+
+
+FMP.3_D28 = m.data_msp_lrhamnosus[m.data_msp_lrhamnosus$Groupe_dose=="FMP.3" & m.data_msp_lrhamnosus$Visit=="D28",]
+
+CP.3_D28 = m.data_msp_lrhamnosus[m.data_msp_lrhamnosus$Groupe_dose=="CP.3" & m.data_msp_lrhamnosus$Visit=="D28",]
+
+
+my_comparisons <- list(c("FMP.3_D28","CP.3_D28"))
+
+p1=
+  ggboxplot(m.data_msp_lrhamnosus, x = "Groupe_dose", y = "value",
+          color="Groupe_dose",
+          add = "jitter",
+          ylab ="Log10 Relative abundance Lactobacillus rhamnosus",
+          xlab = "Product consumption",
+          ggtheme = theme_pubr()) +
+  theme(legend.position = 'right')+
+  scale_color_viridis(discrete = TRUE, option = "D")+
+  scale_y_log10(name="Log10 Relative abundance Lactobacillus rhamnosus") +
+  stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+  facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold")) 
+
+
+# mettre les p values en manuel
+
+
+
+```
+
