@@ -88,7 +88,7 @@ createTaxaMatrix(MSP_abundance_matrix_rounded,taxo_1662MSP, 'genus')
 save(genus_count_matrix_rounded, file='~/tolerance/data/genus_count_matrix_rounded.rda')
 
 genus_count_matrix_rounded %>% head
-
+load("~/tolerance/data/genus_count_matrix_rounded.rda")
 
 # create genus matrix prevalence 5% (from MSP prevalence 5%)
 
@@ -105,10 +105,26 @@ genus_count_matrix_rounded_5p %>% head
 
 #  create genus matrix relative abundance
 
+genus_relative_abundance_matrix_rounded = 
+genus_count_matrix_rounded %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) 
+
+genus_relative_abundance_matrix_rounded %>% head
+rownames(genus_relative_abundance_matrix_rounded) = rownames(genus_count_matrix_rounded)
+
+save(genus_relative_abundance_matrix_rounded, file='~/tolerance/data/genus_relative_abundance_matrix_rounded.rda')
 
 
 # create genus matrix prevalence 5% relative abundance
 
+genus_relative_abundance_matrix_rounded_5p = 
+genus_count_matrix_rounded_5p %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) 
+
+genus_relative_abundance_matrix_rounded_5p %>% head
+rownames(genus_relative_abundance_matrix_rounded_5p) = rownames(genus_count_matrix_rounded_5p)
+
+save(genus_relative_abundance_matrix_rounded_5p, file='~/tolerance/data/genus_relative_abundance_matrix_rounded_5p.rda')
 
 
-
+```
