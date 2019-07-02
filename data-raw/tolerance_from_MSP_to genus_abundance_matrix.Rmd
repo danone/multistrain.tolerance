@@ -1,0 +1,130 @@
+---
+title: "MSP tolerance - genus count and relative abundance matrix"
+output: html_notebook
+---
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+devtools::load_all(reset=FALSE)
+library(readr)
+library(foreach)
+library(doMC)
+registerDoMC(detectCores())
+
+```
+
+```{r}
+# function to generate genus abundance matrix from MSP
+
+createTaxaMatrix = function(data, taxo_data, taxo_level, unknown = NULL){
+  #data should be an MGS table with samples in column and MGS in rownames
+  #taxo data should give the information about MGS taxo
+  #taxo level is the level of interest (phylum, genus, etc)
+  # unknown is the vector of names that should be included in the taxo UNKNOWN (ex : c("unclassified", "obsolete NCBI entry"))
+  
+  taxo = taxo_data[, taxo_level, drop = FALSE]
+  
+  #Replace NA with UNKNOWN
+  taxo[is.na(taxo)] = "UNKNOWN"
+  
+  #Remove blanks from taxo_data
+  taxo[taxo == ""] = "UNKNOWN"
+  
+  #NOT NEEDED
+  #new.taxo = data.frame("new.taxo" = sapply(rownames(taxo.na),
+  #                  function(i) ifelse(taxo.na[i, "BH_id"] >= id_threshold,
+  #                                     taxo.na[i, taxo_level],
+  #                                     "UNKNOWN")))
+  
+  
+  # Replace some genus per unknown
+  if (!is.null(unknown)){
+    taxo[taxo[[1]] %in% unknown, 1] = "UNKNOWN"
+  }
+  
+  
+  #Add taxo information to data
+  data.taxo = merge(data, taxo, by = "row.names", all.x = TRUE)
+  
+  #Aggregate so that there will be one line for each taxa
+  res = aggregate(data.taxo[,2:(ncol(data)+1)], by = list(data.taxo[[taxo_level]]), sum)
+  rownames(res) = res$Group.1
+  res = res[,-1]
+  
+  return(res)
+}
+
+```
+
+
+
+```{r}
+
+# load MSP matrix rounded
+
+load("~/tolerance/data/MSP_count_matrix_rounded.rda")
+
+# load MSP matrix rounded prevalence 5%
+
+load("~/tolerance/data/MSP_count_matrix_rounded_5p.rda")
+
+# load MSP taxonomy file 
+
+taxo_1662MSP = read.csv2("~/tolerance/data/taxo_1662msp.csv")
+save(taxo_1662MSP, file="~/tolerance/data/taxo_1662MSP.rda")
+load("~/tolerance/data/taxo_1662MSP.rda")
+rownames(taxo_1662MSP) = taxo_1662MSP$X
+```
+
+
+
+```{r}
+
+# create genus matrix 
+
+genus_count_matrix_rounded =
+createTaxaMatrix(MSP_count_matrix_rounded,taxo_1662MSP, 'genus')
+save(genus_count_matrix_rounded, file='~/tolerance/data/genus_count_matrix_rounded.rda')
+
+genus_count_matrix_rounded %>% head
+load("~/tolerance/data/genus_count_matrix_rounded.rda")
+
+# create genus matrix prevalence 5% (from MSP prevalence 5%)
+
+genus_count_matrix_rounded_5p =
+createTaxaMatrix(MSP_count_matrix_rounded_5p,taxo_1662MSP, 'genus')
+save(genus_count_matrix_rounded_5p, file='~/tolerance/data/genus_count_matrix_rounded_5p.rda')
+
+genus_count_matrix_rounded_5p %>% head
+
+```
+
+
+```{r}
+
+#  create genus matrix relative abundance
+
+genus_relative_abundance_matrix_rounded = 
+genus_count_matrix_rounded %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) 
+
+genus_relative_abundance_matrix_rounded %>% head
+rownames(genus_relative_abundance_matrix_rounded) = rownames(genus_count_matrix_rounded)
+
+save(genus_relative_abundance_matrix_rounded, file='~/tolerance/data/genus_relative_abundance_matrix_rounded.rda')
+
+
+# create genus matrix prevalence 5% relative abundance
+
+genus_relative_abundance_matrix_rounded_5p = 
+genus_count_matrix_rounded_5p %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) 
+
+genus_relative_abundance_matrix_rounded_5p %>% head
+rownames(genus_relative_abundance_matrix_rounded_5p) = rownames(genus_count_matrix_rounded_5p)
+
+save(genus_relative_abundance_matrix_rounded_5p, file='~/tolerance/data/genus_relative_abundance_matrix_rounded_5p.rda')
+
+
+```
