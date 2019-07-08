@@ -1,0 +1,141 @@
+---
+title: "generate kegg gut modules"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+devtools::load_all(reset = TRUE)
+
+
+
+
+```
+
+
+
+## import scaled counts
+```{r}
+
+scaled_normalization_counts = readr::read_tsv(system.file("data-raw/scaled_normalization_counts.txt", package="Tolerance"))
+
+scaled_normalization_counts = 
+  scaled_normalization_counts %>% dplyr::rename(genes_id=X1)
+
+```
+
+## import KO annotation
+
+
+```{r}
+
+kegg = readr::read_tsv(system.file("data-raw/annotations/KEGG.txt", package="Tolerance"), col_names = FALSE)
+
+
+kegg = kegg %>% 
+  dplyr::rename(genes_id=X1, KO=X2)
+
+kegg %>% head
+
+```
+
+
+
+```{r}
+
+
+
+kegg %>% #head(200) %>%
+  tidyr::separate(KO, sep=",", into=as.character(1:100)) %>%
+  reshape2::melt(id.vars="genes_id") %>%
+  select(genes_id,value) %>%
+  dplyr::rename(KO=value) %>%
+  na.omit() %>%
+  as_tibble() -> kegg_melt
+
+
+
+kegg_melt %>% dim
+
+
+
+
+```
+
+
+
+
+## aggregate count at KEGG levels
+```{r}
+
+kegg_melt %>%
+
+  merge(.,scaled_normalization_counts, by.x="genes_id", by.y="genes_id") %>%
+  select(-genes_id) %>%
+  group_by(KO) %>%
+  summarise_all(sum) -> KO_counts
+
+write.csv2(KO_counts, file="KO_counts.csv")
+
+KO_counts %>% head
+
+
+
+```
+
+
+
+```{r}
+
+KO_counts %>%
+  reshape2::melt()
+
+
+
+```
+
+
+
+
+
+## generate global gut modules
+
+```{r}
+
+library(omixerRpm)
+
+mods = rpm(KO_counts, minimum.coverage = 0.3, annotation = 1)
+
+save(mods, file="modules.rda")
+
+db = omixerRpm::loadDefaultDB()
+
+mods@annotation
+
+cbind(module=mods@annotation,mods@abundance,annotation=apply(mods@annotation,1,function(x) omixerRpm::getNames(db,x))) %>% head
+
+cbind(module=mods@annotation,mods@abundance,annotation=apply(mods@annotation,1,function(x) omixerRpm::getNames(db,x))) %>%
+
+  write.csv2(.,file="kegg_gut_modules.csv")
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
