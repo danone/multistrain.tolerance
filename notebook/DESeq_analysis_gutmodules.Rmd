@@ -1,0 +1,245 @@
+---
+title: "Differential analysis - KEGG gut modules"
+output: html_notebook
+---
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+devtools::load_all(reset=FALSE)
+
+```
+
+```{r}
+# Function to get the new subject id
+Get_New_Subject_ID = function(data_temp) {
+  old = factor(data_temp$Subject)
+  new_sub = paste0("S", 1:length(levels(old)))
+  names(new_sub) = levels(old)
+  return(data.frame(new_sub))
+}
+
+```
+
+
+# selection of subjects with all visits
+```{r}
+
+sample_metadata_metaG_allvisits = 
+readr::read_csv2("~/tolerance/data/sample_metadata_metaG_allvisits.csv")
+# 107 samples
+
+sample_metadata_metaG_allvisits = sample_metadata_metaG_allvisits[sample_metadata_metaG_allvisits$visits_v2v4=="1",]
+# 94 samples instead of 107
+
+sample_metadata_metaG_allvisits_v2v4 = sample_metadata_metaG_allvisits[sample_metadata_metaG_allvisits$Visit=="V2" | sample_metadata_metaG_allvisits$Visit=="V4",]
+# 76 samples only subjetcs with v2 and v4 (delete v5 ATN3) to compare ATN3/CP3 V4 normalisé par V2
+
+
+Tolerance::sample_metadata_metaG_allvisits_v2v4 %>% head
+
+sample_metadata_metaG_allvisits_v2v4$samplenr = as.character(sample_metadata_metaG_allvisits_v2v4$samplenr)
+
+sample_metadata_metaG_allvisits_v2v4$Subject = as.factor(sample_metadata_metaG_allvisits_v2v4$Subject) # je mets subject en factor sinon il me met un warning avec la fonction DESeqDataSetFromMatrix
+
+sample_metadata_metaG_allvisits_v2v4$Sample = as.character(sample_metadata_metaG_allvisits_v2v4$Sample)
+
+sample_metadata_metaG_allvisits_v2v4$Visit = as.factor(sample_metadata_metaG_allvisits_v2v4$Visit)
+
+sample_metadata_metaG_allvisits_v2v4$Groupe_dose = as.factor(sample_metadata_metaG_allvisits_v2v4$Groupe_dose)
+sample_metadata_metaG_allvisits_v2v4$Groupe_dose = relevel(sample_metadata_metaG_allvisits_v2v4$Groupe_dose, ref = "CP.3") 
+
+
+save(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4_090719.rda")
+
+load("~/tolerance/data/sample_metadata_metaG_allvisits_v2v4_090719.rda")
+devtools::load_all(reset=FALSE)
+
+
+# download gut modules matrix
+
+kegg_gut_modules=
+readr::read_csv2("~/tolerance/data/kegg_gut_modules_asa.csv")
+kegg_gut_modules = as.data.frame(kegg_gut_modules)
+kegg_gut_modules %>% head
+rownames(kegg_gut_modules) = kegg_gut_modules$Module
+kegg_gut_modules = kegg_gut_modules[,-1]
+kegg_gut_modules_rounded = round(kegg_gut_modules)
+kegg_gut_modules_rounded %>% head
+save(kegg_gut_modules_rounded, file="~/tolerance/data/kegg_gut_modules_rounded.rda")
+
+load("~/tolerance/data/kegg_gut_modules_rounded.rda")
+
+kegg_gut_modules_rounded_allvisits_v2v4 = kegg_gut_modules_rounded[match(sample_metadata_metaG_allvisits_v2v4$samplenr, colnames(kegg_gut_modules_rounded))]
+
+kegg_gut_modules_rounded_allvisits_v2v4$Module= rownames(kegg_gut_modules_rounded_allvisits_v2v4)
+
+save(kegg_gut_modules_rounded_allvisits_v2v4, file="~/tolerance/data/kegg_gut_modules_rounded_allvisits_v2v4.rda")
+
+load("~/tolerance/data/kegg_gut_modules_rounded_allvisits_v2v4.rda")
+gut_modules = kegg_gut_modules_rounded_allvisits_v2v4
+gut_modules = as.data.frame(gut_modules)
+
+gut_modules %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("Module") %>%
+  BiotypeR::noise.removal(percent=0.1) %>% rownames() -> gut_modules_select
+
+
+# gut_modules %>%
+#   filter(gut_modules %in% gut_modules_select) %>%
+#   tibble::column_to_rownames("Module") %>%
+#   t %>% as.data.frame-> gut_modules_count
+# Error: Result must have length 98, not 77
+
+gut_modules = gut_modules[gut_modules_select,]
+rownames(gut_modules)
+all.equal(rownames(gut_modules), gut_modules_select)
+colnames(gut_modules)
+gut_modules = gut_modules[,-77]
+
+t(gut_modules) -> gut_modules
+gut_modules = as.data.frame (gut_modules)
+
+Tolerance::sample_metadata_metaG_allvisits_v2v4 %>%
+  tibble::as_tibble() %>%
+  as.data.frame() %>%
+  tibble::column_to_rownames("samplenr") %>% head
+
+```
+
+## global time effect
+
+```{r}
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(gut_modules[Tolerance::sample_metadata_metaG_allvisits_v2v4$samplenr,]), 
+  colData = Tolerance::sample_metadata_metaG_allvisits_v2v4 %>% tibble::as_tibble() %>%
+  as.data.frame() %>%
+    tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Subject)
+
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Subject)
+
+
+results(dds_res1, alpha=0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("Module") %>%
+  filter(padj<0.05, abs(log2FoldChange) > 1) %>%
+  arrange(padj)
+
+# 0
+
+res_dds_res1 =
+results(dds_res1, alpha=0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("Module") %>%
+  filter(pvalue<0.05, abs(log2FoldChange) > 1) %>%
+  arrange(pvalue)
+ 
+# Module  baseMean log2FoldChange     lfcSE     stat      pvalue       padj
+# 1 MF0081  599.9593      -1.222354 0.3954908 8.352513 0.003851542 0.09079198 methanol conversion
+# 2 MF0003 4006.1534      -1.054378 0.3712661 5.168529 0.022999688 0.17161306 pectin degradation
+
+save(dds_res1, file="deseq2_gut_modules_dds_res1_time_effect_subjecswithallvisitsv2v4.rda")
+load("deseq2_16S_dds_res1_time_effect_subjecswithallvisits.rda")
+write.csv2(res_dds_res1, file="deseq2_gut_modules_dds_res1_time_effect_subjecswithallvisitsv2v4_pvalue0.05.csv")
+
+```
+
+## product and time effect
+```{r}
+
+temp <- Tolerance::sample_metadata_metaG_allvisits_v2v4 #%>% tibble::column_to_rownames("samplenr")
+temp <- temp[with(temp, order(Groupe_dose, Subject)), ]
+new_sub <- data.frame(Reduce(rbind, 
+                            by(as.data.frame(temp), 
+                                temp$Groupe_dose, 
+                                Get_New_Subject_ID, 
+                                simplify = FALSE)))
+names(new_sub) = "subject.n"
+new_sub[, "Subject"] <- factor(rownames(new_sub))
+temp = full_join(temp, 
+                  new_sub, 
+                  by = "Subject")
+rownames(temp) <- temp$samplenr
+
+temp # need here to force level factor
+
+temp$Groupe_dose = as.factor(temp$Groupe_dose)
+temp$Groupe_dose = relevel(temp$Groupe_dose, ref = "CP.3") 
+
+
+# DESeq2 object and design matrices
+dds2 <- dds
+dds2 <- estimateSizeFactors(dds2, type="poscounts")
+
+# Full design matrix
+mod <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose + Groupe_dose:Visit, temp)
+mod <- mod[,colSums(mod)>0]
+dds2 <- estimateDispersions(dds2, modelMatrix = mod)
+
+# Reduced design matrix
+mod2 <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose, temp)
+mod2 = mod2[, colSums(mod2)>0]
+
+dds2_res1 <- nbinomLRT(dds2, full = mod, reduced = mod2)
+
+results(dds2_res1, alpha = 0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("Module") %>%
+  filter(padj<0.05, abs(log2FoldChange) > 1) %>%
+  arrange(padj)
+# 0
+
+results(dds2_res1, alpha = 0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("Module") %>%
+  filter(pvalue<0.05, abs(log2FoldChange) > 1) %>%
+  arrange(pvalue)
+# 0
+
+res_dds2_res1_all=
+results(dds2_res1, alpha = 0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("Module") 
+
+save(dds2_res1, file="deseq2_gut_modules_dds2_res1_LRT_subjecswithallvisitsv2v4.rda")
+load("deseq2_gut_modules_dds2_res1_LRT_subjecswithallvisitsv2v4.rda")
+write.csv2(res_dds2_res1_all, file="ddeseq2_gut_modules_dds2_res1_LRT_subjecswithallvisitsv2v4_all.csv")
+
+
+res_dds2_res_contrastATN3CP3V2V4=
+results(dds2_res1, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("Module")  %>% filter(padj<0.05)
+# 0
+
+res_dds2_res1_all_contrastATN3CP3V2V4=
+results(dds2_res1, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("Module") 
+
+save(res_dds2_res1_all_contrastATN3CP3V2V4, file="res_dds2_res1_all_contrastATN3CP3V2V4.rda")
+write.csv2(res_dds2_res1_all_contrastATN3CP3V2V4, file="res_dds2_res1_all_contrastATN3CP3V2V4.csv")
+
+
+dds2_res2 = nbinomWaldTest(dds2, modelMatrix = mod, betaPrior = FALSE)
+DESeq2::resultsNames(dds2_res2)
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("Module")  %>% filter(padj<0.05)
+# 0
+
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("Module")  %>% filter(pvalue<0.05)
+# 0
+
+res_dds2_res2_all_contrastATN3CP3V2V4=
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("Module") 
+save(res_dds2_res2_all_contrastATN3CP3V2V4, file="res_dds2_res2_all_contrastATN3CP3V2V4.rda")
+write.csv2(res_dds2_res2_all_contrastATN3CP3V2V4, file="res_dds2_res2_all_contrastATN3CP3V2V4.csv")
+
+
+```
