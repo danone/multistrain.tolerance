@@ -152,7 +152,9 @@ load("deseq2_16S_dds2_res1_LRT_time_product_subjecswithallvisits.rda")
 # Lactobacillus 230.873223      -1.911436 0.6250550  24.91558 1.522802e-02 8.438859e-02
 
 
-
+results(dds2_res1, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+# Lactobacillus 2.308732e+02     1.51950016  0.8613333  24.915580443 1.522802e-02 8.438859e-02
 
 dds2_res2 = nbinomWaldTest(dds2, modelMatrix = mod, betaPrior = FALSE)
 
@@ -305,7 +307,9 @@ save(dds2_res1, file="deseq2_16S_dds2_res1_LRT_time_product_subjecswithallvisits
 write.csv2(res_dds2_res1, file="deseq2_16S_dds2_res1_LRT_time_product_subjecswithallvisits_v2v4_dose3.csv")
 load("deseq2_16S_dds2_res1_LRT_time_product_subjecswithallvisits_v2v4_dose3.rda")
 
-
+results(dds2_res1, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
+  data.frame() %>% tibble::rownames_to_column("genus")  %>% filter(padj<0.05)
+# Lactobacillus 153.754874      1.4847892 0.8464087  28.781558 5.625538e-07 1.170112e-05
 
 dds2_res2 = nbinomWaldTest(dds2, modelMatrix = mod, betaPrior = FALSE)
 
@@ -645,10 +649,12 @@ res_dds2_res2_subjecswithallvisits_v2v4_dose1 =
 results(dds2_res2, contrast = list("Groupe_doseATN.1.VisitV4","Groupe_doseCP.1.VisitV4"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus") 
 
+# Lactobacillus 93.130276     2.07835917 0.7214879  2.880657104 0.003968471 0.1587388
 
 save(res_dds2_res2_subjecswithallvisits_v2v4_dose1,file="~/tolerance/notebook/res_dds2_res2_subjecswithallvisits_v2v4_dose1.rda")
 write.csv2(res_dds2_res2_subjecswithallvisits_v2v4_dose1, file="~/tolerance/notebook/res_dds2_res2_subjecswithallvisits_v2v4_dose1.csv")
 
+load("res_dds2_res2_subjecswithallvisits_v2v4_dose1.rda")
 ```
 
 
@@ -777,9 +783,10 @@ res_dds2_res1=
   filter(padj<0.05, abs(log2FoldChange) > 1) %>%
   arrange(padj)
 
+# lactobacillus 292.836080    0.377176531 0.5548926   7.957280640 2.412498e-01 6.364888e-01
 save(dds2_res1, file="deseq2_16S_dds2_res1_LRT_time_product_subjecswithallvisits_dose1_padj0.05.rda")
 write.csv2(res_dds2_res1, file="deseq2_16S_dds2_res1_LRT_time_product_subjecswithallvisits_dose1_padj0.05.csv")
-
+load("deseq2_16S_dds2_res1_LRT_time_product_subjecswithallvisits_dose1_padj0.05.rda")
 
 results(dds2_res1, contrast = list("Groupe_doseATN.1.VisitV4","Groupe_doseCP.1.VisitV4"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus") 
@@ -819,6 +826,9 @@ results(dds2_res2, contrast = list("Groupe_doseATN.1.VisitV4","Groupe_doseCP.1.V
 save(res_dds2_res2_subjecswithallvisits_dose1,file="~/tolerance/notebook/res_dds2_res2_subjecswithallvisits_dose1.rda")
 write.csv2(res_dds2_res2_subjecswithallvisits_dose1, file="~/tolerance/notebook/res_dds2_res2_subjecswithallvisits_dose1.csv")
 
+load("res_dds2_res2_subjecswithallvisits_dose1.rda")
+
+# Lactobacillus 292.836080     0.53178507 0.7708288  0.689887424 4.902650e-01 0.998020166
 ```
 
 
@@ -946,6 +956,7 @@ results(dds2_res1, alpha = 0.05) %>%
   filter(padj<0.05, abs(log2FoldChange) > 1) %>%
   arrange(padj)
 # NO LACTOBACILLUS
+# 199.627572    0.505360629 0.6370199   2.751705290 6.001976e-01 9.468320e-01
 
 save(dds2_res1, file="deseq2_16S_dds2_res1_LRT_time_product_subjecswithallvisits_v2v3v4_dose3.rda")
 write.csv2(res_dds2_res1, file="deseq2_16S_dds2_res1_LRT_time_product_subjecswithallvisits_v2v3v4_dose3.csv")
@@ -970,12 +981,9 @@ save(res_dds2_res2_subjecswithallvisits_v2V3v4_dose3_p0.05,file="~/tolerance/not
 write.csv2(res_dds2_res2_subjecswithallvisits_v2V3v4_dose3_p0.05, file="~/tolerance/notebook/res_dds2_res2_subjecswithallvisits_v2V3v4_dose3_p0.05.csv")
 
 
-res_dds2_res2_subjecswithallvisits_v2v4_dose1 = 
-results(dds2_res2, contrast = list("Groupe_doseATN.1.VisitV4","Groupe_doseCP.1.VisitV4"), alpha = 0.05) %>% 
+res_dds2_res2_subjecswithallvisits_v2v4_dose3 = 
+results(dds2_res2, contrast = list("Groupe_doseATN.3.VisitV4","Groupe_doseCP.3.VisitV4"), alpha = 0.05) %>% 
   data.frame() %>% tibble::rownames_to_column("genus") 
 
-
-save(res_dds2_res2_subjecswithallvisits_v2v4_dose1,file="~/tolerance/notebook/res_dds2_res2_subjecswithallvisits_v2v4_dose1.rda")
-write.csv2(res_dds2_res2_subjecswithallvisits_v2v4_dose1, file="~/tolerance/notebook/res_dds2_res2_subjecswithallvisits_v2v4_dose1.csv")
-
+# Lactobacillus 199.627572    0.022851456 0.9002956  0.025382171 0.97975013 0.9980828
 ```
