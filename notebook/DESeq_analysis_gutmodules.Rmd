@@ -28,8 +28,11 @@ Get_New_Subject_ID = function(data_temp) {
 
 sample_metadata_metaG_allvisits = 
 readr::read_csv2("~/tolerance/data/sample_metadata_metaG_allvisits.csv")
-# 107 samples
+# 107 samples ATN3 : v2,v4,v5 CP3 v2,v4
+# among these 107 samples, some subjects don't have all visits
 
+
+# selection of subjects with v2 and v4 visits 
 sample_metadata_metaG_allvisits = sample_metadata_metaG_allvisits[sample_metadata_metaG_allvisits$visits_v2v4=="1",]
 # 94 samples instead of 107
 
