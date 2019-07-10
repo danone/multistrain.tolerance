@@ -246,3 +246,103 @@ write.csv2(res_dds2_res2_all_contrastATN3CP3V2V4, file="res_dds2_res2_all_contra
 
 
 ```
+
+
+
+## selection only ATN subjects at v2,v4,v5
+```{r}
+
+sample_metadata_metaG_allvisits = 
+readr::read_csv2("~/tolerance/data/sample_metadata_metaG_allvisits.csv")
+
+sample_metadata_metaG_allvisits_ATN3 = sample_metadata_metaG_allvisits[sample_metadata_metaG_allvisits$Groupe_dose=="ATN.3" ,]
+
+sample_metadata_metaG_allvisits_ATN3$samplenr = as.character(sample_metadata_metaG_allvisits_ATN3$samplenr)
+
+sample_metadata_metaG_allvisits_ATN3$Subject = as.factor(sample_metadata_metaG_allvisits_ATN3$Subject) # je mets subject en factor sinon il me met un warning avec la fonction DESeqDataSetFromMatrix
+
+sample_metadata_metaG_allvisits_ATN3$Sample = as.character(sample_metadata_metaG_allvisits_ATN3$Sample)
+
+sample_metadata_metaG_allvisits_ATN3$Visit = as.factor(sample_metadata_metaG_allvisits_ATN3$Visit)
+sample_metadata_metaG_allvisits_ATN3$Visit = relevel(sample_metadata_metaG_allvisits_ATN3$Visit, ref = "V2") 
+
+sample_metadata_metaG_allvisits_ATN3$Groupe_dose = as.factor(sample_metadata_metaG_allvisits_ATN3$Groupe_dose)
+
+save(sample_metadata_metaG_allvisits_ATN3, file="~/tolerance/data/sample_metadata_metaG_allvisits_ATN3_100719.rda")
+
+load("~/tolerance/data/sample_metadata_metaG_allvisits_ATN3_100719.rda")
+
+devtools::load_all(reset=FALSE)
+
+
+load("~/tolerance/data/kegg_gut_modules_rounded.rda")
+
+kegg_gut_modules_rounded_allvisits_ATN3 = kegg_gut_modules_rounded[match(sample_metadata_metaG_allvisits_ATN3$samplenr, colnames(kegg_gut_modules_rounded))]
+
+kegg_gut_modules_rounded_allvisits_ATN3$Module= rownames(kegg_gut_modules_rounded_allvisits_ATN3)
+
+save(kegg_gut_modules_rounded_allvisits_ATN3, file="~/tolerance/data/kegg_gut_modules_rounded_allvisits_ATN3.rda")
+
+
+gut_modules = kegg_gut_modules_rounded_allvisits_ATN3
+gut_modules = as.data.frame(gut_modules)
+
+gut_modules %>%
+  mutate_if(is.numeric,function(x)(x/sum(x))) %>%
+  tibble::column_to_rownames("Module") %>%
+  BiotypeR::noise.removal(percent=0.1) %>% rownames() -> gut_modules_select
+
+gut_modules %>%
+filter(gut_modules %in% gut_modules_select) %>%
+tibble::column_to_rownames("Module") %>%
+t %>% as.data.frame-> gut_modules_count
+ # Error: Result must have length 98, not 64
+ 
+gut_modules = gut_modules[gut_modules_select,]
+rownames(gut_modules)
+all.equal(rownames(gut_modules), gut_modules_select)
+colnames(gut_modules)
+gut_modules = gut_modules[,-64]
+
+t(gut_modules) -> gut_modules
+gut_modules = as.data.frame (gut_modules)
+
+Tolerance::sample_metadata_metaG_allvisits_ATN3 %>%
+  tibble::as_tibble() %>%
+  as.data.frame() %>%
+  tibble::column_to_rownames("samplenr") %>% head
+
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(gut_modules[Tolerance::sample_metadata_metaG_allvisits_ATN3$samplenr,]), 
+  colData = Tolerance::sample_metadata_metaG_allvisits_ATN3 %>% tibble::as_tibble() %>%
+  as.data.frame() %>%
+    tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Subject)
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Subject)
+
+results(dds_res1, alpha=0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("Module") %>%
+  filter(padj<0.05, abs(log2FoldChange) > 1) %>%
+  arrange(padj)
+#0
+
+results(dds_res1, alpha=0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("Module") %>%
+  filter(pvalue<0.05, abs(log2FoldChange) > 1) %>%
+  arrange(pvalue)
+#0
+
+res_dds_res1 =
+  results(dds_res1, alpha=0.05) %>% 
+  as.data.frame() %>%
+  tibble::rownames_to_column("Module") 
+
+save(dds_res1, file="deseq2_gut_modules_dds_res1_time_effect_subjecswithallvisits_ATN3.rda")
+
+write.csv2(res_dds_res1, file="deseq2_gut_modules_dds_res1_time_effect_subjecswithall_ATN3_allpvalue.csv")
+
+```
