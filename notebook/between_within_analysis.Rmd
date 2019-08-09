@@ -440,6 +440,34 @@ legend.title = element_text(color="black", size=13, face="bold"))
 dev.off()
 
 
+## color version finale 22.07.19
+
+
+
+
+tiff(file="beta_diversity_combined_plot_color220719.tiff", w=900, h=1100)
+
+beta_diversity_data %>%
+filter(Days == "D0",Group_test=="Within Group") %>%
+filter(!(Days.y == "D0" & Subject_test=="Within Subject")) %>%
+ggboxplot(y="value",x="Days.y",color="Subject_test",
+fill="Subject_test",alpha=0.5,palette=c("#00AFBB", "#E7B800"),
+ylab ="Microbiota beta-diversity distance metrics",xlab="Days", ggtheme = theme_pubr()) +
+theme(legend.position = 'bottom')+
+facet_grid(variable~Product_dose.x, scales = "free_y")+
+theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+theme(strip.text.y = element_text(size=13, color="white", face="bold"))+
+theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+theme(axis.title.x = element_text(color="black", face="bold", size=15),
+axis.title.y = element_text(color="black", size=15, face="bold"),
+axis.text.y = element_text(color="black", size=10, face="bold"),
+axis.text.x = element_text(color="black", size=12, face="bold"),
+legend.text = element_text(color="black", size=12, face="bold"),
+legend.title = element_text(color="black", size=13, face="bold"))
+
+dev.off()
+
+
 
 ```
 
@@ -604,7 +632,11 @@ legend.title = element_text(color="black", size=13, face="bold"))
 
 dev.off()
 
+
+#############
 # version finale 22-07-2019
+############
+
 tiff(file="beta_diversity_genus_BC_JSD_final.tiff", w=900, h=700)
 
 beta_diversity_data %>%

@@ -101,6 +101,8 @@ Tolerance::sample_metadata_metaG_allvisits_v2v4  %>% head
 sample_metadata_metaG_allvisits_v2v4$gene_count = gene_count_tolerance_dwzn13.2M_v2v4
 save(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
 
+load("~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
+
 sample_metadata_metaG_allvisits_v2v4$group = as.factor(sample_metadata_metaG_allvisits_v2v4$group)
 sample_metadata_metaG_allvisits_v2v4$Visit = as.factor(sample_metadata_metaG_allvisits_v2v4$Visit)
 
@@ -114,8 +116,10 @@ m.df_sample_metadata_metaG_allvisits_v2v4 = melt(df_sample_metadata_metaG_allvis
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = m.df_sample_metadata_metaG_allvisits_v2v4 %>% filter(Visit == "V2")
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Visit= factor(Visit, labels="D0"))
   
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
   
-my_comparisons_v2 <- list( c("ATN.3", "CP.3"))
+  
+my_comparisons_v2 <- list( c("FMP.3", "CP.3"))
 
 p1=
  ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, x = "Groupe_dose", y = "value",
@@ -145,8 +149,11 @@ scale_y_continuous(name = 'Gene richness', limits=c(0,1300000)) +
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = m.df_sample_metadata_metaG_allvisits_v2v4 %>% filter(Visit == "V4")
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, Visit= factor(Visit, labels="D28"))
   
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
   
-my_comparisons_v4 <- list( c("ATN.3", "CP.3"))
+  
+my_comparisons_v4 <- list( c("FMP.3", "CP.3"))
+
 
 p2=
  ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, x = "Groupe_dose", y = "value",
@@ -316,8 +323,10 @@ m.df_sample_metadata_metaG_allvisits_v2v4 = melt(df_sample_metadata_metaG_allvis
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = m.df_sample_metadata_metaG_allvisits_v2v4 %>% filter(Visit == "V2")
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Visit= factor(Visit, labels="D0"))
   
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
   
-my_comparisons_v2 <- list( c("ATN.3", "CP.3"))
+  
+my_comparisons_v2 <- list( c("FMP.3", "CP.3"))
 
 p3=
  ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, x = "Groupe_dose", y = "value",
@@ -346,9 +355,11 @@ scale_y_continuous(name = 'MSP richness', limits=c(0,300)) +
 
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = m.df_sample_metadata_metaG_allvisits_v2v4 %>% filter(Visit == "V4")
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, Visit= factor(Visit, labels="D28"))
+
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
   
   
-my_comparisons_v4 <- list( c("ATN.3", "CP.3"))
+my_comparisons_v4 <- list( c("FMP.3", "CP.3"))
 
 p4=
  ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, x = "Groupe_dose", y = "value",
