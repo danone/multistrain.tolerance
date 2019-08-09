@@ -1,0 +1,136 @@
+---
+title: "tolerance - mapping rate on the augmented gene reference catalog"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(ggpubr)
+library(ggsignif)
+library(reshape)
+library(cowplot)
+library(grid)
+
+```
+
+
+# mapping rate plot of all metaG samples (n=107)
+```{r}
+
+preprocess_data = read.csv2("~/actineo_paper/Rlocal_310719/metadata_tolerance_050618.csv")
+
+preprocess_data$Visit = as.factor(preprocess_data$Timepoint)
+preprocess_data$Groupe_dose = as.factor(preprocess_data$Product)
+preprocess_data$Groupe_dose = relevel(preprocess_data$Groupe_dose, ref = "CP.3") 
+
+
+df.preprocess_data = data.frame(preprocess_data[,c("Visit","Groupe_dose","X..Mapped")])
+m.df.preprocess_data = melt(df.preprocess_data)
+
+m.df.preprocess_data =  transform(m.df.preprocess_data, Visit = factor(Visit, labels=c("D0", "D28","D56"), ordered=TRUE))
+m.df.preprocess_data =  transform(m.df.preprocess_data, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+
+p_mapping=
+ ggboxplot(m.df.preprocess_data, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+            palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "Mapping rate",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   # scale_y_log10(name="Gene richness") +
+  # scale_y_continuous(name = '"Mapping rate', limits=c(50,100)) +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+tiff(file="~/actineo_paper/Rlocal_310719/Mapping_107samples.tiff", w=500, h=400)
+plot_grid(p_mapping, nrow=1, ncol=1)
+dev.off()
+
+```
+
+# mapping rate plot of metaG samples with v2/V4 (n=76)
+```{r}
+
+
+preprocess_data = read.csv2("~/actineo_paper/Rlocal_310719/metadata_tolerance_050618.csv")
+
+preprocess_data$Sample = as.character(preprocess_data$Sample)
+rownames(preprocess_data)
+preprocess_data$Visit = as.factor(preprocess_data$Timepoint)
+preprocess_data$Groupe_dose = as.factor(preprocess_data$Product)
+preprocess_data$Groupe_dose = relevel(preprocess_data$Groupe_dose, ref = "CP.3") 
+
+
+load("~/actineo_paper/Rlocal_310719/sample_metadata_metaG_allvisits_v2v4.rda")
+sample_metadata_metaG_allvisits_v2v4 = as.data.frame(sample_metadata_metaG_allvisits_v2v4)
+rownames(sample_metadata_metaG_allvisits_v2v4) = sample_metadata_metaG_allvisits_v2v4$samplenr
+
+
+preprocess_data_v2v4 = preprocess_data[match(sample_metadata_metaG_allvisits_v2v4$Sample, preprocess_data$Sample),] 
+
+
+df.preprocess_data_v2v4 = data.frame(preprocess_data_v2v4[,c("Visit","Groupe_dose","X..Mapped")])
+m.df.preprocess_data_v2v4 = melt(df.preprocess_data_v2v4)
+
+m.df.preprocess_data_v2v4 =  transform(m.df.preprocess_data_v2v4, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.df.preprocess_data_v2v4 =  transform(m.df.preprocess_data_v2v4, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+
+p_mapping_v2v4=
+ ggboxplot(m.df.preprocess_data_v2v4, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+            palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "Mapping rate",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   # scale_y_log10(name="Gene richness") +
+  # scale_y_continuous(name = '"Mapping rate', limits=c(50,100)) +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+tiff(file="~/actineo_paper/Rlocal_310719/Mapping_76samples.tiff", w=500, h=400)
+plot_grid(p_mapping_v2v4, nrow=1, ncol=1)
+dev.off()
+
+
+
+
+```
