@@ -409,6 +409,7 @@ sample_metadata_dose3 %>% head
 
 sample_metadata_dose3$Visit = as.factor(sample_metadata_dose3$Visit)
 sample_metadata_dose3_v2v4 = sample_metadata_dose3[sample_metadata_dose3$Visit=="V2" | sample_metadata_dose3$Visit=="V4",]
+sample_metadata_dose3_v2v4$Groupe_dose = relevel(sample_metadata_dose3_v2v4$Groupe_dose, ref = "CP.3") 
 save(sample_metadata_dose3_v2v4, file="../data/sample_metadata_dose3_v2v4.rda")
 
 
@@ -424,7 +425,7 @@ genus_dose3_v2v4 = genus_tmp[match(sample_metadata_dose3_v2v4$samplenr, colnames
 genus_dose3_v2v4$genus= rownames(genus_dose3_v2v4)
 genus= genus_dose3_v2v4
 save(genus, file="genus_dose3_v2v4.rda")
-
+load("genus_dose3_v2v4.rda")
 
 genus %>%
   mutate_if(is.numeric,function(x)(x/sum(x))) %>%
@@ -440,6 +441,32 @@ genus %>%
 
 Tolerance::sample_metadata_dose3_v2v4 %>%
   tibble::column_to_rownames("samplenr") %>% head
+
+
+# sans appariement
+
+
+dds = DESeq2::DESeqDataSetFromMatrix(
+  countData = t(genus_count[Tolerance::sample_metadata_dose3_v2v4$samplenr,]) +1, 
+  colData = Tolerance::sample_metadata_dose3_v2v4 %>%
+  tibble::as_tibble() %>%
+  as.data.frame() %>%
+  tibble::column_to_rownames("samplenr"), 
+  design = ~ Visit + Groupe_dose + Visit:Groupe_dose)
+
+
+dds_res1 <- DESeq(dds, test="LRT",  reduced= ~Visit+Groupe_dose, fitType='local')
+
+
+dds_res1_genus_all_dose3_v2v4_no_appariement = results(dds_res1) %>% as.data.frame() %>%
+      tibble::rownames_to_column("genus")
+save(dds_res1_genus_all_dose3_v2v4_no_appariement, file="dds_res1_genus_all_dose3_v2v4_no_appariement.rda")
+write.csv2(dds_res1_genus_all_dose3_v2v4_no_appariement, file="dds_res1_genus_all_dose3_v2v4_no_appariement.csv")
+
+
+
+
+
 
 
 

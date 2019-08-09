@@ -45,6 +45,14 @@ colnames(profile_tolerance_scaled_rounded) = sample_metadata_metaG$samplenr
 head(profile_tolerance_scaled_rounded)
 save(profile_tolerance_scaled_rounded, file="profile_tolerance_scaled_rounded_final.RData", compress=T)
 
+load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_final.RData")
+
+
+profile_tolerance_scaled_rounded_nonull = profile_tolerance_scaled_rounded[rowSums(profile_tolerance_scaled_rounded)>0,]
+save(profile_tolerance_scaled_rounded_nonull, file="profile_tolerance_scaled_rounded_nonull_final_nonull.Rdata", compress=T)
+
+
+
 ```
 
 

@@ -415,6 +415,10 @@ save(res_ATN_CP_v2v4, file="res_ATN_CP_v2v4_p0.05_pool_CP_ATN.rda")
 ```{r}
 
 sample_metadata_dose3v4 = sample_metadata[sample_metadata$Doses=="3" & sample_metadata$Visit=="V4",]
+
+sample_metadata_dose3v4$Visit = as.factor(sample_metadata_dose3v4$Visit)
+sample_metadata_dose3v4$Groupe = as.factor(sample_metadata_dose3v4$Groupe)
+sample_metadata_dose3v4$Groupe_dose = as.factor(sample_metadata_dose3v4$Groupe_dose)
 sample_metadata_dose3v4$Groupe = relevel(sample_metadata_dose3v4$Groupe, ref = "CP") 
 sample_metadata_dose3v4$Groupe_dose = relevel(sample_metadata_dose3v4$Groupe_dose, ref = "CP.3") 
 sample_metadata_dose3v4 %>% head
@@ -429,15 +433,7 @@ genus_dose3v4$genus= rownames(genus_dose3v4)
 genus= genus_dose3v4
 
 
-Tolerance::sample_metadata %>% head
-
-sample_metadata$Groupe = as.factor(sample_metadata$Groupe)
-sample_metadata$Visit = as.factor(sample_metadata$Visit)
-sample_metadata$Groupe_dose = as.factor(sample_metadata$Groupe_dose)
-sample_metadata$Doses = as.factor(sample_metadata$Doses)
-
-
-
+Tolerance::sample_metadata_dose3v4 %>% head
 
 genus %>%
   mutate_if(is.numeric,function(x)(x/sum(x))) %>%
@@ -456,67 +452,70 @@ sample_metadata_dose3v4 %>%
   
 sample_metadata_dose3v4 %>% head
 
+# Group comparisons at each time point
+
 dds = DESeq2::DESeqDataSetFromMatrix(
   countData = t(genus_count[sample_metadata_dose3v4$samplenr,]), 
   colData = sample_metadata_dose3v4 %>% tibble::column_to_rownames("samplenr"), 
   design = ~ Groupe_dose)
 
-# converting counts to integer mode
-# factor levels were dropped which had no samples
 
 dds2 <- dds
+
 dds2 <- estimateSizeFactors(dds2, type="poscounts")
 
 
 temp <- sample_metadata_dose3v4 #%>% tibble::column_to_rownames("samplenr")
 temp <- temp[with(temp, order(Groupe_dose, Subject)), ]
-new_sub <- data.frame(Reduce(rbind, 
-                            by(as.data.frame(temp), 
+new_sub <- data.frame(Reduce(rbind,
+                             by(as.data.frame(temp), 
                                 temp$Groupe_dose, 
-                                Get_New_Subject_ID, 
+                                Get_New_Subject_ID,
                                 simplify = FALSE)))
 names(new_sub) = "subject.n"
 new_sub[, "Subject"] <- factor(rownames(new_sub))
-temp = full_join(temp, 
-                  new_sub, 
+temp = full_join(temp,
+                 new_sub,
                   by = "Subject")
 rownames(temp) <- temp$samplenr
 
-temp # need here to force level factor
 
+temp # need here to force level factor
+ 
 temp$Groupe_dose = as.factor(temp$Groupe_dose)
 temp$Groupe = as.factor(temp$Groupe)
 temp$Visit = as.factor(temp$Visit)
 temp$Groupe = relevel(temp$Groupe_dose, ref = "CP.3")
 
-
 mod <- model.matrix(~ Groupe_dose , temp)
+
 mod <- mod[,colSums(mod)>0]
+
 dds2 <- estimateDispersions(dds2, modelMatrix = mod)
 
-# error: inv(): matrix seems singular
-# Error in fitDisp(ySEXP = ySEXP, xSEXP = xSEXP, mu_hatSEXP = mu_hatSEXP,  : 
-#   inv(): matrix seems singular
-  
-  
-# Reduced design matrix
-#mod2 <- model.matrix(~ Groupe_dose:subject.n , temp)
-#mod2 = mod2[, colSums(mod2)>0]
 
+
+
+# Reduced design matrix
+
+#mod2 <- model.matrix(~ Groupe_dose:subject.n , temp)
+
+#mod2 = mod2[, colSums(mod2)>0]
 
 #dds2_res1 <- nbinomLRT(dds2, full = mod, reduced = mod2)
 
-# Group comparisons at each time point
-dds2_res2 = nbinomWaldTest(dds2, modelMatrix = mod, betaPrior = FALSE)
 
-#using supplied model matrix
-#67 rows did not converge in beta, labelled in mcols(object)$betaConv. Use larger maxit argument with nbinomWaldTest
+# Group comparisons at each time point
+
+dds2_res2 = nbinomWaldTest(dds2, modelMatrix = mod, betaPrior = FALSE)
 
 DESeq2::resultsNames(dds2_res2)
 
-results(dds2_res2, alpha = 0.05) %>%
-  data.frame() %>% tibble::rownames_to_column("genus") 
-
+res_ATN3_CP3_v4only=
+  results(dds2_res2, alpha = 0.05) %>%
+data.frame() %>% tibble::rownames_to_column("genus")
+ save(res_ATN3_CP3_v4only, file="res_ATN3_CP3_v4only.rda")
 
 
 ```
+

@@ -6,13 +6,16 @@ output: html_notebook
 ```{r message=FALSE, warning=FALSE}
 
 library(dplyr)
+library(DESeq2)
 library(ggplot2)
+library(foreach)
+library(readr)
 library(ggpubr)
 library(ggsignif)
-library(reshape2)
-install.packages("viridis") 
-library(viridis)
+library(reshape)
 devtools::load_all(reset=FALSE)
+library(cowplot)
+library(grid)
 
 ```
 
@@ -38,7 +41,7 @@ sample_metadata_metaG_MSP_RA = merge(sample_metadata_metaG, MSP_relative_abundan
 
 sample_metadata_metaG_MSP_RA = as.data.frame(sample_metadata_metaG_MSP_RA)
 save(sample_metadata_metaG_MSP_RA, file="~/tolerance/data/sample_metadata_metaG_MSP_RA_combined.rda")
-
+load("~/tolerance/data/sample_metadata_metaG_MSP_RA_combined.rda")
 ```
 
 
