@@ -1,0 +1,54 @@
+---
+title: "FMP functions analysis"
+output: html_notebook
+---
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+devtools::load_all()
+
+
+```
+
+
+```{r}
+
+data("kegg")
+data("cazy")
+data("MSP_tax")
+
+
+```
+
+
+```{r}
+
+load("../data-raw/tolerance_MSP_table.rda")
+
+
+```
+
+
+```{r}
+head(cazy)
+head(kegg)
+head(tolerance_MSP_table)
+head(MSP_tax)
+
+
+```
+
+
+
+```{r}
+
+cazy %>%
+  tidyr::separate(gene_name,  into=c("gene_id","project"), sep="\\|")
+
+
+
+
+
+```
+
