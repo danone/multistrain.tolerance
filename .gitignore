@@ -1,5 +1,6 @@
 .Rproj.user
 .Rhistory
-.RData
+*.RData
 .Ruserdata
 OG_select.txt
+backup.RData
