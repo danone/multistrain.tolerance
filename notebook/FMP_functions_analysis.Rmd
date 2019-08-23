@@ -26,6 +26,11 @@ data("MSP_tax")
 
 load("../data-raw/tolerance_MSP_table.rda")
 
+counts_scaled = vroom::vroom("../data-raw/scaled_normalization_counts.txt")
+
+
+
+
 
 ```
 
@@ -51,4 +56,193 @@ cazy %>%
 
 
 ```
+
+
+
+```{r}
+#msp_lrhamnosus
+#msp_1025
+
+tolerance_MSP_table %>% head
+
+
+rbind(
+
+kegg %>%
+  filter(gene_name %in% grep("Lr10",gene_name, value = TRUE)) %>%
+  tidyr::separate(gene_name,  into=c("gene_name",LETTERS[1:6]), sep="\\|" ) %>%
+  select(gene_name,KO)
+,
+
+kegg %>%
+  filter(!(gene_name %in% grep("Lr10",gene_name, value = TRUE))) %>%
+  mutate(gene_name = gsub("\\|MetaHIT","", gene_name) ) %>%
+  select(gene_name,KO)
+
+) %>% merge(
+
+#merge
+
+rbind(
+
+tolerance_MSP_table %>%
+  #filter(gene_name %in% grep("Lr10",gene_name, value = TRUE)) %>%
+  filter(msp_name %in% c("msp_lrhamnosus")) %>%
+  tidyr::separate(gene_name,  into=c("gene_name",LETTERS[1:6]), sep="\\|" ) %>%
+  select(msp_name,module_name,gene_id,gene_name,gene_length)
+,
+
+tolerance_MSP_table %>%
+  filter(!(msp_name %in% c("msp_lrhamnosus"))) %>%
+  mutate(gene_name = gsub("\\|MetaHIT","", gene_name))
+
+),
+
+by="gene_name"
+
+
+) %>%
+
+filter(msp_name %in% c("msp_1025","msp_lrhamnosus"))
+
+
+```
+
+
+
+
+```{r}
+
+counts_scaled %>% 
+  dplyr::rename("gene_name" = 1) %>%
+  #sample_frac(0.05) %>%
+  #filter(gene_name %in% grep("Lr10",gene_name, value = TRUE)) %>%
+  merge(tolerance_MSP_table, by="gene_name", all.x = TRUE) %>%
+  #filter(msp_name %in% c("msp_1025") | gene_name %in% grep("Lpp121|Lpp1",gene_name, value = TRUE) ) %>%
+  #filter(msp_name %in% c("msp_lrhamnosus") & gene_name %in% grep("Lpp121|Lpp1",gene_name, value = TRUE) ) %>%
+  filter(msp_name %in% c("msp_1025","msp_lrhamnosus") | gene_name %in% grep("Lpp121|Lpp1|Lr10",gene_name, value = TRUE)) %>% 
+  select(msp_name,gene_name) -> genes_names_from_products
+
+
+
+```
+
+
+
+
+```{r}
+
+
+
+kegg %>% #head(200) %>%
+  #sample_frac(0.05) %>%
+  tidyr::separate(KO, sep=",", into=as.character(1:100)) %>%
+  tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+  select(-A,-B,-C,-D,-E,-F) %>%
+  reshape2::melt(id.vars="gene_name") %>%
+  select(gene_name,value) %>%
+  dplyr::rename(KO=value) %>%
+  na.omit() %>%
+  as_tibble() -> kegg_melt
+
+
+
+kegg_melt %>% dim
+
+
+
+
+```
+
+
+
+
+## aggregate count at KEGG levels
+```{r}
+
+kegg_melt %>% #sample_frac(0.05) %>%
+
+  merge(.,
+        counts_scaled %>% #head %>% 
+          dplyr::rename(gene_name = 1) %>% 
+          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+          select(-A,-B,-C,-D,-E,-F) , 
+        by="gene_name") %>%
+  select(-gene_name) %>%
+  group_by(KO) %>%
+  summarise_all(sum) -> KO_counts
+
+write.csv2(KO_counts, file="KO_counts.csv")
+
+KO_counts %>% head
+
+
+
+```
+
+
+```{r}
+
+kegg_melt %>% #sample_frac(0.05) %>%
+
+  merge(.,
+        counts_scaled %>% #head %>% 
+          dplyr::rename(gene_name = 1) %>% 
+          filter(gene_name %in% genes_names_from_products$gene_name) %>%
+          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+          select(-A,-B,-C,-D,-E,-F) , 
+        by="gene_name") %>%
+  select(-gene_name) %>%
+  group_by(KO) %>%
+  summarise_all(sum) -> KO_counts_Lactobacillus
+
+write.csv2(KO_counts_Lactobacillus, file="KO_counts_Lactobacillus.csv")
+
+KO_counts_Lactobacillus %>% head
+
+
+
+
+```
+
+
+```{r}
+
+KO_counts %>%
+  reshape2::melt() %>%
+  merge(
+          KO_counts_Lactobacillus %>% reshape2::melt(), 
+          by=c("KO","variable")
+          ) %>%
+  mutate(value = value.y/(value.x+1)) %>%
+  arrange(desc(value)) -> KO_contrib_per_individual
+
+
+#save(KO_contrib_per_individual, file="KO_contrib_per_individual.rda")
+
+
+KO_contrib_per_individual %>%
+  filter(value.y>100) %>%
+  arrange(desc(value))
+
+
+KO_contrib_per_individual %>%
+  #group_by(KO) %>%
+  #summarise(value=mean(value)) %>%
+  #arrange(value) %>%
+  #filter(value.y>10) %>%
+  filter(KO %in% c("K03043","K04043")) %>%
+  ggplot() + geom_point(aes(y=value.x,x=variable)) + scale_y_log10()
+  
+
+#to DO : cross with group & visit
+
+
+#K03043
+#K04043
+
+
+```
+
+
 
