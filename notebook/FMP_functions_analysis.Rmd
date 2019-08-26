@@ -12,12 +12,14 @@ devtools::load_all()
 ```
 
 
+
+
 ```{r}
 
 data("kegg")
 data("cazy")
 data("MSP_tax")
-
+data("sample_metadata_metaG")
 
 ```
 
@@ -33,6 +35,20 @@ counts_scaled = vroom::vroom("../data-raw/scaled_normalization_counts.txt")
 
 
 ```
+
+
+
+
+```{r}
+
+
+data.frame(seq=colnames(counts_scaled)[-1], samplenr=colnames(counts_scaled)[-1] %>% stringr::str_split_fixed(pattern="_", 2) %>% .[,1]) %>%
+  merge(sample_metadata_metaG, by="samplenr")
+
+
+```
+
+
 
 
 ```{r}
