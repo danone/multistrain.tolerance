@@ -5,6 +5,7 @@ output: html_notebook
 
 ```{r message=FALSE, warning=FALSE}
 
+library(ggplot2)
 library(dplyr)
 devtools::load_all()
 
@@ -42,7 +43,7 @@ counts_scaled = vroom::vroom("../data-raw/scaled_normalization_counts.txt")
 ```{r}
 
 
-data.frame(seq=colnames(counts_scaled)[-1], samplenr=colnames(counts_scaled)[-1] %>% stringr::str_split_fixed(pattern="_", 2) %>% .[,1]) %>%
+sample_metadata_metaG = data.frame(seq=colnames(counts_scaled)[-1], samplenr=colnames(counts_scaled)[-1] %>% stringr::str_split_fixed(pattern="_", 2) %>% .[,1]) %>%
   merge(sample_metadata_metaG, by="samplenr")
 
 
@@ -260,5 +261,134 @@ KO_contrib_per_individual %>%
 
 ```
 
+
+```{r}
+
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  filter(Visit %in% c("V2") | group == "V4_CP.3") %>%
+  group_by(seq) %>%
+  mutate(sum=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum) %>%
+  filter(prop.x> 0.0001) %>%
+  ggplot() + geom_point(aes(x=value+10^-6,y=prop.x+10^-6)) + scale_x_log10() + scale_y_log10()
+
+
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  filter(group == "V4_ATN.3") %>%
+  group_by(seq) %>%
+  mutate(sum=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum) %>%
+  filter(prop.x> 0.0001) %>%
+  ggplot() + geom_point(aes(x=value+10^-6,y=prop.x+10^-6)) + scale_x_log10() + scale_y_log10()
+
+  
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  #filter(group == "V4_ATN.3") %>%
+  #filter(Visit != "V4") %>%
+  group_by(seq) %>%
+  mutate(sum_kegg=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg) %>%
+  #filter(prop.x> 0.0001) %>%
+  ggplot() + geom_point(aes(x=prop.y+10^-6,y=prop.x+10^-6, col=group), alpha=0.5) + 
+  scale_x_log10() + scale_y_log10() +
+  xlab("FMP genes rel. abundance contributions\nto KEGG Orthologous Group") +
+  ylab("KEGG Orthologous Group relative abundance") + facet_grid(Visit~Groupe)
+
+
+
+
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  #filter(group == "V4_ATN.3") %>%
+  #filter(Visit != "V4") %>%
+  group_by(seq) %>%
+  mutate(sum_kegg=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg) %>%
+  #filter(prop.x> 0.0001) %>%
+  ggplot() + geom_point(aes(x=value+10^-6,y=prop.x+10^-6, col=group), alpha=0.5) + 
+  scale_x_log10() + scale_y_log10() +
+  xlab("FMP genes rel. abundance contributions\nto KEGG Orthologous Group") +
+  ylab("KEGG Orthologous Group relative abundance") + facet_grid(Visit~Groupe)
+
+
+
+```
+
+
+
+
+```{r}
+
+kegg_contrib_V2=
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  #filter(group == "V4_ATN.3") %>%
+  filter(Visit == "V2") %>%
+  group_by(seq) %>%
+  mutate(sum_kegg=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg)
+
+kegg_contrib_V4=
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  #filter(group == "V4_ATN.3") %>%
+  filter(Visit == "V4") %>%
+  group_by(seq) %>%
+  mutate(sum_kegg=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg)
+
+
+
+KO_DNA_replication = read.table("../data-raw/KEGG_DNA_replication/KEGG_KO_DNA_replication.txt", sep="\t") %>%
+  pull(V1) %>% gsub("\xa0\xa0","",.)
+                    
+
+
+kegg_contrib_V2 %>% #sample_frac(0.1) %>%
+  merge(kegg_contrib_V4, by=c("Subject","KO")) %>%
+  mutate(delta_contrib = value.y-value.x) %>%
+  filter(KO %in% KO_counts_Lactobacillus$KO) %>%
+  group_by(Groupe.x,KO) %>%
+  summarise(mean_contrib=median(delta_contrib+10^-6), mean_KO=median(prop.x.x+10^-6)) %>%
+  mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
+  ggplot() + geom_point(aes(x=mean_KO,y=mean_contrib, color=Groupe.x), alpha=0.5) + 
+  scale_y_log10(label=scales::percent) + scale_x_log10() + facet_wrap(~DNA_KO) +
+  geom_hline(yintercept = 0.01) +
+  xlab("average KO agregated rel. abundance\nat baseline") + ylab("average FMP gene contribution by KO\nafter consumption")
+  
+
+
+```
+
+```{r}
+
+kegg_contrib_V2 %>% #sample_frac(0.1) %>%
+  merge(kegg_contrib_V4, by=c("Subject","KO")) %>%
+  mutate(delta_contrib = value.y-value.x) %>%
+  filter(KO %in% KO_counts_Lactobacillus$KO) %>%
+  group_by(Groupe.x,KO) %>%
+  summarise(mean_contrib=median(delta_contrib+10^-6), mean_KO=median(prop.x.x+10^-6)) %>%
+  mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
+  filter(mean_contrib > 0.01) %>%
+  select(KO,mean_contrib) %>%
+  write.csv2(file="KO_contrib_Lactobacillus.csv")
+
+
+```
 
 
