@@ -323,6 +323,7 @@ sample_metadata_metaG %>%
 
 
 
+
 ```
 
 
@@ -385,10 +386,383 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   summarise(mean_contrib=median(delta_contrib+10^-6), mean_KO=median(prop.x.x+10^-6)) %>%
   mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
   filter(mean_contrib > 0.01) %>%
-  select(KO,mean_contrib) %>%
-  write.csv2(file="KO_contrib_Lactobacillus.csv")
+  select(KO,mean_contrib) -> KO_contrib_Lactobacillus
+  write.csv2(KO_contrib_Lactobacillus, file="KO_contrib_Lactobacillus.csv")
 
 
 ```
+
+```{r}
+KO_contrib_Lactobacillus %>% dim
+
+
+  
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  filter(KO %in% KO_contrib_Lactobacillus$KO) %>%
+  #filter(group == "V4_ATN.3") %>%
+  #filter(value>0.01) %>%
+  ggplot() + geom_boxplot(aes(x=KO, y=value)) + facet_wrap(~group) + scale_y_log10()
+  
+
+#to do geom_tile
+
+
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  mutate(contribution=ifelse(KO %in% KO_contrib_Lactobacillus$KO,"high","low")) %>%
+  ggplot() + geom_tile(aes(x=KO, y=Subject, fill=value+10^-6)) + 
+  facet_grid(group~contribution, scales = "free", space="free") + 
+  theme(axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank()) +
+  scale_fill_viridis_c(name="FMP contribution\nto KO rel. abundance",trans = "log10", label=scales::percent, breaks = c(0.0001,0.001,0.01,0.1))
+
+
+
+```
+
+
+## Cazy
+
+
+```{r}
+
+
+
+cazy %>% #head(200) %>%
+  #sample_frac(0.05) %>%
+  tidyr::separate(cazy_family , sep=",", into=as.character(1:100)) %>%
+  tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+  select(-A,-B,-C,-D,-E,-F) %>%
+  reshape2::melt(id.vars="gene_name") %>%
+  select(gene_name,value) %>%
+  dplyr::rename(cazy_family =value) %>%
+  na.omit() %>%
+  as_tibble() -> cazy_melt
+
+
+
+
+cazy_melt %>% #sample_frac(0.05) %>%
+
+  merge(.,
+        counts_scaled %>% #head %>% 
+          dplyr::rename(gene_name = 1) %>% 
+          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+          select(-A,-B,-C,-D,-E,-F) , 
+        by="gene_name") %>%
+  select(-gene_name) %>%
+  group_by(cazy_family ) %>%
+  summarise_all(sum) -> cazy_counts
+
+write.csv2(cazy_counts, file="cazy_counts.csv")
+
+cazy_counts %>% head
+
+
+
+cazy_melt %>% #sample_frac(0.05) %>%
+
+  merge(.,
+        counts_scaled %>% #head %>% 
+          dplyr::rename(gene_name = 1) %>% 
+          filter(gene_name %in% genes_names_from_products$gene_name) %>%
+          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+          select(-A,-B,-C,-D,-E,-F) , 
+        by="gene_name") %>%
+  select(-gene_name) %>%
+  group_by(cazy_family) %>%
+  summarise_all(sum) -> cazy_counts_Lactobacillus
+
+write.csv2(cazy_counts_Lactobacillus, file="cazy_counts_Lactobacillus.csv")
+
+
+
+
+
+```
+
+
+
+```{r}
+
+cazy_counts %>%
+  reshape2::melt() %>%
+  merge(
+          cazy_counts_Lactobacillus %>% reshape2::melt(), 
+          by=c("cazy_family","variable")
+          ) %>%
+  mutate(value = value.y/(value.x+1)) %>%
+  arrange(desc(value)) -> cazy_contrib_per_individual
+
+
+cazy_contrib_V2=
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(cazy_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  #filter(group == "V4_ATN.3") %>%
+  filter(Visit == "V2") %>%
+  group_by(seq) %>%
+  mutate(sum_cazy=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum_cazy, prop.y=value.y/sum_cazy)
+
+cazy_contrib_V4=
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(cazy_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  #filter(group == "V4_ATN.3") %>%
+  filter(Visit == "V4") %>%
+  group_by(seq) %>%
+  mutate(sum_cazy=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum_cazy, prop.y=value.y/sum_cazy)
+
+
+
+cazy_contrib_V2 %>% #sample_frac(0.1) %>%
+  merge(cazy_contrib_V4, by=c("Subject","cazy_family")) %>%
+  mutate(delta_contrib = value.y-value.x) %>%
+  filter(cazy_family %in% cazy_counts_Lactobacillus$cazy_family) %>%
+  group_by(Groupe.x,cazy_family) %>%
+  summarise(mean_contrib=median(delta_contrib+10^-6), mean_cazy_family=median(prop.x.x+10^-6)) %>%
+  #mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
+  filter(mean_contrib > 0.01) %>%
+  select(cazy_family,mean_contrib) -> cazy_contrib_Lactobacillus
+  write.csv2(cazy_contrib_Lactobacillus, file="cazy_contrib_Lactobacillus.csv")
+
+
+
+
+
+```
+
+
+```{r}
+cazy_contrib_Lactobacillus %>% dim
+
+
+  
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(cazy_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  filter(cazy_family %in% cazy_contrib_Lactobacillus$cazy_family) %>%
+  #filter(group == "V4_ATN.3") %>%
+  #filter(value>0.01) %>%
+  ggplot() + geom_boxplot(aes(x=cazy_family, y=value)) + facet_wrap(~group) + scale_y_log10()
+  
+
+#to do geom_tile
+
+
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(cazy_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  mutate(contribution=ifelse(cazy_family %in% cazy_contrib_Lactobacillus$cazy_family,"high","low")) %>%
+  ggplot() + geom_tile(aes(x=cazy_family, y=Subject, fill=value+10^-6)) + 
+  facet_grid(group~contribution, scales = "free", space="free") + 
+  theme(axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank()) +
+  scale_fill_viridis_c(name="FMP contribution\nto cazy rel. abundance",trans = "log10", label=scales::percent, breaks = c(0.0001,0.001,0.01,0.1))
+
+
+
+```
+
+
+
+
+## EggNOG
+
+
+```{r}
+
+og %>% head(50)
+
+#NOG = og$OG %>% strsplit(split=",") %>% sapply(., function(x){grep("@NOG",x , value=TRUE) %>% paste(collapse = ",")})
+
+
+
+```
+
+
+
+```{r}
+
+
+
+OG %>% #head(200) %>%
+  #sample_frac(0.05) %>%
+  #tidyr::separate(OG , sep=",", into=as.character(1:100)) %>%
+  tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+  select(-A,-B,-C,-D,-E,-F) %>%
+  reshape2::melt(id.vars="gene_name") %>%
+  select(gene_name,value) %>%
+  dplyr::rename(OG =value) %>%
+  na.omit() %>%
+  as_tibble() -> OG_melt
+
+
+
+
+OG_melt %>% #sample_frac(0.05) %>%
+
+  merge(.,
+        counts_scaled %>% #head %>% 
+          dplyr::rename(gene_name = 1) %>% 
+          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+          select(-A,-B,-C,-D,-E,-F) , 
+        by="gene_name") %>%
+  select(-gene_name) %>%
+  group_by(OG ) %>%
+  summarise_all(sum) -> OG_counts
+
+
+NOG = OG_counts$OG %>% strsplit(split=",") %>% sapply(., function(x){grep("@NOG",x , value=TRUE) %>% paste(collapse = ",")})
+
+OG_counts$NOG = NOG
+
+OG_counts %>%
+  select(-OG) %>%
+  group_by(NOG) %>%
+  summarise_all(sum) -> NOG_counts
+
+
+write.csv2(OG_counts, file="OG_counts.csv")
+write.csv2(NOG_counts, file="NOG_counts.csv")
+
+
+NOG_counts %>% head
+
+
+
+OG_melt %>% #sample_frac(0.05) %>%
+
+  merge(.,
+        counts_scaled %>% #head %>% 
+          dplyr::rename(gene_name = 1) %>% 
+          filter(gene_name %in% genes_names_from_products$gene_name) %>%
+          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+          select(-A,-B,-C,-D,-E,-F) , 
+        by="gene_name") %>%
+  select(-gene_name) %>%
+  group_by(OG) %>%
+  summarise_all(sum) -> OG_counts_Lactobacillus
+
+NOG_lact = OG_counts_Lactobacillus$OG %>% strsplit(split=",") %>% sapply(., function(x){grep("@NOG",x , value=TRUE) %>% paste(collapse = ",")})
+
+OG_counts_Lactobacillus$NOG = NOG_lact
+
+OG_counts_Lactobacillus %>%
+  select(-OG) %>%
+  group_by(NOG) %>%
+  summarise_all(sum) -> NOG_counts_Lactobacillus
+
+write.csv2(NOG_counts_Lactobacillus, file="NOG_counts_Lactobacillus.csv")
+
+
+
+
+
+```
+
+
+
+```{r}
+
+NOG_counts %>%
+  reshape2::melt() %>%
+  merge(
+          NOG_counts_Lactobacillus %>% reshape2::melt(), 
+          by=c("NOG","variable")
+          ) %>%
+  mutate(value = value.y/(value.x+1)) %>%
+  arrange(desc(value)) -> NOG_contrib_per_individual
+
+
+NOG_contrib_V2=
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(NOG_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  #filter(group == "V4_ATN.3") %>%
+  filter(Visit == "V2") %>%
+  group_by(seq) %>%
+  mutate(sum_NOG=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum_NOG, prop.y=value.y/sum_NOG)
+
+NOG_contrib_V4=
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(NOG_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  #filter(group == "V4_ATN.3") %>%
+  filter(Visit == "V4") %>%
+  group_by(seq) %>%
+  mutate(sum_NOG=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum_NOG, prop.y=value.y/sum_NOG)
+
+
+
+NOG_contrib_V2 %>% #sample_frac(0.1) %>%
+  merge(NOG_contrib_V4, by=c("Subject","NOG")) %>%
+  mutate(delta_contrib = value.y-value.x) %>%
+  filter(NOG %in% NOG_counts_Lactobacillus$NOG) %>%
+  group_by(Groupe.x,NOG) %>%
+  summarise(mean_contrib=median(delta_contrib+10^-6), mean_NOG_family=median(prop.x.x+10^-6)) %>% 
+  #mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
+  filter(mean_contrib > 0.01) %>%
+  select(NOG,mean_contrib) -> NOG_contrib_Lactobacillus
+  write.csv2(NOG_contrib_Lactobacillus, file="NOG_contrib_Lactobacillus.csv")
+
+
+
+
+
+```
+
+
+```{r}
+NOG_contrib_Lactobacillus %>% dim
+
+
+#   
+# sample_metadata_metaG %>%
+#   filter(Subject!="276001094") %>% #exclude contaminated CP3
+#   merge(cazy_contrib_per_individual, by.x="seq", by.y="variable") %>%
+#   filter(cazy_family %in% cazy_contrib_Lactobacillus$cazy_family) %>%
+#   #filter(group == "V4_ATN.3") %>%
+#   #filter(value>0.01) %>%
+#   ggplot() + geom_boxplot(aes(x=cazy_family, y=value)) + facet_wrap(~group) + scale_y_log10()
+#   
+
+#to do geom_tile
+
+
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(NOG_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  mutate(contribution=ifelse(NOG %in% NOG_contrib_Lactobacillus$NOG,"high","low")) %>%
+  ggplot() + geom_tile(aes(x=NOG, y=Subject, fill=value+10^-6)) + 
+  facet_grid(group~contribution, scales = "free", space="free") + 
+  theme(axis.text.x=element_blank(),
+    axis.ticks.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.ticks.y=element_blank()) +
+  scale_fill_viridis_c(name="FMP contribution\nto OGs rel. abundance",trans = "log10", label=scales::percent, breaks = c(0.0001,0.001,0.01,0.1))
+
+
+
+```
+
+
+
+
 
 
