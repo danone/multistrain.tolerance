@@ -763,6 +763,94 @@ sample_metadata_metaG %>%
 
 
 
+## MSP functional redundancy
+
+
+```{r}
+
+MSP_abundance_matrix_rounded %>% 
+  tibble::rownames_to_column("msp") %>% 
+  mutate_if(is.numeric, function(x) x/sum(x)) %>% 
+  tibble::column_to_rownames("msp") %>%
+  BiotypeR::noise.removal(percent=1) %>% rownames() -> msp_select
+
+
+
+```
+
+
+
+### with CAZY
+
+
+```{r}
+
+cazy_melt %>% 
+  filter(cazy_family %in% cazy_contrib_Lactobacillus$cazy_family) %>% 
+  merge(tolerance_MSP_table, by="gene_name") %>%
+  select(cazy_family, msp_name) %>% 
+  unique() %>% 
+  group_by(msp_name) %>%
+  summarise(n=n()) %>%
+  merge(MSP_tax, by.x="msp_name", by.y="MSP_ID") %>%
+  arrange(desc(n)) %>%
+  filter(msp_name %in% msp_select)
+
+  
+  
+
+```
+
+
+### with KEGG
+
+
+```{r}
+
+kegg_melt %>% 
+  filter(KO %in% KO_contrib_Lactobacillus$KO) %>% 
+  merge(tolerance_MSP_table, by="gene_name") %>%
+  select(KO, msp_name) %>% 
+  unique() %>% 
+  group_by(msp_name) %>%
+  summarise(n=n()) %>%
+  merge(MSP_tax, by.x="msp_name", by.y="MSP_ID") %>%
+  arrange(desc(n)) %>%
+  filter(msp_name %in% msp_select)
+
+
+
+
+```
+
+
+
+## ecological MSP network
+
+
+```{r}
+
+MSP_abundance_matrix_rounded %>% 
+  tibble::rownames_to_column("msp") %>% 
+  mutate_if(is.numeric, function(x) x/sum(x)) %>% 
+  tibble::column_to_rownames("msp") %>%
+  BiotypeR::noise.removal(percent=1) %>% rownames() -> msp_select
+
+
+
+```
+
+
+```{r}
+library(SpiecEasi)
+
+MSP_abundance_matrix_rounded[msp_select[1:10],] %>% t %>%
+  spiec.easi(., method='mb', lambda.min.ratio=1e-2,
+                          nlambda=20, pulsar.params=list(rep.num=50, ncores = 32)) -> MSP_spiec_easi
+
+
+```
+
 
 
 
