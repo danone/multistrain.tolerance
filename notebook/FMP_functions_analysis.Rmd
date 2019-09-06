@@ -62,7 +62,7 @@ head(counts_scaled)
 ```
 
 
-## check gene names id
+## check gene labelling
 
 ```{r}
 
@@ -80,8 +80,8 @@ tolerance_MSP_table %>%
 
 ```
 
-## gather gene description
-```{r}
+
+```{r eval=FALSE, include=FALSE}
 
 counts_scaled %>%  #sample_frac(0.01) %>%
   select(1) %>%
@@ -95,10 +95,19 @@ counts_scaled %>%  #sample_frac(0.01) %>%
 
 ```
 
-
-
-
 ```{r}
+
+cazy <- cazy %>% mutate(gene_name = gene_name  %>% gsub("\\|MetaHIT","",.)) %>% mutate(gene_name = gene_name %>% gsub("\\|[0-9]*_aa","",.))
+kegg <- kegg %>% mutate(gene_name = gene_name  %>% gsub("\\|MetaHIT","",.)) %>% mutate(gene_name = gene_name %>% gsub("\\|[0-9]*_aa","",.))
+counts_scaled <- counts_scaled %>% rename(gene_name = 1) %>% mutate(gene_name = gene_name  %>% gsub("\\|MetaHIT","",.)) %>% mutate(gene_name = gene_name %>% gsub("\\|[0-9]*_nt","",.))
+tolerance_MSP_table <- tolerance_MSP_table %>% mutate(gene_name = gene_name %>% gsub("\\|[0-9]*_nt","",.))
+
+
+```
+
+
+
+```{r eval=FALSE, include=FALSE}
 
 cazy %>%
   tidyr::separate(gene_name,  into=c("gene_id","project"), sep="\\|")
@@ -111,7 +120,7 @@ cazy %>%
 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 #msp_lrhamnosus
 #msp_1025
 
@@ -165,24 +174,36 @@ filter(msp_name %in% c("msp_1025","msp_lrhamnosus"))
 
 ```{r}
 
+# counts_scaled %>% 
+#   dplyr::rename("gene_name" = 1) %>%
+#   #sample_frac(0.05) %>%
+#   #filter(gene_name %in% grep("Lr10",gene_name, value = TRUE)) %>%
+#   merge(tolerance_MSP_table, by="gene_name", all.x = TRUE) %>%
+#   #filter(msp_name %in% c("msp_1025") | gene_name %in% grep("Lpp121|Lpp1",gene_name, value = TRUE) ) %>%
+#   #filter(msp_name %in% c("msp_lrhamnosus") & gene_name %in% grep("Lpp121|Lpp1",gene_name, value = TRUE) ) %>%
+#   filter(msp_name %in% c("msp_1025","msp_lrhamnosus") | gene_name %in% grep("Lpp121|Lpp1|Lr10",gene_name, value = TRUE)) %>% 
+#  
+#   select(msp_name,gene_name) -> genes_names_from_products
+
+genes_names_from_products <- 
+  unique(tolerance_MSP_table %>% 
+  filter(msp_name %in% c("msp_1025","msp_lrhamnosus") | gene_name %in% grep("Lpp121|Lpp1|Lr10",gene_name, value = TRUE)) %>%
+  .$gene_name,
+
 counts_scaled %>% 
   dplyr::rename("gene_name" = 1) %>%
-  #sample_frac(0.05) %>%
-  #filter(gene_name %in% grep("Lr10",gene_name, value = TRUE)) %>%
-  merge(tolerance_MSP_table, by="gene_name", all.x = TRUE) %>%
-  #filter(msp_name %in% c("msp_1025") | gene_name %in% grep("Lpp121|Lpp1",gene_name, value = TRUE) ) %>%
-  #filter(msp_name %in% c("msp_lrhamnosus") & gene_name %in% grep("Lpp121|Lpp1",gene_name, value = TRUE) ) %>%
-  filter(msp_name %in% c("msp_1025","msp_lrhamnosus") | gene_name %in% grep("Lpp121|Lpp1|Lr10",gene_name, value = TRUE)) %>% 
- 
-  select(msp_name,gene_name) -> genes_names_from_products
+  select(gene_name) %>%
+  filter(gene_name %in% grep("Lpp121|Lpp1|Lr10",gene_name, value = TRUE)) %>% .$gene_name) 
 
-genes_names_from_products %>%
- tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|", fill="left") %>%
-  #select(-A,-B,-C,-D,-E,-F) %>%
-  select(-F) %>%
-  tidyr::unite("gene_names",gene_name, A,B,C,D,E, sep = "|") %>%
-  mutate(gene_name = gene_names %>% gsub("NA\\|NA\\|NA\\|NA\\|NA\\|","",.)) %>%
-  select(-gene_names) -> genes_names_from_products
+
+
+# genes_names_from_products %>%
+#  tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|", fill="left") %>%
+#   #select(-A,-B,-C,-D,-E,-F) %>%
+#   select(-F) %>%
+#   tidyr::unite("gene_names",gene_name, A,B,C,D,E, sep = "|") %>%
+#   mutate(gene_name = gene_names %>% gsub("NA\\|NA\\|NA\\|NA\\|NA\\|","",.)) %>%
+#   select(-gene_names) -> genes_names_from_products
 
 
 ```
@@ -196,13 +217,13 @@ genes_names_from_products %>%
 
 kegg %>% #head(200) %>%
   #sample_frac(0.01) %>%
-  tidyr::separate(KO, sep=",", into=as.character(1:100)) %>%
-  tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|", fill="left") %>%
-  #select(-A,-B,-C,-D,-E,-F) %>%
-  select(-F) %>%
-  tidyr::unite("gene_names",gene_name, A,B,C,D,E, sep = "|") %>%
-  mutate(gene_name = gene_names %>% gsub("NA\\|NA\\|NA\\|NA\\|NA\\|","",.)) %>%
-  select(-gene_names) %>% 
+  tidyr::separate(KO, sep=",", into=as.character(1:100), extra="drop") %>%
+  # tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|", fill="left") %>%
+  # #select(-A,-B,-C,-D,-E,-F) %>%
+  # select(-F) %>%
+  # tidyr::unite("gene_names",gene_name, A,B,C,D,E, sep = "|") %>%
+  # mutate(gene_name = gene_names %>% gsub("NA\\|NA\\|NA\\|NA\\|NA\\|","",.)) %>%
+  # select(-gene_names) %>% 
   reshape2::melt(id.vars="gene_name") %>%
   select(gene_name,value) %>%
   dplyr::rename(KO=value) %>%
@@ -227,14 +248,14 @@ kegg_melt %>% dim
 kegg_melt %>% #sample_frac(0.05) %>%
 
   merge(.,
-        counts_scaled %>% #sample_frac(0.05) %>% 
-          dplyr::rename(gene_name = 1) %>% 
-          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|", fill="left") %>%
-          #select(-A,-B,-C,-D,-E,-F) %>%
-           select(-F) %>%
-           tidyr::unite("gene_names",gene_name, A,B,C,D,E, sep = "|") %>%
-           mutate(gene_name = gene_names %>% gsub("NA\\|NA\\|NA\\|NA\\|NA\\|","",.)) %>%
-           select(-gene_names) , 
+        counts_scaled, #%>% #sample_frac(0.05) %>% 
+          # dplyr::rename(gene_name = 1) %>% 
+          # tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|", fill="left") %>%
+          # #select(-A,-B,-C,-D,-E,-F) %>%
+          #  select(-F) %>%
+          #  tidyr::unite("gene_names",gene_name, A,B,C,D,E, sep = "|") %>%
+          #  mutate(gene_name = gene_names %>% gsub("NA\\|NA\\|NA\\|NA\\|NA\\|","",.)) %>%
+          #  select(-gene_names) , 
         by="gene_name") %>%
   select(-gene_name) %>%
   group_by(KO) %>%
@@ -255,14 +276,14 @@ kegg_melt %>% #sample_frac(0.05) %>%
 
   merge(.,
         counts_scaled %>% #head %>% 
-          dplyr::rename(gene_name = 1) %>% 
-          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|", fill="left") %>%
-          #select(-A,-B,-C,-D,-E,-F) %>%
-           select(-F) %>%
-           tidyr::unite("gene_names",gene_name, A,B,C,D,E, sep = "|") %>%
-           mutate(gene_name = gene_names %>% gsub("NA\\|NA\\|NA\\|NA\\|NA\\|","",.)) %>%
-           select(-gene_names) %>%
-           filter(gene_name %in% genes_names_from_products$gene_name), 
+          #dplyr::rename(gene_name = 1) %>% 
+          # tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|", fill="left") %>%
+          # #select(-A,-B,-C,-D,-E,-F) %>%
+          #  select(-F) %>%
+          #  tidyr::unite("gene_names",gene_name, A,B,C,D,E, sep = "|") %>%
+          #  mutate(gene_name = gene_names %>% gsub("NA\\|NA\\|NA\\|NA\\|NA\\|","",.)) %>%
+          #  select(-gene_names) %>%
+           filter(gene_name %in% genes_names_from_products), 
         by="gene_name") %>%
   select(-gene_name) %>%
   group_by(KO) %>%
@@ -319,28 +340,28 @@ KO_contrib_per_individual %>%
 
 ```{r}
 
-sample_metadata_metaG %>%
-  filter(Subject!="276001094") %>% #exclude contaminated CP3
-  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
-  filter(Visit %in% c("V2") | group == "V4_CP.3") %>%
-  group_by(seq) %>%
-  mutate(sum=sum(value.x)) %>%
-  ungroup() %>%
-  mutate(prop.x=value.x/sum) %>%
-  filter(prop.x> 0.0001) %>%
-  ggplot() + geom_point(aes(x=value+10^-6,y=prop.x+10^-6)) + scale_x_log10() + scale_y_log10()
-
-
-sample_metadata_metaG %>%
-  filter(Subject!="276001094") %>% #exclude contaminated CP3
-  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
-  filter(group == "V4_ATN.3") %>%
-  group_by(seq) %>%
-  mutate(sum=sum(value.x)) %>%
-  ungroup() %>%
-  mutate(prop.x=value.x/sum) %>%
-  filter(prop.x> 0.0001) %>%
-  ggplot() + geom_point(aes(x=value+10^-6,y=prop.x+10^-6)) + scale_x_log10() + scale_y_log10()
+# sample_metadata_metaG %>%
+#   filter(Subject!="276001094") %>% #exclude contaminated CP3
+#   merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+#   filter(Visit %in% c("V2") | group == "V4_CP.3") %>%
+#   group_by(seq) %>%
+#   mutate(sum=sum(value.x)) %>%
+#   ungroup() %>%
+#   mutate(prop.x=value.x/sum) %>%
+#   filter(prop.x> 0.0001) %>%
+#   ggplot() + geom_point(aes(x=value+10^-6,y=prop.x+10^-6)) + scale_x_log10() + scale_y_log10()
+# 
+# 
+# sample_metadata_metaG %>%
+#   filter(Subject!="276001094") %>% #exclude contaminated CP3
+#   merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+#   filter(group == "V4_ATN.3") %>%
+#   group_by(seq) %>%
+#   mutate(sum=sum(value.x)) %>%
+#   ungroup() %>%
+#   mutate(prop.x=value.x/sum) %>%
+#   filter(prop.x> 0.0001) %>%
+#   ggplot() + geom_point(aes(x=value+10^-6,y=prop.x+10^-6)) + scale_x_log10() + scale_y_log10()
 
   
 sample_metadata_metaG %>%
@@ -353,15 +374,16 @@ sample_metadata_metaG %>%
   ungroup() %>%
   mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg) %>%
   #filter(prop.x> 0.0001) %>%
-  ggplot() + geom_point(aes(x=prop.y+10^-6,y=prop.x+10^-6, col=group), alpha=0.5) + 
+  ggplot() + geom_point(aes(x=prop.y+10^-7,y=prop.x+10^-7, col=group), alpha=0.5) + 
   scale_x_log10() + scale_y_log10() +
   xlab("FMP genes rel. abundance contributions\nto KEGG Orthologous Group") +
   ylab("KEGG Orthologous Group relative abundance") + facet_grid(Visit~Groupe) +
-  geom_vline(xintercept = 0.0001)
+  geom_vline(xintercept = 0.000001)
 
 
-
-
+KO_DNA_replication = read.table("../data-raw/KEGG_DNA_replication/KEGG_KO_DNA_replication.txt", sep="\t") %>%
+  pull(V1) %>% gsub("\xa0\xa0","",.)
+                    
 sample_metadata_metaG %>%
   filter(Subject!="276001094") %>% #exclude contaminated CP3
   merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
@@ -371,23 +393,43 @@ sample_metadata_metaG %>%
   mutate(sum_kegg=sum(value.x)) %>%
   ungroup() %>%
   mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg) %>%
-  #filter(prop.x> 0.0001) %>%
-  ggplot() + geom_point(aes(x=value+10^-6,y=prop.x+10^-6, col=group), alpha=0.5) + 
+  mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
+  ggplot() + geom_point(aes(x=prop.y+10^-7,y=prop.x+10^-7, col=group), alpha=0.5) + 
   scale_x_log10() + scale_y_log10() +
   xlab("FMP genes rel. abundance contributions\nto KEGG Orthologous Group") +
-  ylab("KEGG Orthologous Group relative abundance") + facet_grid(Visit~Groupe)
+  ylab("KEGG Orthologous Group relative abundance") + facet_grid(Visit~Groupe+DNA_KO) +
+  geom_vline(xintercept = 0.000003) +
+  geom_hline(yintercept = 0.0001)
 
 
-sample_metadata_metaG %>%
-  filter(Subject!="276001094") %>% #exclude contaminated CP3
-  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
-  #filter(group == "V4_ATN.3") %>%
-  #filter(Visit != "V4") %>%
-  group_by(seq) %>%
-  mutate(sum_kegg=sum(value.x)) %>%
-  ungroup() %>%
-  mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg) %>%
-  filter(value> 0.0001)
+
+
+# sample_metadata_metaG %>%
+#   filter(Subject!="276001094") %>% #exclude contaminated CP3
+#   merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+#   #filter(group == "V4_ATN.3") %>%
+#   #filter(Visit != "V4") %>%
+#   group_by(seq) %>%
+#   mutate(sum_kegg=sum(value.x)) %>%
+#   ungroup() %>%
+#   mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg) %>%
+#   #filter(prop.x> 0.0001) %>%
+#   ggplot() + geom_point(aes(x=value+10^-6,y=prop.x+10^-6, col=group), alpha=0.5) + 
+#   scale_x_log10() + scale_y_log10() +
+#   xlab("FMP genes rel. abundance contributions\nto KEGG Orthologous Group") +
+#   ylab("KEGG Orthologous Group relative abundance") + facet_grid(Visit~Groupe)
+
+
+# sample_metadata_metaG %>%
+#   filter(Subject!="276001094") %>% #exclude contaminated CP3
+#   merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+#   #filter(group == "V4_ATN.3") %>%
+#   #filter(Visit != "V4") %>%
+#   group_by(seq) %>%
+#   mutate(sum_kegg=sum(value.x)) %>%
+#   ungroup() %>%
+#   mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg) %>%
+#   filter(value> 0.0001)
 
 
 ```
@@ -435,7 +477,7 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
   ggplot() + geom_point(aes(x=mean_KO,y=mean_contrib, color=Groupe.x), alpha=0.5) + 
   scale_y_log10(label=scales::percent) + scale_x_log10() + facet_wrap(~DNA_KO) +
-  geom_hline(yintercept = 0.01) +
+  geom_hline(yintercept = 0.003) +
   xlab("average KO agregated rel. abundance\nat baseline") + ylab("average FMP gene contribution by KO\nafter consumption")
   
 
@@ -451,7 +493,7 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   group_by(Groupe.x,KO) %>%
   summarise(mean_contrib=median(delta_contrib+10^-6), mean_KO=median(prop.x.x+10^-6)) %>%
   mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
-  filter(mean_contrib > 0.0001) %>%
+  filter(mean_contrib > 0.003) %>%
   select(KO,mean_contrib) -> KO_contrib_Lactobacillus
   write.csv2(KO_contrib_Lactobacillus, file="KO_contrib_Lactobacillus.csv")
 
@@ -496,9 +538,6 @@ sample_metadata_metaG %>%
 
 
 ```{r}
-
-
-
 cazy %>% #head(200) %>%
   #sample_frac(0.05) %>%
   tidyr::separate(cazy_family , sep=",", into=as.character(1:100)) %>%
@@ -840,7 +879,7 @@ MSP_abundance_matrix_rounded %>%
   tibble::column_to_rownames("msp") %>%
   BiotypeR::noise.removal(percent=1) %>% rownames() -> msp_select
 
-msp_select = unique(msp_select,c("msp_lrhamnosus","msp_1025"))
+msp_select = union(msp_select,c("msp_lrhamnosus","msp_1025"))
 
 #read_mass
 sum(MSP_abundance_matrix_rounded[msp_select,])/sum(MSP_abundance_matrix_rounded)
@@ -883,7 +922,12 @@ kegg_melt %>%
   select(KO, msp_name) %>% 
   unique() %>% 
   group_by(msp_name) %>%
-  summarise(n=n()) %>% #filter(msp_name=="msp_lrhamnosus")
+  summarise(n=n()) -> kegg_summary
+
+
+kegg_summary %>% filter(msp_name=="msp_lrhamnosus")
+
+kegg_summary %>%
   merge(MSP_tax %>% select(MSP_ID,species) %>% rbind(c("msp_lrhamnosus","Lactobacillus rhamnosus")), by.x="msp_name", by.y="MSP_ID") %>%
   arrange(desc(n)) %>%
   filter(msp_name %in% msp_select) -> kegg_similarity
@@ -907,7 +951,7 @@ MSP_abundance_matrix_rounded %>%
   tibble::column_to_rownames("msp") %>%
   BiotypeR::noise.removal(percent=1) %>% rownames() -> msp_select
 
-msp_select = c(msp_select,"msp_lrhamnosus","msp_1025")
+msp_select = union(msp_select,c("msp_lrhamnosus","msp_1025"))
 
 
 ```
