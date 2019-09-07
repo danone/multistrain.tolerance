@@ -541,8 +541,8 @@ sample_metadata_metaG %>%
 cazy %>% #head(200) %>%
   #sample_frac(0.05) %>%
   tidyr::separate(cazy_family , sep=",", into=as.character(1:100)) %>%
-  tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
-  select(-A,-B,-C,-D,-E,-F) %>%
+  #tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+  #select(-A,-B,-C,-D,-E,-F) %>%
   reshape2::melt(id.vars="gene_name") %>%
   select(gene_name,value) %>%
   dplyr::rename(cazy_family =value) %>%
@@ -555,10 +555,10 @@ cazy %>% #head(200) %>%
 cazy_melt %>% #sample_frac(0.05) %>%
 
   merge(.,
-        counts_scaled %>% #head %>% 
-          dplyr::rename(gene_name = 1) %>% 
-          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
-          select(-A,-B,-C,-D,-E,-F) , 
+        counts_scaled, #%>% #head %>% 
+          # dplyr::rename(gene_name = 1) %>% 
+          # tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+          # select(-A,-B,-C,-D,-E,-F) , 
         by="gene_name") %>%
   select(-gene_name) %>%
   group_by(cazy_family ) %>%
@@ -575,9 +575,9 @@ cazy_melt %>% #sample_frac(0.05) %>%
   merge(.,
         counts_scaled %>% #head %>% 
           dplyr::rename(gene_name = 1) %>% 
-          filter(gene_name %in% genes_names_from_products$gene_name) %>%
-          tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
-          select(-A,-B,-C,-D,-E,-F) , 
+          filter(gene_name %in% genes_names_from_products), #%>%
+          # tidyr::separate(gene_name, into=c("gene_name",LETTERS[1:6]), sep="\\|") %>%
+          # select(-A,-B,-C,-D,-E,-F) , 
         by="gene_name") %>%
   select(-gene_name) %>%
   group_by(cazy_family) %>%
@@ -636,7 +636,7 @@ cazy_contrib_V2 %>% #sample_frac(0.1) %>%
   group_by(Groupe.x,cazy_family) %>%
   summarise(mean_contrib=median(delta_contrib+10^-6), mean_cazy_family=median(prop.x.x+10^-6)) %>%
   #mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
-  filter(mean_contrib > 0.01) %>%
+  filter(mean_contrib > 0.003) %>%
   select(cazy_family,mean_contrib) -> cazy_contrib_Lactobacillus
   write.csv2(cazy_contrib_Lactobacillus, file="cazy_contrib_Lactobacillus.csv")
 
@@ -984,7 +984,7 @@ MSP_spiec_easi
 
 
 
-ig.mb     <- adj2igraph(getRefit(MSP_spiec_easi), vertex.attr=list(name=row.names(MSP_abundance_matrix_rounded[msp_select,])))
+ig.mb     <- adj2igraph(getRefit(MSP_spiec_easi), vertex.attr=list(name=msp_select))
 library(igraph)
 ## set size of vertex proportional to clr-mean
 vsize    <- rowMeans(clr(MSP_abundance_matrix_rounded[msp_select,], 1))+6
@@ -1059,14 +1059,45 @@ V(graph)$species =
 
 ggraph(graph) +
   geom_edge_link(aes(alpha=weight, color=type)) + 
-  geom_node_point(aes(color=kegg, size=kegg)) +
+  geom_node_point(aes(color=kegg)) +
   geom_node_text(aes(label=species), size=2) +
   scale_color_viridis(trans="log10")
                   
 
 
 
+graph %>%  
+  mutate(dist_to_lr10 = node_distance_to(287)) %>% 
+  activate(edges) %>%
+  #filter(type==FALSE) %>%
+  activate(nodes) %>%
+  mutate(isolated= node_is_isolated()) %>%
+  filter(!isolated) %>%
+  mutate(kegg=ifelse(is.na(kegg),0,kegg)) %>%
+  ggplot() + 
+  geom_jitter(aes(x=kegg+1,y=dist_to_lr10+1), width = 0.01, height = 0.01, alpha=0.5) + 
+  scale_x_log10() #+ scale_y_log10()
 
+graph %>%  
+  mutate(dist_to_lr10 = node_distance_to(287)) %>% 
+  activate(edges) %>%
+  #filter(type==FALSE) %>%
+  activate(nodes) %>%
+  mutate(isolated= node_is_isolated()) %>%
+  filter(!isolated) %>%
+  mutate(kegg=ifelse(is.na(kegg),0,kegg)) %>% 
+  select(kegg,dist_to_lr10) %>% as_tibble() %>% 
+  with(.,cor.test(.$kegg, .$dist_to_lr10, method="spearman"))
+
+
+graph %>%  
+  mutate(dist_to_lr10 = node_distance_to(287)) %>% 
+  #filter(dist_to_lr10 < 6) %>%
+  ggraph() +
+  geom_edge_link(aes(alpha=weight, color=type)) + 
+  geom_node_point(aes(color=kegg,size=11-dist_to_lr10)) +
+  geom_node_text(aes(label=species), size=2) +
+  scale_color_viridis(trans="log10")
 
 ```
 

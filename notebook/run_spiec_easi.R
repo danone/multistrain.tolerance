@@ -11,7 +11,7 @@ MSP_abundance_matrix_rounded %>%
   tibble::column_to_rownames("msp") %>%
   BiotypeR::noise.removal(percent=1) %>% rownames() -> msp_select
 
-msp_select = c(msp_select,"msp_lrhamnosus","msp_1025")
+msp_select = union(msp_select,c("msp_lrhamnosus","msp_1025"))
 
 
 MSP_abundance_matrix_rounded[msp_select,] %>% t %>%
