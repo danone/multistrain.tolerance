@@ -1024,8 +1024,6 @@ get.adjacency(ig.mb, attr="weight", sparse=F) %>%
 
 
 ```{r}
-
-
 tolerance_spiec_easi_edge_network
 
 graph <- as_tbl_graph(
@@ -1066,6 +1064,42 @@ ggraph(graph) +
 
 
 
+
+
+
+graph %>%  
+  mutate(dist_to_lr10 = node_distance_to(287)) %>% 
+  activate(edges) %>%
+  #filter(type==FALSE) %>%
+  activate(nodes) %>%
+  mutate(isolated= node_is_isolated()) %>%
+  filter(!(name %in% c("msp_lrhamnosus","msp_1025"))) %>%
+  filter(!isolated) %>%
+  mutate(kegg=ifelse(is.na(kegg),0,kegg)) %>% 
+  select(kegg,dist_to_lr10) %>% as_tibble() %>% 
+  with(.,cor.test(.$kegg, .$dist_to_lr10, method="spearman"))
+
+
+
+network_plot = graph %>%  
+  mutate(dist_to_lr10 = node_distance_to(287)) %>% 
+  mutate(FMP= ifelse(name %in% c("msp_lrhamnosus","msp_1025","msp_0790"),"FMP","others")) %>%
+  #filter(dist_to_lr10 < 6) %>%
+  ggraph() +
+  geom_edge_link(aes(alpha=weight, color=type)) + 
+  scale_edge_color_manual("sens", labels =c("neg.","pos."), values = c("red","lightblue")) +
+  geom_node_point(aes(color=kegg,size=11-dist_to_lr10)) +
+  #geom_node_text(aes(label=species), size=2) +
+  scale_color_viridis("Common KOs\nwith FMP",trans="log10") + 
+  scale_size_continuous("Edge distance\nto FMPs", breaks = c(1,4,7,10), labels = c("9","6","3","0")) +
+  scale_edge_alpha_continuous("SPIEC-EASI\nweight") + 
+  ggforce::geom_mark_ellipse(aes(x, y, label = 'FMP species', 
+                        description = "L. rhamnosus\nL. casei\nS. thermophilus",
+                        filter = FMP == "FMP"))
+
+
+
+
 graph %>%  
   mutate(dist_to_lr10 = node_distance_to(287)) %>% 
   activate(edges) %>%
@@ -1075,33 +1109,42 @@ graph %>%
   filter(!isolated) %>%
   mutate(kegg=ifelse(is.na(kegg),0,kegg)) %>%
   ggplot() + 
-  geom_jitter(aes(x=kegg+1,y=dist_to_lr10+1), width = 0.01, height = 0.01, alpha=0.5) + 
+  geom_jitter(aes(x=kegg+1,y=dist_to_lr10, col=kegg), width = 0.01, height = 0.01, alpha=0.5) + 
+  scale_color_viridis() +
   scale_x_log10() #+ scale_y_log10()
 
-graph %>%  
+
+
+kegg_function_plot = graph %>%  
   mutate(dist_to_lr10 = node_distance_to(287)) %>% 
   activate(edges) %>%
-  #filter(type==FALSE) %>%
+  filter(type==TRUE) %>%
   activate(nodes) %>%
   mutate(isolated= node_is_isolated()) %>%
   filter(!isolated) %>%
-  mutate(kegg=ifelse(is.na(kegg),0,kegg)) %>% 
-  select(kegg,dist_to_lr10) %>% as_tibble() %>% 
-  with(.,cor.test(.$kegg, .$dist_to_lr10, method="spearman"))
-
-
-graph %>%  
-  mutate(dist_to_lr10 = node_distance_to(287)) %>% 
-  #filter(dist_to_lr10 < 6) %>%
-  ggraph() +
-  geom_edge_link(aes(alpha=weight, color=type)) + 
-  geom_node_point(aes(color=kegg,size=11-dist_to_lr10)) +
-  geom_node_text(aes(label=species), size=2) +
-  scale_color_viridis(trans="log10")
-
+  mutate(kegg=ifelse(is.na(kegg),0,kegg)) %>%
+  mutate(kegg_break=case_when(
+    
+    kegg == 0 ~ "[0",
+    kegg>=1 & kegg < 10 ~ "[1-10[",
+    kegg>=10 & kegg < 30 ~ "[10-30[",
+    kegg>=30 & kegg < 100 ~ "[30-100[",
+    kegg>=100   ~ ">100"
+  ) ) %>%
+  ggplot() + 
+  geom_bar(aes(x=kegg_break,fill=dist_to_lr10%>%as.character), position="fill") + 
+  scale_fill_viridis_d("MSP edge distance\nto FMP species",option="magma") + 
+  xlab("Number of KEGG in common with FMP contributions") +
+  ylab("MSP proportion") + theme_minimal()
 ```
 
 
+```{r fig.height=10, fig.width=8}
+cowplot::plot_grid(network_plot,kegg_function_plot, nrow=2, rel_heights = c(2,1))
+
+ggsave("MSP_network_KEGG_contribution.pdf")
+
+```
 
 
 
