@@ -338,7 +338,7 @@ KO_contrib_per_individual %>%
 ```
 
 
-```{r}
+```{r fig.height=5, fig.width=9}
 
 # sample_metadata_metaG %>%
 #   filter(Subject!="276001094") %>% #exclude contaminated CP3
@@ -394,7 +394,7 @@ sample_metadata_metaG %>%
   ungroup() %>%
   mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg) %>%
   mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
-  ggplot() + geom_point(aes(x=prop.y+10^-7,y=prop.x+10^-7, col=group), alpha=0.5) + 
+  ggplot() + geom_point(aes(x=prop.y+10^-7,y=prop.x+10^-7), alpha=0.5) + 
   scale_x_log10() + scale_y_log10() +
   xlab("FMP genes rel. abundance contributions\nto KEGG Orthologous Group") +
   ylab("KEGG Orthologous Group relative abundance") + facet_grid(Visit~Groupe+DNA_KO) +
@@ -402,6 +402,27 @@ sample_metadata_metaG %>%
   geom_hline(yintercept = 0.0001)
 
 
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  #filter(group == "V4_ATN.3") %>%
+  #filter(Visit != "V4") %>%
+  group_by(seq) %>%
+  mutate(sum_kegg=sum(value.x)) %>%
+  ungroup() %>%
+  mutate(prop.x=value.x/sum_kegg, prop.y=value.y/sum_kegg) %>%
+  mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
+  ggplot() + geom_point(aes(x=prop.y+10^-7,y=prop.x+10^-7, color=DNA_KO, alpha=DNA_KO, size=DNA_KO)) + 
+  scale_x_log10() + scale_y_log10() +
+  scale_size_discrete("KEGG pathway",range=c(3,1)) +
+  scale_alpha_discrete("KEGG pathway",range=c(1,0.05)) +
+  scale_color_manual("KEGG pathway",values = c("red","lightblue")) +
+  xlab("FMP genes rel. abundance contributions\nto KEGG Orthologous group") +
+  ylab("KEGG Orthologous group\naggregated relative abundance") + facet_wrap(~Groupe+Visit, nrow = 2) +
+  geom_vline(xintercept = 0.000003, linetype=2) +
+  geom_hline(yintercept = 0.0001, linetype=2) + theme_minimal()
+
+ggsave("KEGG_contribution_per_visit_per_product.pdf")
 
 
 # sample_metadata_metaG %>%
@@ -477,9 +498,13 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
   ggplot() + geom_point(aes(x=mean_KO,y=mean_contrib, color=Groupe.x), alpha=0.5) + 
   scale_y_log10(label=scales::percent) + scale_x_log10() + facet_wrap(~DNA_KO) +
-  geom_hline(yintercept = 0.003) +
-  xlab("average KO agregated rel. abundance\nat baseline") + ylab("average FMP gene contribution by KO\nafter consumption")
+  geom_hline(yintercept = 0.003, linetype=2) +
+  scale_color_brewer("", type="qual") +
+  xlab("average KO agregated rel. abundance\nat baseline") + 
+  ylab("average FMP gene contribution by KO\nafter consumption") +
+  theme_minimal()
   
+ggsave("KEGG_average_contribution.pdf")
 
 
 ```
@@ -1134,13 +1159,13 @@ kegg_function_plot = graph %>%
   ggplot() + 
   geom_bar(aes(x=kegg_break,fill=dist_to_lr10%>%as.character), position="fill") + 
   scale_fill_viridis_d("MSP edge distance\nto FMP species",option="magma") + 
-  xlab("Number of KEGG in common with FMP contributions") +
+  xlab("Number of KOs in common with FMP contributions") +
   ylab("MSP proportion") + theme_minimal()
 ```
 
 
 ```{r fig.height=10, fig.width=8}
-cowplot::plot_grid(network_plot,kegg_function_plot, nrow=2, rel_heights = c(2,1))
+cowplot::plot_grid(network_plot,kegg_function_plot, nrow=2, rel_heights = c(2,1), labels = "AUTO")
 
 ggsave("MSP_network_KEGG_contribution.pdf")
 
