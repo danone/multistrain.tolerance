@@ -558,6 +558,28 @@ sample_metadata_metaG %>%
 
 ```
 
+### generate kegg ipath input
+```{r}
+
+sample_metadata_metaG %>%
+  filter(Subject!="276001094") %>% #exclude contaminated CP3
+  merge(KO_contrib_per_individual, by.x="seq", by.y="variable") %>%
+  filter(Groupe=="ATN" & Visit =="V4") %>%
+  group_by(KO) %>%
+  summarise(FMP_contrib=median(value)) %>% #pull(contribution_median) -> test
+  mutate(contribution=ifelse(KO %in% KO_contrib_Lactobacillus$KO,"w20","w10")) %>%
+  mutate(color=viridis::viridis(n=256)[round((((log10(FMP_contrib) - log10(min(FMP_contrib))) / (max(log10(FMP_contrib)) - min(log10(FMP_contrib)))) * 255)+1)]) %>%
+  mutate(color=paste0("c",color)) %>%
+  select(KO,color,contribution) %>%
+  readr::write_tsv("FMP_KEGG_contribution.tsv", col_names = FALSE)
+
+
+
+
+
+```
+
+
 
 ## Cazy
 
