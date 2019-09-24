@@ -22,3 +22,11 @@ system(paste("wget",url4, "-O data-raw/mapping_metadata.txt"))
 
 url5 = "\"https://danone-my.sharepoint.com/:t:/p/julien_tap/EXeUEpP0gHVFoHWg6u55fFoBPlIDIJkq2TXzH6JZHdgBMw?e=PZeGMa&download=1\""
 system(paste("wget",url5, "-O data-raw/scaled_normalization_counts.txt"))
+
+
+url6 = "\"https://danone-my.sharepoint.com/:x:/p/julien_tap/ERWqf61-OvtDte4SkoRg8dEBX-vM6umShKA7PxFt5zCTCg?e=owOAHQ&download=1\""
+system(paste("wget",url6, "-O data-raw/qPCR/qPCR.xlsx"))
+
+
+
+
