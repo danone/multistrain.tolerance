@@ -200,8 +200,127 @@ zibr_est_df %>%
   select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
   write.csv2(file="result_ZIBR.csv")
 
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
+  #filter(joint.p.fx3<0.05) %>%
+  arrange(( joint.p.fx3)) %>% 
+  tidyr::separate(genus, into=LETTERS[2:7], sep=";", remove=FALSE ) %>%
+  mutate(G=ifelse(joint.p.fx3<0.05|joint.p.Challenge<0.05,G,NA)) %>%
+  ggplot() + 
+  geom_point(aes(x=-log10(joint.p.Challenge), y=-log10(joint.p.fx3))) +
+  ggrepel::geom_text_repel(aes(x=-log10(joint.p.Challenge), y=-log10(joint.p.fx3), label=G%>%gsub("D_5__","",.))) +
+  ylab("Dose effect\n(-log10(Qvalue))") + xlab("Cumulative FMP consumption effect\n(-log10(Qvalue))") + theme_classic() +
+  geom_hline(yintercept = -log10(0.05), alpha=0.5, color="pink") + geom_vline(xintercept = -log10(0.05), alpha=0.5, color="pink")
+
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
+  filter(joint.p.fx3<0.05 & joint.p.Challenge <0.05) %>% pull(genus) -> genus_select
+
 
 ```
+
+
+
+
+```{r}
+
+genus %>%
+  tibble::column_to_rownames("genus") %>%
+  mutate_all(SpiecEasi::clr) -> genus_clr
+
+row.names(genus_clr)=genus$genus
+
+library(ade4)
+
+genus_clr_pca = dudi.pca(as.data.frame(genus_clr[genus_select,]%>%t), scannf = F, nf=3)
+
+genus_clr_pca = dudi.pca(as.data.frame(genus_clr%>%t), scannf = F, nf=3)
+
+sample_metadata %>%
+  merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
+  filter(Visit %in% c("V3","V4")) %>%
+  ggplot() + geom_point(aes(x=Axis1,y=Axis2,col=Groupe)) + facet_grid(Visit~Doses)
+
+sample_metadata %>%
+  merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
+  filter(Visit %in% c("V3","V4")) %>%
+  ggplot() + geom_boxplot(aes(x=Groupe,y=Axis2,fill=Groupe)) + facet_grid(Visit~Doses)
+
+
+genus_clr_pca$co %>%
+  tibble::rownames_to_column("genus") %>%
+  tidyr::separate(genus, into=LETTERS[2:7], sep=";", remove=FALSE ) %>%
+  ggplot() + geom_segment(aes(x=0,y=0,xend=Comp1,yend=Comp2), arrow = arrow(length = unit(0.1,"cm")) ) +
+  ggrepel::geom_text_repel(aes(x=Comp1,y=Comp2, label=G%>%gsub("D_5__","",.))) +
+  theme_classic()
+
+
+
+sample_metadata %>%
+  merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
+  filter(Visit %in% c("V3","V4")) %>%
+  group_by(Visit,Doses) %>%
+  tidyr::nest() %>%
+  mutate(model = map(data, ~wilcox.test(Axis2 ~ Groupe, data = .))) %>%
+  mutate(tidy = map(model, broom::tidy)) %>%
+  tidyr::unnest(tidy, .drop = T) %>%
+  arrange(p.value) %>%
+  mutate(p.value=p.adjust(p.value,"fdr"))
+  
+
+```
+
+
+
+
+```{r}
+
+
+spe="D_0__Bacteria; D_1__Firmicutes; D_2__Bacilli; D_3__Lactobacillales; D_4__Lactobacillaceae; D_5__Lactobacillus"
+
+
+spe_df =
+  genus_metadata_baseline %>%  
+  filter(genus==spe)
+
+
+p1=spe_df %>% 
+  mutate(Ylogit=value %>% car::logit(adjust=0)) %>% 
+  ggplot() + 
+  geom_boxplot(aes(y=Ylogit,x=(Time*2)%>%as.character(),fill=fx3%>%as.character()))
+
+p2=spe_df %>% 
+  group_by(fx3,Time) %>%
+  summarise(p = value %>% (function(x)(table(x>0)["TRUE"]/length(x)))) %>%
+  ggplot() + 
+  geom_bar(aes(x=(Time*2)%>%as.character(),fill=fx3%>%as.character(),y=p), 
+           position="dodge", stat="identity")
+
+
+cowplot::plot_grid(
+  p1 + 
+    scale_fill_brewer("FMP dose") + 
+    ylab("Rel. abundance\n(logit scaled)") + 
+    xlab("Time\n(Weeks)"),
+  p2+
+    scale_fill_brewer("FMP dose") + 
+    ylab("prevalence") +
+    xlab("Time\n(Weeks)")
+  ) 
+
+
+
+```
+
 
 
 
