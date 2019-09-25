@@ -1,0 +1,220 @@
+---
+title: "qPCR analysis"
+output: html_notebook
+---
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+library(ggpubr)
+library(wesanderson)
+
+
+```
+
+
+
+```{r}
+
+
+
+data= read.csv2("../notebook_clean/Tolerance_qPCR_Bilan_repro_version170804_final_modif260419.csv")
+
+str(data)
+
+df_metadata = data.frame(data[,c("Product","target", "Time.points",  "Mean")])
+m.df_metadata = melt(df_metadata)
+
+
+m.df_metadata  <- transform(m.df_metadata, target = factor(target, labels=c("Lactobacillus paracasei CNCM I-1518", "Lactobacillus paracasei CNCM I-3689", "Lactobacillus rhamnosus CNCM I-3690"), ordered =TRUE))
+
+
+
+```
+
+
+
+```{r}
+
+
+#DN_114001 = Lactobacillus paracasei CNCM I-1518
+
+#data= read.csv2("~/actineo_paper/Tolerance_qPCR_Bilan_repro_version170804_final_modif260419.csv")
+data$target = as.character(data$target)
+data_1518 = data %>% filter(target == "DN_114001")
+
+df_data_1518 = data.frame(data_1518[,c("Product","target", "Time.points",  "Mean")])
+m.df_data_1518 = melt(df_data_1518)
+m.df_data_1518  <- transform(m.df_data_1518, target = factor(target, labels=c("Lactobacillus paracasei CNCM I-1518"), ordered =TRUE))
+
+
+p1=
+  ggboxplot(m.df_data_1518, x = "Time.points", y = "value",
+          color="Product",
+          fill="Product",
+          alpha=0.5,
+          add = "jitter",
+          ylab ="log10 CRISPR gene copies number/g feces",
+          xlab = "Days",
+          palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+          ggtheme = theme_pubr()) +
+  theme(legend.position = "right")+
+  # scale_color_viridis(discrete = TRUE, option = "magma")+
+  # scale_fill_viridis(discrete = TRUE, option = "magma") +
+  facet_grid(. ~ target)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+kruskal.test(value ~ paste(Product,Time.points), data = m.df_data_1518)
+
+m.df_data_1518 %>%
+  filter(Time.points%in% c("D14","D28"), Product %in% c("FMP.1","FMP.3")) %>%
+  with(., pairwise.wilcox.test(.$value,paste(.$Product,.$Time.points), data=. , p.adjust.method = "non") %>% 
+         broom::tidy() %>%
+         
+         filter(  (group1=="FMP.3 D14" & group2=="FMP.1 D14") | (group1=="FMP.3 D28" & group2=="FMP.1 D28")  )) %>%
+  
+  mutate(p.value=p.value%>%p.adjust(method="BH"))
+
+
+
+
+```
+
+
+
+
+```{r}
+
+
+#DN_1140121 = Lactobacillus paracasei CNCM I-3689
+
+
+data_3689 = data %>% filter(target == "DN_1140121")
+
+df_data_3689 = data.frame(data_3689[,c("Product","target", "Time.points",  "Mean")])
+m.df_data_3689 = melt(df_data_3689)
+m.df_data_3689  <- transform(m.df_data_3689, target = factor(target, labels=c("Lactobacillus paracasei CNCM I-3689"), ordered =TRUE))
+
+p2=
+  ggboxplot(m.df_data_3689, x = "Time.points", y = "value",
+            color="Product",
+            fill="Product",
+            alpha=0.5,
+            add = "jitter",
+            ylab ="log10 cas gene copies number/g feces",
+            xlab = "Days",
+            palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+            ggtheme = theme_pubr()) +
+  theme(legend.position = 'none')+
+  # scale_color_viridis(discrete = TRUE, option = "D")+
+  # scale_fill_viridis(discrete = TRUE) +
+  facet_grid(. ~ target)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+kruskal.test(value ~ paste(Product,Time.points), data = m.df_data_3689)
+
+m.df_data_3689 %>%
+  filter(Time.points%in% c("D14","D28"), Product %in% c("FMP.1","FMP.3")) %>%
+  with(., pairwise.wilcox.test(.$value,paste(.$Product,.$Time.points), data=. , p.adjust.method = "non") %>% 
+         broom::tidy() %>%
+         
+         filter(  (group1=="FMP.3 D14" & group2=="FMP.1 D14") | (group1=="FMP.3 D28" & group2=="FMP.1 D28")  )) %>%
+  
+  mutate(p.value=p.value%>%p.adjust(method="BH"))
+
+
+
+```
+
+
+
+```{r}
+
+
+
+#DN_1160010 = Lactobacillus rhamnosus CNCM I-3690
+
+data_3690 = data %>% filter(target == "DN_1160010")
+
+df_data_3690 = data.frame(data_3690[,c("Product","target", "Time.points",  "Mean")])
+m.df_data_3690 = melt(df_data_3690)
+m.df_data_3690  <- transform(m.df_data_3690, target = factor(target, labels=c("Lactobacillus rhamnosus CNCM I-3690"), ordered =TRUE))
+
+p3=
+  ggboxplot(m.df_data_3690, x = "Time.points", y = "value",
+            color="Product",
+            fill="Product",
+            alpha=0.5,
+            add = "jitter",
+            palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+            ylab ="log10 Cro/CI family copies number/g feces",
+            xlab = "Days",
+            ggtheme = theme_pubr()) +
+  theme(legend.position = 'right')+
+  # scale_color_viridis(discrete = TRUE, option = "D")+
+  # scale_fill_viridis(discrete = TRUE) +
+  facet_grid(. ~ target)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+kruskal.test(value ~ paste(Product,Time.points), data = m.df_data_3690)
+
+m.df_data_3690 %>%
+  filter(Time.points%in% c("D14","D28"), Product %in% c("FMP.1","FMP.3")) %>%
+  with(., pairwise.wilcox.test(.$value,paste(.$Product,.$Time.points), data=. , p.adjust.method = "non") %>% 
+         broom::tidy() %>%
+         
+         filter(  (group1=="FMP.3 D14" & group2=="FMP.1 D14") | (group1=="FMP.3 D28" & group2=="FMP.1 D28")  )) %>%
+  
+  mutate(p.value=p.value%>%p.adjust(method="BH"))
+
+
+
+
+```
+
+
+
+
+
+
+```{r fig.height=4, fig.width=16}
+
+
+leg <- ggpubr::get_legend(p1)
+
+#p1 <- p1 + theme(legend.position = "none")
+p2 <- p2 + theme(legend.position = "none")
+p3 <- p3 + theme(legend.position = "none")
+
+plot_grid(p1 + theme(legend.position = "none") ,p2,p3,leg, align = "h", axis="t",nrow=1, ncol=4, rel_widths = c(1,1,1,0.3))
+
+
+
+
+```
+

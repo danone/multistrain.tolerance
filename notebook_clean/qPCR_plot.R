@@ -24,11 +24,11 @@ library(gridExtra)
 library(gplots)
 library(ggpubr)
 
-install.packages("viridis") 
+install.packages("viridis")
 library(viridis)
 
 
-data= read.csv2("~/actineo_paper/Tolerance_qPCR_Bilan_repro_version170804_final_modif260419.csv")
+data= read.csv2("./notebook_clean/Tolerance_qPCR_Bilan_repro_version170804_final_modif260419.csv")
 
 str(data)
 
@@ -53,10 +53,10 @@ m.df_metadata = melt(df_metadata)
 #       axis.text.y = element_text(color="black", size=10, face="bold"),
 #       axis.text.x = element_text(color="black", size=10, face="bold"),
 #       legend.text = element_text(color="black", size=10, face="bold"),
-#       legend.title = element_text(color="black", size=13, face="bold")) 
-# 
-# 
-# 
+#       legend.title = element_text(color="black", size=13, face="bold"))
+#
+#
+#
 # ggboxplot(m.df_metadata, x = "Time.points", y = "value",
 #               color="Product",
 #               add = "jitter",
@@ -74,7 +74,7 @@ m.df_metadata = melt(df_metadata)
 #         axis.text.y = element_text(color="black", size=10, face="bold"),
 #         axis.text.x = element_text(color="black", size=10, face="bold"),
 #         legend.text = element_text(color="black", size=10, face="bold"),
-#         legend.title = element_text(color="black", size=13, face="bold")) 
+#         legend.title = element_text(color="black", size=13, face="bold"))
 
 
 
@@ -101,7 +101,7 @@ ggboxplot(m.df_metadata, x = "Time.points", y = "value",
 
 
 
-## les genes sont différents pour les 3 souches
+## les genes sont diff?rents pour les 3 souches
 
 library(wesanderson)
 
@@ -137,7 +137,7 @@ p1=
         axis.text.y = element_text(color="black", size=10, face="bold"),
         axis.text.x = element_text(color="black", size=10, face="bold"),
         legend.text = element_text(color="black", size=10, face="bold"),
-        legend.title = element_text(color="black", size=13, face="bold")) 
+        legend.title = element_text(color="black", size=13, face="bold"))
 
 
 
@@ -163,12 +163,12 @@ p1bis=
         axis.text.y = element_text(color="black", size=10, face="bold"),
         axis.text.x = element_text(color="black", size=10, face="bold"),
         legend.text = element_text(color="black", size=10, face="bold"),
-        legend.title = element_text(color="black", size=13, face="bold")) 
+        legend.title = element_text(color="black", size=13, face="bold"))
 
 
 p1_ggplot2=
-  ggplot(m.df_data_1518, 
-         aes(x=Time.points, y=value, fill=factor(Product))) + 
+  ggplot(m.df_data_1518,
+         aes(x=Time.points, y=value, fill=factor(Product))) +
   geom_boxplot() +
   geom_point(position = position_jitterdodge(dodge.width = 0.75, jitter.width=0.2),cex=1) +
   scale_fill_manual(values=get_palette(c("#00AFBB", "#E7B800", "#FC4E07"), 4))+
@@ -187,8 +187,8 @@ p1_ggplot2=
 
 
 p1_ggplot2_viridis=
-  ggplot(m.df_data_1518, 
-         aes(x=Time.points, y=value, fill=factor(Product))) + 
+  ggplot(m.df_data_1518,
+         aes(x=Time.points, y=value, fill=factor(Product))) +
   geom_boxplot() +
   scale_fill_viridis_d(option = "viridis")+
   geom_point(position = position_jitterdodge(dodge.width = 0.75, jitter.width=0.2),cex=1) +
@@ -238,7 +238,7 @@ p2=
         axis.text.y = element_text(color="black", size=10, face="bold"),
         axis.text.x = element_text(color="black", size=10, face="bold"),
         legend.text = element_text(color="black", size=10, face="bold"),
-        legend.title = element_text(color="black", size=13, face="bold")) 
+        legend.title = element_text(color="black", size=13, face="bold"))
 
 
 p2bis=
@@ -260,12 +260,12 @@ p2bis=
         axis.text.y = element_text(color="black", size=10, face="bold"),
         axis.text.x = element_text(color="black", size=10, face="bold"),
         legend.text = element_text(color="black", size=10, face="bold"),
-        legend.title = element_text(color="black", size=13, face="bold")) 
+        legend.title = element_text(color="black", size=13, face="bold"))
 
 
 p2_ggplot2=
-  ggplot(m.df_data_3689, 
-         aes(x=Time.points, y=value, fill=factor(Product))) + 
+  ggplot(m.df_data_3689,
+         aes(x=Time.points, y=value, fill=factor(Product))) +
   geom_boxplot() +
   geom_point(position = position_jitterdodge(dodge.width = 0.75, jitter.width=0.2),cex=1) +
   scale_fill_manual(values=get_palette(c("#00AFBB", "#E7B800", "#FC4E07"), 4))+
@@ -284,8 +284,8 @@ p2_ggplot2=
 
 
 p2_ggplot2_viridis=
-  ggplot(m.df_data_3689, 
-         aes(x=Time.points, y=value, fill=factor(Product))) + 
+  ggplot(m.df_data_3689,
+         aes(x=Time.points, y=value, fill=factor(Product))) +
   geom_boxplot() +
   scale_fill_viridis_d(option = "viridis")+
   geom_point(position = position_jitterdodge(dodge.width = 0.75, jitter.width=0.2),cex=1) +
@@ -332,7 +332,7 @@ p3=
         axis.text.y = element_text(color="black", size=10, face="bold"),
         axis.text.x = element_text(color="black", size=10, face="bold"),
         legend.text = element_text(color="black", size=10, face="bold"),
-        legend.title = element_text(color="black", size=13, face="bold")) 
+        legend.title = element_text(color="black", size=13, face="bold"))
 
 
 p3bis=
@@ -354,7 +354,7 @@ p3bis=
         axis.text.y = element_text(color="black", size=10, face="bold"),
         axis.text.x = element_text(color="black", size=10, face="bold"),
         legend.text = element_text(color="black", size=10, face="bold"),
-        legend.title = element_text(color="black", size=13, face="bold")) 
+        legend.title = element_text(color="black", size=13, face="bold"))
 
 
 
@@ -376,12 +376,12 @@ geom_boxplot(m.df_data_3690, x = "Time.points", y = "value",
         axis.text.y = element_text(color="black", size=10, face="bold"),
         axis.text.x = element_text(color="black", size=10, face="bold"),
         legend.text = element_text(color="black", size=10, face="bold"),
-        legend.title = element_text(color="black", size=13, face="bold")) 
+        legend.title = element_text(color="black", size=13, face="bold"))
 
 
 p3_ggplot2=
-  ggplot(m.df_data_3690, 
-       aes(x=Time.points, y=value, fill=factor(Product))) + 
+  ggplot(m.df_data_3690,
+       aes(x=Time.points, y=value, fill=factor(Product))) +
   geom_boxplot() +
   geom_point(position = position_jitterdodge(dodge.width = 0.75, jitter.width=0.2),cex=1) +
   scale_fill_manual(values=get_palette(c("#00AFBB", "#E7B800", "#FC4E07"), 4))+
@@ -400,8 +400,8 @@ p3_ggplot2=
 
 
 p3_ggplot2_viridis=
-  ggplot(m.df_data_3690, 
-         aes(x=Time.points, y=value, fill=factor(Product))) + 
+  ggplot(m.df_data_3690,
+         aes(x=Time.points, y=value, fill=factor(Product))) +
   geom_boxplot() +
   scale_fill_viridis_d(option = "viridis")+
   geom_point(position = position_jitterdodge(dodge.width = 0.75, jitter.width=0.2),cex=1) +
@@ -420,7 +420,7 @@ p3_ggplot2_viridis=
 
 # grid.arrange(p1,p2,p3, nrow=1, ncol=3)
 
-leg <- get_legend(p1)
+leg <- ggpubr::get_legend(p1)
 p1 <- p1 + theme(legend.position = "none")
 p2 <- p2 + theme(legend.position = "none")
 p3 <- p3 + theme(legend.position = "none")
@@ -443,11 +443,11 @@ plot_grid(p1_ggplot2_viridis,p2_ggplot2_viridis,p3_ggplot2_viridis, leg, align =
 # study_design <- png::readPNG("design_richness.png")
 # study_design_grob1 <- grid::rasterGrob(study_design)
 # cowplot::plot_grid(
-#   study_design_grob1, 
+#   study_design_grob1,
 #   pB_diet)
 
 
-# 
+#
 # p3_dark=
 #   ggboxplot(m.df_data_3690, x = "Time.points", y = "value",
 #             color="Product",
@@ -467,11 +467,11 @@ plot_grid(p1_ggplot2_viridis,p2_ggplot2_viridis,p3_ggplot2_viridis, leg, align =
 #         axis.text.y = element_text(color="black", size=10, face="bold"),
 #         axis.text.x = element_text(color="black", size=10, face="bold"),
 #         legend.text = element_text(color="black", size=10, face="bold"),
-#         legend.title = element_text(color="black", size=13, face="bold")) 
-# 
-# 
-# 
-# 
+#         legend.title = element_text(color="black", size=13, face="bold"))
+#
+#
+#
+#
 # p3_blue=
 #   ggboxplot(m.df_data_3690, x = "Time.points", y = "value",
 #             color="Product",
@@ -494,8 +494,8 @@ plot_grid(p1_ggplot2_viridis,p2_ggplot2_viridis,p3_ggplot2_viridis, leg, align =
 # theme(panel.background = element_rect(fill = "lightblue",
 #                                   colour = "lightblue",
 #                                   size = 0.5, linetype = "solid"))
-# 
-# 
+#
+#
 # p3_blue=
 #   ggboxplot(m.df_data_3690, x = "Time.points", y = "value",
 #             color="Product",
@@ -518,11 +518,11 @@ plot_grid(p1_ggplot2_viridis,p2_ggplot2_viridis,p3_ggplot2_viridis, leg, align =
 #   theme(panel.background = element_rect(fill = "lightblue",
 #                                         colour = "lightblue",
 #                                         size = 0.5, linetype = "solid"))
-# 
-# 
-# 
-# 
-# 
+#
+#
+#
+#
+#
 # p3_blue_gray=
 #   ggboxplot(m.df_data_3690, x = "Time.points", y = "value",
 #             color="Product",
@@ -545,9 +545,9 @@ plot_grid(p1_ggplot2_viridis,p2_ggplot2_viridis,p3_ggplot2_viridis, leg, align =
 #   theme(panel.background = element_rect(fill = "lightblue",
 #                                         colour = "lightblue",
 #                                         size = 0.5, linetype = "solid"))
-# 
-# 
-# 
+#
+#
+#
 # p3_gray=
 #   ggboxplot(m.df_data_3690, x = "Time.points", y = "value",
 #             color="Product",
@@ -570,7 +570,7 @@ plot_grid(p1_ggplot2_viridis,p2_ggplot2_viridis,p3_ggplot2_viridis, leg, align =
 #   theme(panel.background = element_rect(fill = "white",
 #                                         colour = "white",
 #                                         size = 0.5, linetype = "solid"))
-# 
+#
 # p3_violet=
 #   ggboxplot(m.df_data_3690, x = "Time.points", y = "value",
 #             color="Product",
@@ -593,8 +593,8 @@ plot_grid(p1_ggplot2_viridis,p2_ggplot2_viridis,p3_ggplot2_viridis, leg, align =
 #   theme(panel.background = element_rect(fill = "white",
 #                                         colour = "white",
 #                                         size = 0.5, linetype = "solid"))
-# 
-# 
+#
+#
 # p3_blue_black=
 #   ggboxplot(m.df_data_3690, x = "Time.points", y = "value",
 #             color="Product",
