@@ -11,17 +11,17 @@ library(dplyr)
 
 devtools::load_all(reset=FALSE)  
 
-install.packages("ggpubr") 
+#install.packages("ggpubr") 
 library(ggpubr)
 
-install.packages("viridis") 
+#install.packages("viridis") 
 library(viridis)
 library(viridisLite)
 ```
 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 load("tolerance_genus_JSD.rda")
 load("tolerance_genus_BC.rda")
@@ -41,7 +41,7 @@ sample_metadata$Groupe_dose = relevel(sample_metadata$Groupe_dose, ref = "CP.1")
 ```
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 # beta-diversity from genus
 
@@ -99,6 +99,8 @@ save(beta_diversity_data, file="beta_diversity_data.rda")
 
 
 ```{r}
+
+load("../data-raw/beta_diversity_data.rda")
 
 beta_diversity_data %>%
   filter(Visit.x == "V2",Group_test=="Within Group") %>%
