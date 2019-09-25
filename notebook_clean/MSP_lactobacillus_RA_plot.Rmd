@@ -18,14 +18,22 @@ library(cowplot)
 # load data
 ```{r}
 # load taxo MSP
-taxoMSP = read.csv2("~/actineo_paper/Rlocal_310719/taxo_1662msp.csv")
+taxoMSP = read.csv2("../data-raw/taxo_1662msp.csv")
 
 # load MSP relative abundance
-load("~/actineo_paper/Rlocal_310719/MSP_relative_abundance_matrix_rounded.rda")
+load("../data-raw/MSP_relative_abundance_matrix_rounded.rda")
+
+
+  
+MSP_relative_abundance_matrix_rounded = prop.table(MSP_relative_abundance_matrix_rounded %>% as.matrix,1)
+
+MSP_relative_abundance_matrix_rounded[which(is.na(MSP_relative_abundance_matrix_rounded))] <-0
+
+MSP_relative_abundance_matrix_rounded= as.data.frame(MSP_relative_abundance_matrix_rounded)
 
 # load metadata
 # load("C:/Users/alvareao/Documents/actineo_paper/Rlocal_310719/sample_metadata_metaG.rda")
-sample_metadata_metaG = read.csv2("~/actineo_paper/Rlocal_310719/sample_metadata_metaG.csv")
+sample_metadata_metaG = read.csv2("../data-raw/sample_metadata_metaG.csv")
 
 sample_metadata_metaG_v2v4 = sample_metadata_metaG[sample_metadata_metaG$visits_v2v4=="1",]
 sample_metadata_metaG_v2v4 = sample_metadata_metaG_v2v4[sample_metadata_metaG_v2v4$Visit=="V2" | sample_metadata_metaG_v2v4$Visit=="V4",]
@@ -57,7 +65,7 @@ MSP_relative_abundance_matrix_rounded_t = as.data.frame(MSP_relative_abundance_m
 
 MSP_RA_Lactobacillus = MSP_relative_abundance_matrix_rounded_t[,taxoMSP_Lactobacillus$msp_name]
 
-save(MSP_RA_Lactobacillus, file="~/actineo_paper/Rlocal_310719/MSP_RA_Lactobacillus.rda")
+save(MSP_RA_Lactobacillus, file="MSP_RA_Lactobacillus.rda")
 
 
 
@@ -77,9 +85,9 @@ sample_metadata_metaG_v2v4_MSP_Lacto$Visit = as.factor(sample_metadata_metaG_v2v
 sample_metadata_metaG_v2v4_MSP_Lacto$Groupe_dose = relevel(sample_metadata_metaG_v2v4_MSP_Lacto$Groupe_dose, ref = "CP.3") 
 
 summary(sample_metadata_metaG_v2v4_MSP_Lacto)
-save(sample_metadata_metaG_v2v4_MSP_Lacto, file="~/actineo_paper/Rlocal_310719/sample_metadata_metaG_v2v4_MSP_Lacto.rda")
+save(sample_metadata_metaG_v2v4_MSP_Lacto, file="sample_metadata_metaG_v2v4_MSP_Lacto.rda")
 
-load("~/actineo_paper/Rlocal_310719/sample_metadata_metaG_v2v4_MSP_Lacto.rda")
+load("sample_metadata_metaG_v2v4_MSP_Lacto.rda")
 
 
 
@@ -91,7 +99,7 @@ load("~/actineo_paper/Rlocal_310719/sample_metadata_metaG_v2v4_MSP_Lacto.rda")
 
 # plot MSP Lactobacillus - individuals with samples at V2 and V4 (n=76, noATN v5)
 
-```{r}
+```{r warning=FALSE}
 
 
 # plot L. rhamnosus
@@ -105,7 +113,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 # m.sample_metadata_metaG_v2v4_MSP_Lacto_filterv2v4 = m.sample_metadata_metaG_MSP_Lacto %>% filter(Visit == "D0" | Visit == "D28")
 
@@ -117,7 +125,7 @@ p1=
             fill="Groupe_dose",
             alpha=0.5,
             palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               ylab = "Log10 relative abundance L. rhamnosus",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -147,7 +155,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -159,7 +167,7 @@ p2=
             fill="Groupe_dose",
             alpha=0.5,
             palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               ylab = "Log10 relative abundance L. acidophilus",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -189,7 +197,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -201,7 +209,7 @@ p3=
             fill="Groupe_dose",
             alpha=0.5,
             palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 Relative abundance L. amylovorus",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -229,7 +237,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -240,7 +248,7 @@ p4=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -269,7 +277,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -280,7 +288,7 @@ p5=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -309,7 +317,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -320,7 +328,7 @@ p6=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -348,7 +356,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -359,7 +367,7 @@ p7=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -386,7 +394,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -397,7 +405,7 @@ p8=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -424,7 +432,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -435,7 +443,7 @@ p9=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -462,7 +470,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -473,7 +481,7 @@ p10=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -500,7 +508,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -511,7 +519,7 @@ p11=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -537,7 +545,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -548,7 +556,7 @@ p12=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -575,7 +583,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -586,7 +594,7 @@ p13=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -613,7 +621,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -624,7 +632,7 @@ p14=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -651,7 +659,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -662,7 +670,7 @@ p15=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -689,7 +697,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -700,7 +708,7 @@ p16=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -727,7 +735,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -738,7 +746,7 @@ p17=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -767,7 +775,7 @@ m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4
 m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
 
 
-m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-11
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
 
 
 my_comparisons <- list( c("FMP.3", "CP.3"))
@@ -778,7 +786,7 @@ p18=
             fill="Groupe_dose",
             alpha=0.5,
               palette=c("#3399FF", "#FF0033"),
-              add = "jitter",
+              #add = "jitter",
               # ylab = "Log10 relative abundance L. casei/paracasei",
               xlab= "",
               ggtheme = theme_pubr()) +
@@ -796,9 +804,10 @@ p18=
         legend.title = element_text(color="black", size=13, face="bold"))
 
 
-tiff(file="~/tolerance/notebook/MSP_lactobacillus_AR_plot.tiff", w=1600, h=2000)
-plot_grid(c(p1:p18),align="h",nrow=5, ncol=4)
+tiff(file="MSP_lactobacillus_AR_plot.tiff", w=1600, h=2000)
+cowplot::plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,align="h",nrow=5, ncol=4)
 dev.off()
+
 
 ```
 
