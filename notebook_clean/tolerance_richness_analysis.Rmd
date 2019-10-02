@@ -525,7 +525,7 @@ p_change_gene=
               xlab= "",
               ggtheme = theme_pubr()) +
 # scale_y_continuous(name = 'Delta gene richness', limits=c(0,300)) +
-   stat_compare_means(comparisons = my_comparisons_deltagene, label = "p.signif")+
+   stat_compare_means(comparisons = my_comparisons_deltagene, label = "p.signif", method="wilcox.test")+
    theme(axis.title.x=element_blank(), legend.position = 'none')+
  # facet_grid(. ~ Visit)+
   theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
