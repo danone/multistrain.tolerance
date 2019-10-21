@@ -31,7 +31,7 @@ load("../data-raw/tolerance_MSP_table.rda")
 
 counts_scaled = vroom::vroom("../data-raw/scaled_normalization_counts.txt")
 
-
+table(kegg$KO) %>% dim
 
 
 
@@ -265,6 +265,8 @@ write.csv2(KO_counts, file="KO_counts.csv")
 
 KO_counts %>% head
 
+KO_counts %>% dim
+
 
 
 ```
@@ -459,7 +461,6 @@ ggsave("KEGG_contribution_per_visit_per_product.pdf")
 
 
 ```{r}
-
 kegg_contrib_V2=
 sample_metadata_metaG %>%
   filter(Subject!="276001094") %>% #exclude contaminated CP3
@@ -505,8 +506,45 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   theme_minimal()
   
 ggsave("KEGG_average_contribution.pdf")
+```
 
 
+```{r fig.height=5, fig.width=16}
+kegg_modules = readr::read_tsv("../data-raw/kegg.module.txt")
+
+
+kegg_contrib_V2 %>% #sample_frac(0.1) %>%
+  merge(kegg_contrib_V4, by=c("Subject","KO")) %>%
+  mutate(delta_contrib = value.y-value.x) %>%
+  filter(KO %in% KO_counts_Lactobacillus$KO) %>%
+  group_by(Groupe.x,KO) %>%
+  summarise(mean_contrib=median(delta_contrib+10^-6), mean_KO=median(prop.x.x+10^-6)) %>%
+  ungroup() %>%
+  filter(mean_contrib>0.01) %>%
+  merge(kegg_modules, by="KO", all.x = TRUE) %>%
+  group_by(KO) %>%
+  slice(1) %>%
+  ungroup() %>%
+  arrange(desc(mean_contrib)) %>%
+  #dplyr::top_n(100, mean_contrib) %>%
+  #mutate(ModuleGroup2 = ifelse(is.na(ModuleGroup2),"Unknown modules",ModuleGroup2) ) %>%
+  ggplot() + geom_bar(aes(x=reorder(KO, -mean_contrib) ,y=mean_contrib*100, fill=ModuleGroup2), stat="identity") +
+  ylab("average FMP gene contribution (%) by KO\nafter consumption") +
+  xlab("KEGG Orthologous group") +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=90,hjust=1)) +
+  scale_y_log10() +
+  scale_fill_discrete("KEGG modules", l = 80, c = 150)
+  
+  
+ggsave("kegg_barplot.pdf")
+
+
+  
+```
+
+
+```{r}
 ```
 
 ```{r}
@@ -1135,7 +1173,7 @@ network_plot = graph %>%
   ggraph() +
   geom_edge_link(aes(alpha=weight, color=type)) + 
   scale_edge_color_manual("sens", labels =c("neg.","pos."), values = c("red","lightblue")) +
-  geom_node_point(aes(color=kegg,size=11-dist_to_lr10)) +
+  geom_node_point(aes(color=kegg/312,size=11-dist_to_lr10)) +
   #geom_node_text(aes(label=species), size=2) +
   scale_color_viridis("Common KOs\nwith FMP",trans="log10") + 
   scale_size_continuous("Edge distance\nto FMPs", breaks = c(1,4,7,10), labels = c("9","6","3","0")) +
@@ -1165,7 +1203,7 @@ graph %>%
 kegg_function_plot = graph %>%  
   mutate(dist_to_lr10 = node_distance_to(287)) %>% 
   activate(edges) %>%
-  filter(type==TRUE) %>%
+  filter(type==FALSE) %>%
   activate(nodes) %>%
   mutate(isolated= node_is_isolated()) %>%
   filter(!isolated) %>%
