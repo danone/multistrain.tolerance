@@ -19,23 +19,27 @@ library(grid)
 # gene count 
 ```{r}
 
-load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_dwzn13.2M_final.RData")
+load(system.file("data-raw","profile_tolerance_scaled_rounded_dwzn13.2M_final.RData", package = "Tolerance"))
+
+#load("data-raw/profile_tolerance_scaled_rounded_dwzn13.2M_final.RData")
 
 gene_count_tolerance_dwzn13.2M = colSums(profile_tolerance_scaled_rounded_dwzn13.2M > 0)
 save(gene_count_tolerance_dwzn13.2M, file="gene_count_tolerance_13.2M.rda")
 
 Tolerance::sample_metadata_metaG  %>% head
 sample_metadata_metaG$gene_count_dwzn13.2M = gene_count_tolerance_dwzn13.2M
-save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
+#save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
 
-load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_dwzn16M_final.RData")
+load(system.file("data-raw","profile_tolerance_scaled_rounded_dwzn16M_final.RData", package = "Tolerance"))
+
+#load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_dwzn16M_final.RData")
 
 gene_count_tolerance_dwzn16M = colSums(profile_tolerance_scaled_rounded_dwzn16M > 0)
 save(gene_count_tolerance_dwzn16M, file="gene_count_tolerance_dwzn16M.rda")
 
 Tolerance::sample_metadata_metaG  %>% head
 sample_metadata_metaG$gene_count_tolerance_dwzn16M = gene_count_tolerance_dwzn16M
-save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
+#save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
 
 
 ```
@@ -47,7 +51,7 @@ save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
 tapply(sample_metadata_metaG$gene_count_dwzn13.2M,sample_metadata_metaG$group, summary)
 
 
-df_sample_metadata_metaG = data.frame(sample_metadata_metaG[,c("samplenr","gene_count_dwzn13.2M", "group", "Visit", "Groupe_dose")])
+df_sample_metadata_metaG = data.frame(sample_metadata_metaG[,c("samplenr","gene_count_dwzn13.2M", "group", "Visit", "Groupe_dose","mgs_count")])
 
 m.df_sample_metadata_metaG = melt(df_sample_metadata_metaG)
 
@@ -117,7 +121,7 @@ p_msp_richness_all=
         legend.title = element_text(color="black", size=13, face="bold"))
 
 
-tiff(file="~/actineo_paper/Rlocal_310719/Microbiome_richness_107samples.tiff", w=800, h=400)
+tiff(file="Microbiome_richness_107samples.tiff", w=800, h=400)
 plot_grid(p_gene_richness_all,p_msp_richness_all, nrow=1, ncol=2, labels=c("A","B"), label_size = 22)
 dev.off()
 
@@ -126,10 +130,10 @@ dev.off()
 
 # metadata file samples with the 2 timepoints v2,v4, no ATN3 V5 
 ```{r}
+load(system.file("data","sample_metadata_metaG_allvisits_v2v4_090719.rda", package="Tolerance"))
 
-load("~/tolerance/data/sample_metadata_metaG_allvisits_v2v4_090719.rda")
+load(system.file("data-raw/profile_tolerance_scaled_rounded_dwzn13.2M_final.RData", package="Tolerance"))
 
-load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_dwzn13.2M_final.RData")
 
 profile = profile_tolerance_scaled_rounded_dwzn13.2M
 profile = as.data.frame(profile)
@@ -137,13 +141,13 @@ profile_v2v4 = profile[,sample_metadata_metaG_allvisits_v2v4$samplenr]
 
 
 gene_count_tolerance_dwzn13.2M_v2v4 = colSums(profile_v2v4 > 0)
-save(gene_count_tolerance_dwzn13.2M_v2v4, file="~/tolerance/data/gene_count_tolerance_dwzn13.2M_v2v4.rda")
+#save(gene_count_tolerance_dwzn13.2M_v2v4, file="~/tolerance/data/gene_count_tolerance_dwzn13.2M_v2v4.rda")
 
 Tolerance::sample_metadata_metaG_allvisits_v2v4  %>% head
 sample_metadata_metaG_allvisits_v2v4$gene_count = gene_count_tolerance_dwzn13.2M_v2v4
-save(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
+#save(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
 
-load("~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
+load(system.file("data/sample_metadata_metaG_allvisits_v2v4.rda", package="Tolerance"))
 
 sample_metadata_metaG_allvisits_v2v4$group = as.factor(sample_metadata_metaG_allvisits_v2v4$group)
 sample_metadata_metaG_allvisits_v2v4$Visit = as.factor(sample_metadata_metaG_allvisits_v2v4$Visit)
@@ -160,8 +164,10 @@ m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = m.df_sample_metadata_metaG_
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Visit= factor(Visit, labels="D0"))
   
 m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
-  
-  
+```
+
+
+```{r}
 my_comparisons_v2 <- list( c("FMP.3", "CP.3"))
 
 p1=
@@ -222,7 +228,7 @@ scale_y_continuous(name = 'Gene richness', limits=c(0,1300000)) +
         legend.text = element_text(color="black", size=10, face="bold"),
         legend.title = element_text(color="black", size=13, face="bold"))
 
-tiff(file="~/tolerance/notebook/gene_richness_samplesv2v4.tiff", w=800, h=400)
+tiff(file="gene_richness_samplesv2v4.tiff", w=800, h=400)
 plot_grid(p1,p2,align="h",nrow=1, ncol=2)
 dev.off()
 
@@ -286,11 +292,13 @@ scale_y_continuous(name = 'Gene richness', limits=c(0,1300000)) +
         legend.text = element_text(color="black", size=10, face="bold"),
         legend.title = element_text(color="black", size=13, face="bold"))
 
-tiff(file="~/tolerance/notebook/gene_richness_samplesv2v4_stats.tiff", w=800, h=400)
+tiff(file="gene_richness_samplesv2v4_stats.tiff", w=800, h=400)
 plot_grid(p1,p2,align="h",nrow=1, ncol=2)
 dev.off()
+```
 
 
+```{r}
 ```
 
 
@@ -364,7 +372,7 @@ p_msp_richness=
         legend.title = element_text(color="black", size=13, face="bold"))
 
 
-tiff(file="~/actineo_paper/Rlocal_310719/Microbiome_richness.tiff", w=800, h=400)
+tiff(file="Microbiome_richness.tiff", w=800, h=400)
 plot_grid(p_gene_richness,p_msp_richness, nrow=1, ncol=2, labels=c("A","B"), label_size = 22)
 dev.off()
 
@@ -379,27 +387,27 @@ dev.off()
 ```{r}
 
 # all samples (107 samples)
-load("~/tolerance/data/MSP_count_matrix_rounded.rda")
+load(system.file("data/MSP_count_matrix_rounded.rda", package="Tolerance"))
 mgs_count = colSums(MSP_count_matrix_rounded > 0)
-save(mgs_count, file="~/tolerance/data/mgs_count.rda")
-write.csv2(mgs_count, file="~/tolerance/data/mgs_count.csv")
+#save(mgs_count, file="~/tolerance/data/mgs_count.rda")
+write.csv2(mgs_count, file="mgs_count.csv")
 
 Tolerance::sample_metadata_metaG  %>% head
 sample_metadata_metaG$mgs_count = colSums(MSP_count_matrix_rounded > 0)
-save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
+#save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
 
 # samples with all visits v2/v4 (76 samples)
-load("~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
+load(system.file("data/sample_metadata_metaG_allvisits_v2v4.rda", package="Tolerance"))
 Tolerance::sample_metadata_metaG_allvisits_v2v4  %>% head
 MSP_count_matrix_rounded_v2v4 = MSP_count_matrix_rounded[,sample_metadata_metaG_allvisits_v2v4$samplenr]
-save(MSP_count_matrix_rounded_v2v4, file="~/tolerance/data/MSP_count_matrix_rounded_v2v4.rda")
+#save(MSP_count_matrix_rounded_v2v4, file="~/tolerance/data/MSP_count_matrix_rounded_v2v4.rda")
 
 MSP_count_allvisits_v2v4 = colSums(MSP_count_matrix_rounded_v2v4 > 0)
-save(MSP_count_allvisits_v2v4, file="~/tolerance/data/MSP_count_allvisits_v2v4.rda")
+#save(MSP_count_allvisits_v2v4, file="~/tolerance/data/MSP_count_allvisits_v2v4.rda")
 
 Tolerance::sample_metadata_metaG_allvisits_v2v4  %>% head
 sample_metadata_metaG_allvisits_v2v4$MSP_count = MSP_count_allvisits_v2v4
-save(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
+#save(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
 
 sample_metadata_metaG_allvisits_v2v4$group = as.factor(sample_metadata_metaG_allvisits_v2v4$group)
 sample_metadata_metaG_allvisits_v2v4$Visit = as.factor(sample_metadata_metaG_allvisits_v2v4$Visit)
@@ -474,7 +482,7 @@ scale_y_continuous(name = 'MSP richness', limits=c(0,300)) +
         legend.text = element_text(color="black", size=10, face="bold"),
         legend.title = element_text(color="black", size=13, face="bold"))
 
-tiff(file="~/tolerance/notebook/MSP_richness_samplesv2v4.tiff", w=800, h=400)
+tiff(file="MSP_richness_samplesv2v4.tiff", w=800, h=400)
 plot_grid(p3,p4,align="h",nrow=1, ncol=2)
 dev.off()
 
@@ -482,7 +490,7 @@ dev.off()
 
 
 
-tiff(file="~/tolerance/notebook/microbiome_richness_samplesv2v4.tiff", w=900, h=700)
+tiff(file="microbiome_richness_samplesv2v4.tiff", w=900, h=700)
 plot_grid(p1,p2,p3,p4,align="h",labels = c("A","", "B", ""),nrow=2, ncol=2)
 dev.off()
 
@@ -492,14 +500,14 @@ dev.off()
 ```{r}
 # delta gene count
 # delta msp count
-load("~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
-write.csv2(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.csv")
+load(system.file("data/sample_metadata_metaG_allvisits_v2v4.rda", package="Tolerance"))
+#write.csv2(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.csv")
 
 # delta gene count and MSP count on excel
 
-sample_metadata_metaG_allvisits_v2v4_delta = read.csv2("~/tolerance/data/sample_metadata_metaG_allvisits_v2v4_deltaGC_MSP.csv")
+sample_metadata_metaG_allvisits_v2v4_delta = read.csv2(system.file("data/sample_metadata_metaG_allvisits_v2v4_deltaGC_MSP.csv", package="Tolerance"))
 
-sample_metadata_metaG_allvisits_v2v4_delta = read.csv2("~/actineo_paper/Rlocal_310719/sample_metadata_metaG_allvisits_v2v4_deltaGC_MSP.csv")
+#sample_metadata_metaG_allvisits_v2v4_delta = read.csv2("~/actineo_paper/Rlocal_310719/sample_metadata_metaG_allvisits_v2v4_deltaGC_MSP.csv")
 
 sample_metadata_metaG_allvisits_v2v4_delta$Groupe_dose = relevel(sample_metadata_metaG_allvisits_v2v4_delta$Groupe_dose, ref = "CP.3") 
 
@@ -525,7 +533,7 @@ p_change_gene=
               xlab= "",
               ggtheme = theme_pubr()) +
 # scale_y_continuous(name = 'Delta gene richness', limits=c(0,300)) +
-   stat_compare_means(comparisons = my_comparisons_deltagene, label = "p.signif", method="wilcox.test")+
+   stat_compare_means(comparisons = my_comparisons_deltamsp, label = "p.format", method="wilcox.test")+
    theme(axis.title.x=element_blank(), legend.position = 'none')+
  # facet_grid(. ~ Visit)+
   theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
@@ -562,7 +570,7 @@ p_change_msp=
               xlab= "",
               ggtheme = theme_pubr()) +
 # scale_y_continuous(name = 'Delta gene richness', limits=c(0,300)) +
-   stat_compare_means(comparisons = my_comparisons_deltamsp, label = "p.signif")+
+   stat_compare_means(comparisons = my_comparisons_deltamsp, label = "p.format", method="wilcox.test")+
    theme(axis.title.x=element_blank(), legend.position = 'none')+
  # facet_grid(. ~ Visit)+
   theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
@@ -576,9 +584,9 @@ p_change_msp=
 
 
 
-tiff(file="~/actineo_paper/Rlocal_310719/change_microbiome_richness.tiff", w=800, h=400)
+tiff(file="change_microbiome_richness.tiff", w=800, h=400)
 plot_grid(p_change_gene,p_change_msp,align="h",labels = c("A", "B"),nrow=1, ncol=2,label_size = 22)
 dev.off()
-
+plot_grid(p_change_gene,p_change_msp,align="h",labels = c("A", "B"),nrow=1, ncol=2,label_size = 22)
 
 ```
