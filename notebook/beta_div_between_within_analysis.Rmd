@@ -91,3 +91,27 @@ tidyr::nest(-Days.y,-Groupe_dose.x, -variable) %>%
 
 
 
+
+
+
+```{r}
+
+# a difference between days within subject per method and per group ?
+
+  
+  
+beta_diversity_data %>%
+  filter(Days == "D0",Group_test=="Within Group") %>%
+  filter(!(Days.y == "D0"),Subject_test=="Within Subject") %>% 
+  tidyr::nest(-Groupe_dose.x, -variable) %>%
+  mutate(fit = purrr::map(data, ~ kruskal.test(.$value~.$Days.y)),
+         results = map(fit, broom::glance)) %>% 
+  tidyr::unnest(results) %>%
+  select(-data,-fit,-statistic,-parameter) 
+  
+
+
+```
+
+
+
