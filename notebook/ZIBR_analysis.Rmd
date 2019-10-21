@@ -245,15 +245,22 @@ genus_clr_pca = dudi.pca(as.data.frame(genus_clr[genus_select,]%>%t), scannf = F
 
 genus_clr_pca = dudi.pca(as.data.frame(genus_clr%>%t), scannf = F, nf=3)
 
-sample_metadata %>%
-  merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
-  filter(Visit %in% c("V3","V4")) %>%
-  ggplot() + geom_point(aes(x=Axis1,y=Axis2,col=Groupe)) + facet_grid(Visit~Doses)
+genus_clr_pca$eig/sum(genus_clr_pca$eig)
 
 sample_metadata %>%
   merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
   filter(Visit %in% c("V3","V4")) %>%
-  ggplot() + geom_boxplot(aes(x=Groupe,y=Axis2,fill=Groupe)) + facet_grid(Visit~Doses)
+  ggplot() + geom_point(aes(x=Axis1,y=Axis2,col=Groupe)) + 
+  facet_grid(Visit~Doses)
+
+sample_metadata %>%
+  merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
+  filter(Visit %in% c("V2","V4")) %>%
+  ggplot() + 
+  geom_boxplot(aes(x=Groupe,y=Axis2)) + 
+  geom_jitter(aes(x=Groupe,y=Axis2), width = 0.1) + 
+  facet_grid(Visit~Doses) + ylab(paste("PC2",round((genus_clr_pca$eig/sum(genus_clr_pca$eig))[2]*100,2),"%")) +
+  theme_classic()
 
 
 genus_clr_pca$co %>%
@@ -287,6 +294,13 @@ sample_metadata %>%
 
 spe="D_0__Bacteria; D_1__Firmicutes; D_2__Bacilli; D_3__Lactobacillales; D_4__Lactobacillaceae; D_5__Lactobacillus"
 
+spe="D_0__Bacteria; D_1__Firmicutes; D_2__Clostridia; D_3__Clostridiales; D_4__Lachnospiraceae; D_5__Blautia"
+
+spe="D_0__Bacteria; D_1__Firmicutes; D_2__Erysipelotrichia; D_3__Erysipelotrichales; D_4__Erysipelotrichaceae; D_5__Holdemania"
+
+spe="D_0__Archaea; D_1__Euryarchaeota; D_2__Methanobacteria; D_3__Methanobacteriales; D_4__Methanobacteriaceae; D_5__Methanobrevibacter"
+
+spe="D_0__Bacteria; D_1__Bacteroidetes; D_2__Bacteroidia; D_3__Bacteroidales; D_4__Porphyromonadaceae; D_5__Coprobacter"
 
 spe_df =
   genus_metadata_baseline %>%  
