@@ -204,18 +204,21 @@ zibr_est_df %>%
   t %>%
   as.data.frame() %>%
   tibble::rownames_to_column("genus") %>% 
-  select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3, beta.est.table3) %>%
   mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
   #filter(joint.p.fx3<0.05) %>%
   arrange(( joint.p.fx3)) %>% 
   tidyr::separate(genus, into=LETTERS[2:7], sep=";", remove=FALSE ) %>%
   mutate(G=ifelse(joint.p.fx3<0.05|joint.p.Challenge<0.05,G,NA)) %>%
   ggplot() + 
-  geom_point(aes(x=-log10(joint.p.Challenge), y=-log10(joint.p.fx3))) +
-  ggrepel::geom_text_repel(aes(x=-log10(joint.p.Challenge), y=-log10(joint.p.fx3), label=G%>%gsub("D_5__","",.))) +
-  ylab("Dose effect\n(-log10(Qvalue))") + xlab("Cumulative FMP consumption effect\n(-log10(Qvalue))") + theme_classic() +
-  geom_hline(yintercept = -log10(0.05), alpha=0.5, color="pink") + geom_vline(xintercept = -log10(0.05), alpha=0.5, color="pink")
+  geom_point(aes(x=-log10(joint.p.Challenge+10^-12), y=-log10(joint.p.fx3+10^-12), size=abs(beta.est.table3)), alpha=0.5) +
+  ggrepel::geom_text_repel(aes(x=-log10(joint.p.Challenge+10^-12), y=-log10(joint.p.fx3+10^-12), label=G%>%gsub("D_5__","",.))) +
+  ylab("Dose effect\n(-log10(Qvalue))") + xlab("Test product consumption effect\n(-log10(Qvalue))") + theme_classic() +
+  geom_hline(yintercept = -log10(0.05), alpha=0.5, color="red") + geom_vline(xintercept = -log10(0.05), alpha=0.5, color="red") +
+  scale_size_continuous("absolute Test product\neffect estimate") #+
+  #xlim(0,16) + ylim(0,16)
 
+ggsave("Figure_ZIBR_pvalue.pdf")
 
 zibr_est_df %>%
   t %>%
