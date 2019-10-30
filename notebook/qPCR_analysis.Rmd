@@ -51,7 +51,11 @@ m.df_data_1518  <- transform(m.df_data_1518, target = factor(target, labels=c("L
 
 
 p1=
-  ggboxplot(m.df_data_1518, x = "Time.points", y = "value",
+  ggboxplot(m.df_data_1518 %>% 
+              mutate(Product=Product %>% 
+                       forcats::fct_recode(
+                         `Control 1`= "CP.1", `Control 3` = "CP.3",
+                         `Test 1` = "FMP.1", `Test 3` = "FMP.3"))  , x = "Time.points", y = "value",
           color="Product",
           fill="Product",
           alpha=0.5,
@@ -202,18 +206,22 @@ m.df_data_3690 %>%
 
 
 
-```{r fig.height=4, fig.width=16}
+```{r fig.height=12, fig.width=8}
 
 
 leg <- ggpubr::get_legend(p1)
 
 #p1 <- p1 + theme(legend.position = "none")
-p2 <- p2 + theme(legend.position = "none")
-p3 <- p3 + theme(legend.position = "none")
+#p2 <- p2 + theme(legend.position = "none")
+#p3 <- p3 + theme(legend.position = "none")
 
-plot_grid(p1 + theme(legend.position = "none") ,p2,p3,leg, align = "h", axis="t",nrow=1, ncol=4, rel_widths = c(1,1,1,0.3))
+plot_grid(
+  p1 + theme(legend.position = "none") ,leg,
+  p2,leg,
+  p3+ theme(legend.position = "none"),leg, 
+  align = "h", axis="t",nrow=3, ncol=2, rel_widths = c(1,0.3))
 
-
+ggsave("Figure_qPCR.pdf")
 
 
 ```
