@@ -1155,7 +1155,7 @@ ggraph(graph) +
 graph %>%  
   mutate(dist_to_lr10 = node_distance_to(287)) %>% 
   activate(edges) %>%
-  #filter(type==FALSE) %>%
+  filter(type==TRUE) %>%
   activate(nodes) %>%
   mutate(isolated= node_is_isolated()) %>%
   filter(!(name %in% c("msp_lrhamnosus","msp_1025"))) %>%
@@ -1163,6 +1163,7 @@ graph %>%
   mutate(kegg=ifelse(is.na(kegg),0,kegg)) %>% 
   select(kegg,dist_to_lr10) %>% as_tibble() %>% 
   with(.,cor.test(.$kegg, .$dist_to_lr10, method="spearman"))
+
 
 
 
@@ -1203,7 +1204,7 @@ graph %>%
 kegg_function_plot = graph %>%  
   mutate(dist_to_lr10 = node_distance_to(287)) %>% 
   activate(edges) %>%
-  filter(type==FALSE) %>%
+  filter(type==TRUE) %>%
   activate(nodes) %>%
   mutate(isolated= node_is_isolated()) %>%
   filter(!isolated) %>%
