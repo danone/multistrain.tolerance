@@ -234,7 +234,7 @@ zibr_est_df %>%
 
 
 
-```{r}
+```{r fig.height=10, fig.width=6}
 
 genus %>%
   tibble::column_to_rownames("genus") %>%
@@ -246,7 +246,7 @@ library(ade4)
 
 genus_clr_pca = dudi.pca(as.data.frame(genus_clr[genus_select,]%>%t), scannf = F, nf=3)
 
-genus_clr_pca = dudi.pca(as.data.frame(genus_clr%>%t), scannf = F, nf=3)
+#genus_clr_pca = dudi.pca(as.data.frame(genus_clr%>%t), scannf = F, nf=3)
 
 genus_clr_pca$eig/sum(genus_clr_pca$eig)
 
@@ -256,6 +256,7 @@ sample_metadata %>%
   ggplot() + geom_point(aes(x=Axis1,y=Axis2,col=Groupe)) + 
   facet_grid(Visit~Doses)
 
+PC2_boxplot_plot =
 sample_metadata %>%
   merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
   filter(Visit %in% c("V2","V4")) %>%
@@ -265,15 +266,20 @@ sample_metadata %>%
   facet_grid(Visit~Doses) + ylab(paste("PC2",round((genus_clr_pca$eig/sum(genus_clr_pca$eig))[2]*100,2),"%")) +
   theme_classic()
 
-
+genus_pca_plot = 
 genus_clr_pca$co %>%
   tibble::rownames_to_column("genus") %>%
   tidyr::separate(genus, into=LETTERS[2:7], sep=";", remove=FALSE ) %>%
   ggplot() + geom_segment(aes(x=0,y=0,xend=Comp1,yend=Comp2), arrow = arrow(length = unit(0.1,"cm")) ) +
-  ggrepel::geom_text_repel(aes(x=Comp1,y=Comp2, label=G%>%gsub("D_5__","",.))) +
-  theme_classic()
+  ggrepel::geom_text_repel(aes(x=Comp1,y=Comp2, label=paste0(E%>%gsub("D_3__","",.),F%>%gsub("D_4__","",.),"\n",G%>%gsub("D_5__","",.)))) +
+  theme_classic() +
+  ylab(paste("PC2",round((genus_clr_pca$eig/sum(genus_clr_pca$eig))[2]*100,2),"%")) +
+  xlab(paste("PC1",round((genus_clr_pca$eig/sum(genus_clr_pca$eig))[1]*100,2),"%"))
 
 
+cowplot::plot_grid(genus_pca_plot,PC2_boxplot_plot,ncol=1, label="AUTO")
+
+ggsave("figure_genus_pca_clr.pdf")
 
 sample_metadata %>%
   merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
