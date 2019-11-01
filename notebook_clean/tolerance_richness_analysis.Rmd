@@ -42,6 +42,23 @@ sample_metadata_metaG$gene_count_tolerance_dwzn16M = gene_count_tolerance_dwzn16
 #save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
 
 
+load(system.file("data-raw","MSP_relative_abundance_matrix_rounded.rda",  package="Tolerance"))
+
+Tolerance::MSP_abundance_matrix %>%
+  round(0) %>% 
+  apply(2,sum)
+
+Tolerance::MSP_abundance_matrix %>%
+  round(0) %>% 
+  t %>%
+  vegan::rarefy(1700) %>%
+  #t %>%
+  data.frame(mgs_count_rarefied=.) %>%
+  merge(sample_metadata_metaG,.,by.x="samplenr", by.y="row.names") -> sample_metadata_metaG
+  
+  
+  
+
 ```
 
 # gene richness according to product consumption
@@ -51,7 +68,7 @@ sample_metadata_metaG$gene_count_tolerance_dwzn16M = gene_count_tolerance_dwzn16
 tapply(sample_metadata_metaG$gene_count_dwzn13.2M,sample_metadata_metaG$group, summary)
 
 
-df_sample_metadata_metaG = data.frame(sample_metadata_metaG[,c("samplenr","gene_count_dwzn13.2M", "group", "Visit", "Groupe_dose","mgs_count")])
+df_sample_metadata_metaG = data.frame(sample_metadata_metaG[,c("samplenr","gene_count_dwzn13.2M", "group", "Visit", "Groupe_dose","mgs_count_rarefied")])
 
 m.df_sample_metadata_metaG = melt(df_sample_metadata_metaG)
 
@@ -87,7 +104,7 @@ p_gene_richness_all=
 
 
 
-df.sample_metadata_metaG = data.frame(sample_metadata_metaG[,c("Visit","Groupe_dose", "Groupe", "group","mgs_count")])
+df.sample_metadata_metaG = data.frame(sample_metadata_metaG[,c("Visit","Groupe_dose", "Groupe", "group","mgs_count_rarefied")])
 m.df.sample_metadata_metaG = melt(df.sample_metadata_metaG)
 
 m.df.sample_metadata_metaG =  transform(m.df.sample_metadata_metaG, Visit = factor(Visit, labels=c("D0", "D28","D56"), ordered=TRUE))
@@ -389,7 +406,7 @@ dev.off()
 # all samples (107 samples)
 load(system.file("data/MSP_count_matrix_rounded.rda", package="Tolerance"))
 mgs_count = colSums(MSP_count_matrix_rounded > 0)
-#save(mgs_count, file="~/tolerance/data/mgs_count.rda")
+#save(mgs_count_rarefied, file="~/tolerance/data/mgs_count.rda")
 write.csv2(mgs_count, file="mgs_count.csv")
 
 Tolerance::sample_metadata_metaG  %>% head
