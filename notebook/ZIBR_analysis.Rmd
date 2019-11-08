@@ -259,12 +259,14 @@ sample_metadata %>%
 PC2_boxplot_plot =
 sample_metadata %>%
   merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
-  filter(Visit %in% c("V2","V4")) %>%
+  filter(Visit %in% c("V2","V3","V4","V5")) %>%
+  mutate(Visit = Visit %>% forcats::fct_recode(D0="V2",D14="V3",D28="V4",D56="V5")  ) %>%
+  mutate(Groupe = Groupe %>% forcats::fct_recode(Control="CP",Test="ATN")  ) %>%
   ggplot() + 
   geom_boxplot(aes(x=Groupe,y=Axis2)) + 
   geom_jitter(aes(x=Groupe,y=Axis2), width = 0.1) + 
   facet_grid(Visit~Doses) + ylab(paste("PC2",round((genus_clr_pca$eig/sum(genus_clr_pca$eig))[2]*100,2),"%")) +
-  theme_classic()
+  theme_classic() + xlab("Group")
 
 genus_pca_plot = 
 genus_clr_pca$co %>%
@@ -277,7 +279,7 @@ genus_clr_pca$co %>%
   xlab(paste("PC1",round((genus_clr_pca$eig/sum(genus_clr_pca$eig))[1]*100,2),"%"))
 
 
-cowplot::plot_grid(genus_pca_plot,PC2_boxplot_plot,ncol=1, label="AUTO")
+cowplot::plot_grid(genus_pca_plot,PC2_boxplot_plot,ncol=1, labels="AUTO", rel_heights = c(1,1.2))
 
 ggsave("figure_genus_pca_clr.pdf")
 
@@ -292,6 +294,39 @@ sample_metadata %>%
   arrange(p.value) %>%
   mutate(p.value=p.adjust(p.value,"fdr"))
   
+sample_metadata %>%
+  merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
+  filter(Visit %in% c("V2","V3","V4","V5")) %>%
+  group_by(Visit,Doses) %>%
+  tidyr::nest() %>%
+  mutate(model = map(data, ~wilcox.test(Axis1 ~ Groupe, data = .))) %>%
+  mutate(tidy = map(model, broom::tidy)) %>%
+  tidyr::unnest(tidy, .drop = T) %>%
+  arrange(p.value) %>%
+  mutate(p.value=p.adjust(p.value,"fdr"))
+
+sample_metadata %>%
+  merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
+  filter(Visit %in% c("V2","V3","V4","V5")) %>%
+  group_by(Doses) %>%
+  tidyr::nest() %>%
+  mutate(model = map(data, ~kruskal.test(Axis1 ~ paste(Groupe,Visit), data = .))) %>%
+  mutate(tidy = map(model, broom::tidy)) %>%
+  tidyr::unnest(tidy, .drop = T) %>%
+  arrange(p.value) %>%
+  mutate(p.value=p.adjust(p.value,"fdr"))
+
+sample_metadata %>%
+  merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
+  filter(Visit %in% c("V2","V3","V4","V5")) %>%
+  group_by(Doses) %>%
+  tidyr::nest() %>%
+  mutate(model = map(data, ~kruskal.test(Axis2 ~ paste(Groupe,Visit), data = .))) %>%
+  mutate(tidy = map(model, broom::tidy)) %>%
+  tidyr::unnest(tidy, .drop = T) %>%
+  arrange(p.value) %>%
+  mutate(p.value=p.adjust(p.value,"fdr"))
+
 
 ```
 
