@@ -551,10 +551,10 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   geom_hline(yintercept = 0.003, linetype=2) +
   scale_color_brewer("", type="qual") +
   xlab("average KO aggregated rel. abundance\nat baseline") + 
-  ylab("average FMP gene contribution by KO\nduring consumption") +
+  ylab("average Test product gene\ncontribution by KO\nduring consumption") +
   theme_minimal()
   
-ggsave("KEGG_average_contribution.pdf")
+ggsave("Figure_KEGG_average_contribution.pdf")
 ```
 
 
@@ -592,6 +592,53 @@ ggsave("Figure_kegg_barplot.pdf")
   
 ```
 
+```{r}
+
+#import function category based on KEGG brite
+
+#readxl::read_xlsx("../data-raw/KEGG_annotations/KO_selection_FMP_category.xlsx", sheet = "category") %>% readr::write_tsv("KO_category.txt")
+#readr::read_tsv("KO_category.txt") %>%
+#mutate(KO = KO %>% stringr::str_remove(., "[:space:][:space:]") %>% stringr::str_remove(., "ko:"))
+
+readxl::read_xlsx("../data-raw/KEGG_annotations/KO_selection_FMP_category.xlsx", sheet = "category") %>%
+  mutate(KO = KO %>% stringr::str_remove(., "[:space:][:space:]") %>% stringr::str_remove(., "ko:")) %>%
+  mutate(KEGG_Brite = ifelse(KEGG_Brite=="others","Others",KEGG_Brite)) %>%
+  group_by(KEGG_Brite,Type) %>%
+  summarise(n=n()) %>%
+  arrange(desc(n)) %>%
+  mutate(Type= ifelse(Type %in% c("AA","EC: 1.1","PTS","EC: 2.7","EC: 3.5","ion"),yes=Type,no=NA)) %>%
+  #mutate(Type = forcats::fct_relevel(Type,"AA","PTS","ion","EC: 1.1","EC: 2.7","EC: 3.5")) %>%
+  mutate(Type=factor(Type, levels=c("AA","PTS","ion","EC: 1.1","EC: 2.7","EC: 3.5"))) %>%
+  #mutate(Type = forcats::fct_relevel(as.factor(Type),"AA",after=3)) %>%
+  mutate(Type = case_when(
+    
+    Type == "AA" ~ "Aminoacid transporter",
+    Type == "PTS" ~ "Phosphotransferase system",
+    Type == "ion" ~ "Ion transporter",
+    Type == "EC: 1.1" ~ "EC:1.1",
+    Type == "EC: 2.7" ~ "EC:2.7",
+    Type == "EC: 3.5" ~ "EC:3.5"
+    
+  )) %>%
+  mutate(Type=factor(Type, levels=c("Aminoacid transporter","Phosphotransferase system","Ion transporter","EC:1.1","EC:2.7","EC:3.5"))) %>%
+  mutate(Type = forcats::fct_explicit_na(Type, na_level = "Others") ) %>%
+  mutate(Type = Type %>% forcats::fct_relevel("Others", after = 0)) %>%
+  ungroup() %>%
+  #mutate(KEGG_Brite = forcats::fct_reorder(KEGG_Brite %>% as.factor, n, median)) %>%
+  ggplot() + 
+  geom_bar(aes(x=reorder(KEGG_Brite,-n),fill=Type,y=n), stat="identity") + 
+  xlab("") + ylab("Number of KO") +
+  coord_flip() + theme_classic() +
+  scale_fill_manual("", values= c('#cccccc','#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33')) -> kegg_brite_barplot
+  
+ kegg_brite_barplot 
+
+
+
+```
+
+
+
 
 ```{r}
 
@@ -605,7 +652,7 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   filter(mean_contrib>0.003) %>%
   merge(kegg_modules, by="KO", all.x = TRUE) %>%
   select(KO,KODesc) %>%
-  unique() %>% write_csv2(path="KO_selection_FMP.csv")
+  unique() %>% readr::write_csv2(path="KO_selection_FMP.csv")
 
 
 
@@ -1128,14 +1175,14 @@ MSP_spiec_easi = run_spiec_easi_results$MSP_spiec_easi
 
 library(ggraph)
 library(tidygraph)
-
+library(igraph)
 MSP_spiec_easi
 
 
 
 
 ig.mb     <- adj2igraph(getRefit(MSP_spiec_easi), vertex.attr=list(name=msp_select))
-library(igraph)
+
 ## set size of vertex proportional to clr-mean
 vsize    <- rowMeans(clr(MSP_abundance_matrix_rounded[msp_select,], 1))+6
 ig.coord <- layout.fruchterman.reingold(ig.mb)
@@ -1289,6 +1336,9 @@ kegg_function_plot = graph %>%
   scale_fill_viridis_d("MSP edge distance\nto Test product species",option="magma") + 
   xlab("Number of KOs in common with\nTest product species contributions") +
   ylab("MSP proportion") + theme_minimal()
+
+
+
 ```
 
 
