@@ -607,3 +607,26 @@ dev.off()
 plot_grid(p_change_gene,p_change_msp,align="h",labels = c("A", "B"),nrow=1, ncol=2,label_size = 22)
 
 ```
+
+
+```{r eval=FALSE, include=FALSE}
+
+tolerance_MSP_table %>% 
+  filter(module_name=="core") %>%
+  select(msp_name,gene_name) %>%
+  merge(.,profile_tolerance_scaled_rounded_dwzn13.2M, by.x="gene_name", by.y="row.names") %>%
+  select(-gene_name) %>%
+  group_by(msp_name) %>%
+  summarise_all(median) -> tmp
+
+tmp %>%
+  group_by(msp_name) %>%
+  mutate_all(round) %>%
+  ungroup() %>%
+  summarise_if(is.numeric,sum)
+
+
+```
+
+
+
