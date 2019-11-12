@@ -170,6 +170,40 @@ filter(msp_name %in% c("msp_1025","msp_lrhamnosus"))
 ```
 
 
+Import CD-HIT clustering
+```{r}
+
+cdhit_path = system.file("data-raw/msp2018_tolerance/Lifeseq_non-redundant_augmented-catalog.fasta.clstr",package="Tolerance")
+
+
+cdhit = vroom::vroom(cdhit_path)
+
+Lacto_genes_name = grep("Lr10|Lpp121|Lpp1", cdhit$id, value = TRUE)
+
+
+clstr_id = cdhit %>%  filter(id %in% Lacto_genes_name  ) %>%  pull(clstr)
+
+
+corresponding_catalog_Lacto_genes = 
+cdhit %>%
+  filter(clstr_rep == 1) %>%
+  filter(clstr %in% clstr_id) %>%
+  pull(id)
+  
+table(gsub("\\|MetaHIT","",corresponding_catalog_Lacto_genes) %in% counts_scaled$gene_name) 
+
+
+
+c(counts_scaled$gene_name[counts_scaled$gene_name %in%  gsub("\\|MetaHIT","",corresponding_catalog_Lacto_genes) ],
+
+grep("Lr10|Lpp121|Lpp1",counts_scaled$gene_name, value = TRUE)) -> genes_names_from_Lacto
+
+counts_scaled %>%
+  filter(gene_name %in% genes_names_from_Lacto) %>% dim
+
+
+```
+
 
 
 ```{r}
@@ -734,7 +768,7 @@ sample_metadata_metaG %>%
 ## Cazy
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 cazy %>% #head(200) %>%
   #sample_frac(0.05) %>%
   tidyr::separate(cazy_family , sep=",", into=as.character(1:100)) %>%
@@ -790,7 +824,7 @@ write.csv2(cazy_counts_Lactobacillus, file="cazy_counts_Lactobacillus.csv")
 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 cazy_counts %>%
   reshape2::melt() %>%
@@ -844,7 +878,7 @@ cazy_contrib_V2 %>% #sample_frac(0.1) %>%
 ```
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 cazy_contrib_Lactobacillus %>% dim
 
 
@@ -883,7 +917,7 @@ sample_metadata_metaG %>%
 ## EggNOG
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 og %>% head(50)
 
@@ -895,7 +929,7 @@ og %>% head(50)
 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 OG=og
 
@@ -976,7 +1010,7 @@ write.csv2(NOG_counts_Lactobacillus, file="NOG_counts_Lactobacillus.csv")
 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 NOG_counts %>%
   reshape2::melt() %>%
@@ -1030,7 +1064,7 @@ NOG_contrib_V2 %>% #sample_frac(0.1) %>%
 ```
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 NOG_contrib_Lactobacillus %>% dim
 
 
@@ -1069,6 +1103,7 @@ sample_metadata_metaG %>%
 
 
 ```{r}
+data("MSP_abundance_matrix_rounded")
 
 MSP_abundance_matrix_rounded %>% 
   tibble::rownames_to_column("msp") %>% 
@@ -1089,7 +1124,7 @@ sum(MSP_abundance_matrix_rounded[msp_select,])/sum(MSP_abundance_matrix_rounded)
 ### with CAZY
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 cazy_melt %>% 
   filter(cazy_family %in% cazy_contrib_Lactobacillus$cazy_family) %>% 
@@ -1166,6 +1201,9 @@ MSP_abundance_matrix_rounded[msp_select,] %>% t %>%
 
 MSP_spiec_easi = run_spiec_easi_results$MSP_spiec_easi
 
+save(MSP_spiec_easi, file = "MSP_spiec_easi.rda")
+
+
 ```
 
 
@@ -1176,7 +1214,7 @@ MSP_spiec_easi = run_spiec_easi_results$MSP_spiec_easi
 library(ggraph)
 library(tidygraph)
 library(igraph)
-MSP_spiec_easi
+load("MSP_spiec_easi.rda")
 
 
 
@@ -1337,6 +1375,7 @@ kegg_function_plot = graph %>%
   xlab("Number of KOs in common with\nTest product species contributions") +
   ylab("MSP proportion") + theme_minimal()
 
+kegg_function_plot
 
 
 ```
