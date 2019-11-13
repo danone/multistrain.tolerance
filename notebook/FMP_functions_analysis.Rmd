@@ -181,7 +181,7 @@ cdhit = vroom::vroom(cdhit_path)
 Lacto_genes_name = grep("Lr10|Lpp121|Lpp1", cdhit$id, value = TRUE)
 
 
-clstr_id = cdhit %>%  filter(id %in% Lacto_genes_name  ) %>%  pull(clstr)
+clstr_id = cdhit %>%  filter(id %in% Lacto_genes_name  ) %>%  pull(clstr) %>% unique()
 
 
 corresponding_catalog_Lacto_genes = 
@@ -319,7 +319,7 @@ kegg_melt %>% #sample_frac(0.05) %>%
           #  tidyr::unite("gene_names",gene_name, A,B,C,D,E, sep = "|") %>%
           #  mutate(gene_name = gene_names %>% gsub("NA\\|NA\\|NA\\|NA\\|NA\\|","",.)) %>%
           #  select(-gene_names) %>%
-           filter(gene_name %in% genes_names_from_products), 
+           filter(gene_name %in% genes_names_from_Lacto), 
         by="gene_name") %>%
   select(-gene_name) %>%
   group_by(KO) %>%
@@ -582,13 +582,17 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "universal genes","others genes")) %>%
   ggplot() + geom_point(aes(x=mean_KO,y=mean_contrib, color=Groupe.x), alpha=0.5) + 
   scale_y_log10(label=scales::percent) + scale_x_log10() + facet_wrap(~DNA_KO) +
-  geom_hline(yintercept = 0.003, linetype=2) +
+  geom_hline(yintercept = 0.005, linetype=2) +
   scale_color_brewer("", type="qual") +
   xlab("average KO aggregated rel. abundance\nat baseline") + 
   ylab("average Test product gene\ncontribution by KO\nduring consumption") +
   theme_minimal()
   
 ggsave("Figure_KEGG_average_contribution.pdf")
+
+
+
+
 ```
 
 
@@ -603,7 +607,7 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   group_by(Groupe.x,KO) %>%
   summarise(mean_contrib=median(delta_contrib+10^-6), mean_KO=median(prop.x.x+10^-6)) %>%
   ungroup() %>%
-  filter(mean_contrib>0.01) %>%
+  filter(mean_contrib>0.005) %>%
   merge(kegg_modules, by="KO", all.x = TRUE) %>%
   group_by(KO) %>%
   slice(1) %>%
@@ -627,6 +631,76 @@ ggsave("Figure_kegg_barplot.pdf")
 ```
 
 ```{r}
+
+
+kegg_contrib_V2 %>% #sample_frac(0.1) %>%
+  merge(kegg_contrib_V4, by=c("Subject","KO")) %>%
+  mutate(delta_contrib = value.y-value.x) %>%
+  filter(KO %in% KO_counts_Lactobacillus$KO) %>%
+  group_by(Groupe.x,KO) %>%
+  summarise(mean_contrib=median(delta_contrib+10^-6), mean_KO=median(prop.x.x+10^-6)) %>%
+  ungroup() %>%
+  filter(mean_contrib>0.005) %>%
+  select(KO,mean_contrib) %>%
+  write.csv2(file = "KO_selected_FMP_contribution.csv")
+
+
+```
+
+
+```{r}
+rbind(  cbind(readxl::read_xlsx("../data-raw/KEGG_annotations/KO_selected_FMP_contribution.xlsx", sheet = "transporter"),
+    Brite="Transporters"),
+  cbind(    readxl::read_xlsx("../data-raw/KEGG_annotations/KO_selected_FMP_contribution.xlsx", sheet = "enzymes"),
+    Brite="Enzymes")) %>%
+  select(KO,Brite,Type,Subtype) %>% 
+  mutate(Type = case_when(
+    
+    Type == "AA" ~ "Aminoacid transporter",
+    Type == "PTS" ~ "Phosphotransferase system",
+    Type == "ion" ~ "Ion transporter",
+    Type == "MFS" ~ "MFS transporter",
+    Type == "EC:1" ~ "Oxydoreductase",
+    Type == "EC:2" ~ "Transferase",
+    Type == "EC.2" ~ "Transferase", # to fix
+    Type == "EC:3" ~ "Hydrolase",
+    Type == "EC:4" ~ "Lyase",
+    Type == "EC:5" ~ "Isomerase",
+    Type == "EC:6" ~ "Ligase",
+    TRUE ~ "Others"       
+           
+           )) %>%
+  mutate(Subtype = case_when(
+    
+    Subtype == "EC:1.1" ~ "EC:1.1",
+    Subtype == "EC:2.7" ~ "EC:2.7",
+    Subtype == "EC:3.5" ~ "EC:3.5",
+    Subtype == "DHA" ~ "Drug antiporter",
+    Subtype == "manganese" ~ "Manganese transporter",
+    Subtype == "SP" ~ "Sugar porter",
+    Subtype == "glu" ~ "Glutamate transporter",
+    TRUE ~ "Others"
+    
+    )) %>%
+  mutate(Type=factor(Type, levels=c("Others","MFS transporter", "Aminoacid transporter","Phosphotransferase system","Ion transporter", "Transferase", "Oxydoreductase","Hydrolase","Lyase","Isomerase","Ligase"))) %>%
+  mutate(Subtype=factor(Subtype, levels=c("Others", "Glutamate transporter","Manganese transporter","Drug antiporter","Sugar porter","EC:1.1","EC:2.7","EC:3.5"))) %>%
+  ggplot() +
+  geom_bar(aes(x=Type,fill=Subtype)) + 
+  facet_wrap(~Brite, scale="free_y", nrow=2) +
+  ylab("Number of KOs")+ xlab("Category") +
+  theme_minimal() +
+  scale_fill_manual("", values= c('#cccccc','#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628')) +
+  coord_flip() -> kegg_brite_barplot
+  
+ kegg_brite_barplot 
+  
+
+
+```
+
+
+
+```{r eval=FALSE, include=FALSE}
 
 #import function category based on KEGG brite
 
@@ -674,7 +748,7 @@ readxl::read_xlsx("../data-raw/KEGG_annotations/KO_selection_FMP_category.xlsx",
 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   merge(kegg_contrib_V4, by=c("Subject","KO")) %>%
@@ -683,7 +757,7 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   group_by(Groupe.x,KO) %>%
   summarise(mean_contrib=median(delta_contrib+10^-6), mean_KO=median(prop.x.x+10^-6)) %>%
   ungroup() %>%
-  filter(mean_contrib>0.003) %>%
+  filter(mean_contrib>0.005) %>%
   merge(kegg_modules, by="KO", all.x = TRUE) %>%
   select(KO,KODesc) %>%
   unique() %>% readr::write_csv2(path="KO_selection_FMP.csv")
@@ -702,7 +776,8 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   group_by(Groupe.x,KO) %>%
   summarise(mean_contrib=median(delta_contrib+10^-6), mean_KO=median(prop.x.x+10^-6)) %>%
   mutate(DNA_KO = ifelse(KO %in% KO_DNA_replication, "DNA RNA machinery","others")) %>%
-  filter(mean_contrib > 0.003) %>%
+  filter(mean_contrib > 0.005) %>%
+  ungroup %>%
   select(KO,mean_contrib) -> KO_contrib_Lactobacillus
   write.csv2(KO_contrib_Lactobacillus, file="KO_contrib_Lactobacillus.csv")
 
@@ -1298,8 +1373,8 @@ ggraph(graph) +
                   
 
 
-
-
+V(graph)$species[287]
+max(V(graph)$kegg %>% na.omit)
 
 
 graph %>%  
@@ -1325,9 +1400,9 @@ network_plot = graph %>%
   ggraph() +
   geom_edge_link(aes(alpha=weight, color=type)) + 
   scale_edge_color_manual("sens", labels =c("neg.","pos."), values = c("red","lightblue")) +
-  geom_node_point(aes(color=kegg/312,size=11-dist_to_lr10)) +
+  geom_node_point(aes(color=kegg/max(V(graph)$kegg %>% na.omit),size=11-dist_to_lr10)) +
   #geom_node_text(aes(label=species), size=2) +
-  scale_color_viridis("Common KOs\nwith Test product\nspecies",trans="log10") + 
+  scale_color_viridis("Common KOs prop.\nwith Test product\nspecies",trans="log10") + 
   scale_size_continuous("Edge distance\nto Test product\nspecies", breaks = c(1,4,7,10), labels = c("9","6","3","0")) +
   scale_edge_alpha_continuous("SPIEC-EASI\nweight") + 
   ggforce::geom_mark_rect(aes(x, y, label = 'Test product\nspecies', 
@@ -1363,12 +1438,14 @@ kegg_function_plot = graph %>%
   mutate(kegg=ifelse(is.na(kegg),0,kegg)) %>%
   mutate(kegg_break=case_when(
     
-    kegg == 0 ~ "[0",
-    kegg>=1 & kegg < 10 ~ "[1-10[",
+    kegg < 10 ~ "[0-10[",
     kegg>=10 & kegg < 30 ~ "[10-30[",
     kegg>=30 & kegg < 100 ~ "[30-100[",
-    kegg>=100   ~ ">100"
+    kegg>=100 & kegg < 300 ~ "[100-300[",
+    kegg>=300   ~ ">300"
   ) ) %>%
+  mutate(kegg_break =  as.factor(kegg_break)) %>%
+  mutate(kegg_break =  forcats::fct_relevel(kegg_break, "[100-300[", after=3 )) %>%
   ggplot() + 
   geom_bar(aes(x=kegg_break,fill=dist_to_lr10%>%as.character), position="fill") + 
   scale_fill_viridis_d("MSP edge distance\nto Test product species",option="magma") + 
@@ -1381,8 +1458,8 @@ kegg_function_plot
 ```
 
 
-```{r fig.height=14, fig.width=10}
-cowplot::plot_grid(kegg_modules_plot, network_plot,kegg_function_plot, nrow=3, rel_heights = c(1.2,2,1.2), labels = "AUTO")
+```{r fig.height=14, fig.width=16}
+cowplot::plot_grid(kegg_modules_plot, kegg_brite_barplot, network_plot,kegg_function_plot, nrow=3, rel_heights = c(1.2,2), rel_widths = c(1.5,1), labels = "AUTO")
 
 ggsave("Figure_MSP_network_KEGG_contribution.pdf")
 
