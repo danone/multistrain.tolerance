@@ -1458,8 +1458,8 @@ kegg_function_plot
 ```
 
 
-```{r fig.height=14, fig.width=16}
-cowplot::plot_grid(kegg_modules_plot, kegg_brite_barplot, network_plot,kegg_function_plot, nrow=3, rel_heights = c(1.2,2), rel_widths = c(1.5,1), labels = "AUTO")
+```{r fig.height=10, fig.width=16}
+cowplot::plot_grid(kegg_modules_plot, kegg_brite_barplot, network_plot,kegg_function_plot, nrow=2, rel_heights = c(1.2,2), rel_widths = c(1.5,1), labels = "AUTO")
 
 ggsave("Figure_MSP_network_KEGG_contribution.pdf")
 
