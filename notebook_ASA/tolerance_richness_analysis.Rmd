@@ -1,0 +1,632 @@
+---
+title: "Richness analysis - metagenomic shotgun data"
+output: html_notebook
+---
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(ggpubr)
+library(ggsignif)
+library(reshape)
+library(cowplot)
+library(grid)
+
+```
+
+# gene count 
+```{r}
+
+load(system.file("data-raw","profile_tolerance_scaled_rounded_dwzn13.2M_final.RData", package = "Tolerance"))
+
+#load("data-raw/profile_tolerance_scaled_rounded_dwzn13.2M_final.RData")
+
+gene_count_tolerance_dwzn13.2M = colSums(profile_tolerance_scaled_rounded_dwzn13.2M > 0)
+save(gene_count_tolerance_dwzn13.2M, file="gene_count_tolerance_13.2M.rda")
+
+Tolerance::sample_metadata_metaG  %>% head
+sample_metadata_metaG$gene_count_dwzn13.2M = gene_count_tolerance_dwzn13.2M
+#save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
+
+load(system.file("data-raw","profile_tolerance_scaled_rounded_dwzn16M_final.RData", package = "Tolerance"))
+
+#load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_dwzn16M_final.RData")
+
+gene_count_tolerance_dwzn16M = colSums(profile_tolerance_scaled_rounded_dwzn16M > 0)
+save(gene_count_tolerance_dwzn16M, file="gene_count_tolerance_dwzn16M.rda")
+
+Tolerance::sample_metadata_metaG  %>% head
+sample_metadata_metaG$gene_count_tolerance_dwzn16M = gene_count_tolerance_dwzn16M
+#save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
+
+
+load(system.file("data-raw","MSP_relative_abundance_matrix_rounded.rda",  package="Tolerance"))
+
+Tolerance::MSP_abundance_matrix %>%
+  round(0) %>% 
+  apply(2,sum)
+
+Tolerance::MSP_abundance_matrix %>%
+  round(0) %>% 
+  t %>%
+  vegan::rarefy(1700) %>%
+  #t %>%
+  data.frame(mgs_count_rarefied=.) %>%
+  merge(sample_metadata_metaG,.,by.x="samplenr", by.y="row.names") -> sample_metadata_metaG
+  
+  
+  
+
+```
+
+# gene richness according to product consumption
+```{r}
+# with all samples
+
+tapply(sample_metadata_metaG$gene_count_dwzn13.2M,sample_metadata_metaG$group, summary)
+
+
+df_sample_metadata_metaG = data.frame(sample_metadata_metaG[,c("samplenr","gene_count_dwzn13.2M", "group", "Visit", "Groupe_dose","mgs_count_rarefied")])
+
+m.df_sample_metadata_metaG = melt(df_sample_metadata_metaG)
+
+m.df_sample_metadata_metaG =  transform(m.df_sample_metadata_metaG, Visit = factor(Visit, labels=c("D0", "D28","D56"), ordered=TRUE))
+m.df_sample_metadata_metaG =  transform(m.df_sample_metadata_metaG, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+
+p_gene_richness_all=
+ ggboxplot(m.df_sample_metadata_metaG, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+            palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "Gene richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   # scale_y_log10(name="Gene richness") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+df.sample_metadata_metaG = data.frame(sample_metadata_metaG[,c("Visit","Groupe_dose", "Groupe", "group","mgs_count_rarefied")])
+m.df.sample_metadata_metaG = melt(df.sample_metadata_metaG)
+
+m.df.sample_metadata_metaG =  transform(m.df.sample_metadata_metaG, Visit = factor(Visit, labels=c("D0", "D28","D56"), ordered=TRUE))
+m.df.sample_metadata_metaG =  transform(m.df.sample_metadata_metaG, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+
+p_msp_richness_all=
+ ggboxplot(m.df.sample_metadata_metaG, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+            palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "MSP richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   # scale_y_log10(name="Gene richness") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+tiff(file="Microbiome_richness_107samples.tiff", w=800, h=400)
+plot_grid(p_gene_richness_all,p_msp_richness_all, nrow=1, ncol=2, labels=c("A","B"), label_size = 22)
+dev.off()
+
+
+```
+
+# metadata file samples with the 2 timepoints v2,v4, no ATN3 V5 
+```{r}
+load(system.file("data","sample_metadata_metaG_allvisits_v2v4_090719.rda", package="Tolerance"))
+
+load(system.file("data-raw/profile_tolerance_scaled_rounded_dwzn13.2M_final.RData", package="Tolerance"))
+
+
+profile = profile_tolerance_scaled_rounded_dwzn13.2M
+profile = as.data.frame(profile)
+profile_v2v4 = profile[,sample_metadata_metaG_allvisits_v2v4$samplenr]
+
+
+gene_count_tolerance_dwzn13.2M_v2v4 = colSums(profile_v2v4 > 0)
+#save(gene_count_tolerance_dwzn13.2M_v2v4, file="~/tolerance/data/gene_count_tolerance_dwzn13.2M_v2v4.rda")
+
+Tolerance::sample_metadata_metaG_allvisits_v2v4  %>% head
+sample_metadata_metaG_allvisits_v2v4$gene_count = gene_count_tolerance_dwzn13.2M_v2v4
+#save(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
+
+load(system.file("data/sample_metadata_metaG_allvisits_v2v4.rda", package="Tolerance"))
+
+sample_metadata_metaG_allvisits_v2v4$group = as.factor(sample_metadata_metaG_allvisits_v2v4$group)
+sample_metadata_metaG_allvisits_v2v4$Visit = as.factor(sample_metadata_metaG_allvisits_v2v4$Visit)
+sample_metadata_metaG_allvisits_v2v4$Groupe_dose = as.factor(sample_metadata_metaG_allvisits_v2v4$Groupe_dose)
+
+
+df_sample_metadata_metaG_allvisits_v2v4 = data.frame(sample_metadata_metaG_allvisits_v2v4[,c("samplenr","gene_count", "group", "Visit", "Groupe_dose")])
+
+
+m.df_sample_metadata_metaG_allvisits_v2v4 = melt(df_sample_metadata_metaG_allvisits_v2v4)
+
+
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = m.df_sample_metadata_metaG_allvisits_v2v4 %>% filter(Visit == "V2")
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Visit= factor(Visit, labels="D0"))
+  
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
+```
+
+
+```{r}
+my_comparisons_v2 <- list( c("FMP.3", "CP.3"))
+
+p1=
+ ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, x = "Groupe_dose", y = "value",
+              color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              # palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+           palette=c("#66CCFF", "#FF9999"),
+              add = "jitter",
+              ylab = "Gene richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+scale_y_continuous(name = 'Gene richness', limits=c(0,1300000)) +
+   stat_compare_means(comparisons = my_comparisons_v2, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = m.df_sample_metadata_metaG_allvisits_v2v4 %>% filter(Visit == "V4")
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, Visit= factor(Visit, labels="D28"))
+  
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
+  
+  
+my_comparisons_v4 <- list( c("FMP.3", "CP.3"))
+
+
+p2=
+ ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, x = "Groupe_dose", y = "value",
+              color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              # palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+           palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "Gene richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+scale_y_continuous(name = 'Gene richness', limits=c(0,1300000)) +
+   stat_compare_means(comparisons = my_comparisons_v4, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+tiff(file="gene_richness_samplesv2v4.tiff", w=800, h=400)
+plot_grid(p1,p2,align="h",nrow=1, ncol=2)
+dev.off()
+
+
+
+# affichage stats
+
+  
+my_comparisons_v2 <- list( c("ATN.3", "CP.3"))
+
+p1=
+ ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, x = "Groupe_dose", y = "value",
+              color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              # palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+           palette=c("#66CCFF", "#FF9999"),
+              add = "jitter",
+              ylab = "Gene richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+scale_y_continuous(name = 'Gene richness', limits=c(0,1300000)) +
+   # stat_compare_means(comparisons = my_comparisons_v2, method = "wilcox.test", paired = F)+
+  stat_compare_means()+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+my_comparisons_v4 <- list( c("ATN.3", "CP.3"))
+
+p2=
+ ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, x = "Groupe_dose", y = "value",
+              color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              # palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+           palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "Gene richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+scale_y_continuous(name = 'Gene richness', limits=c(0,1300000)) +
+   stat_compare_means()+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+tiff(file="gene_richness_samplesv2v4_stats.tiff", w=800, h=400)
+plot_grid(p1,p2,align="h",nrow=1, ncol=2)
+dev.off()
+```
+
+
+```{r}
+```
+
+
+```{r}
+df.sample_metadata_metaG_allvisits_v2v4 = data.frame(sample_metadata_metaG_allvisits_v2v4[,c("Visit","Groupe_dose", "Groupe", "group","gene_count")])
+m.df.sample_metadata_metaG_allvisits_v2v4 = melt(df.sample_metadata_metaG_allvisits_v2v4)
+
+m.df.sample_metadata_metaG_allvisits_v2v4 =  transform(m.df.sample_metadata_metaG_allvisits_v2v4, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.df.sample_metadata_metaG_allvisits_v2v4 =  transform(m.df.sample_metadata_metaG_allvisits_v2v4, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+
+p_gene_richness=
+ ggboxplot(m.df.sample_metadata_metaG_allvisits_v2v4, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+            palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "Gene richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   # scale_y_log10(name="Gene richness") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+df.sample_metadata_metaG_allvisits_v2v4 = data.frame(sample_metadata_metaG_allvisits_v2v4[,c("Visit","Groupe_dose", "Groupe", "group","MSP_count")])
+m.df.sample_metadata_metaG_allvisits_v2v4 = melt(df.sample_metadata_metaG_allvisits_v2v4)
+
+m.df.sample_metadata_metaG_allvisits_v2v4 =  transform(m.df.sample_metadata_metaG_allvisits_v2v4, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.df.sample_metadata_metaG_allvisits_v2v4 =  transform(m.df.sample_metadata_metaG_allvisits_v2v4, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+
+p_msp_richness=
+ ggboxplot(m.df.sample_metadata_metaG_allvisits_v2v4, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+            palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "MSP richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   # scale_y_log10(name="Gene richness") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+tiff(file="Microbiome_richness.tiff", w=800, h=400)
+plot_grid(p_gene_richness,p_msp_richness, nrow=1, ncol=2, labels=c("A","B"), label_size = 22)
+dev.off()
+
+
+
+```
+
+
+
+
+# MSP count
+```{r}
+
+# all samples (107 samples)
+load(system.file("data/MSP_count_matrix_rounded.rda", package="Tolerance"))
+mgs_count = colSums(MSP_count_matrix_rounded > 0)
+#save(mgs_count_rarefied, file="~/tolerance/data/mgs_count.rda")
+write.csv2(mgs_count, file="mgs_count.csv")
+
+Tolerance::sample_metadata_metaG  %>% head
+sample_metadata_metaG$mgs_count = colSums(MSP_count_matrix_rounded > 0)
+#save(sample_metadata_metaG, file="~/tolerance/data/sample_metadata_metaG.rda")
+
+# samples with all visits v2/v4 (76 samples)
+load(system.file("data/sample_metadata_metaG_allvisits_v2v4.rda", package="Tolerance"))
+Tolerance::sample_metadata_metaG_allvisits_v2v4  %>% head
+MSP_count_matrix_rounded_v2v4 = MSP_count_matrix_rounded[,sample_metadata_metaG_allvisits_v2v4$samplenr]
+#save(MSP_count_matrix_rounded_v2v4, file="~/tolerance/data/MSP_count_matrix_rounded_v2v4.rda")
+
+MSP_count_allvisits_v2v4 = colSums(MSP_count_matrix_rounded_v2v4 > 0)
+#save(MSP_count_allvisits_v2v4, file="~/tolerance/data/MSP_count_allvisits_v2v4.rda")
+
+Tolerance::sample_metadata_metaG_allvisits_v2v4  %>% head
+sample_metadata_metaG_allvisits_v2v4$MSP_count = MSP_count_allvisits_v2v4
+#save(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.rda")
+
+sample_metadata_metaG_allvisits_v2v4$group = as.factor(sample_metadata_metaG_allvisits_v2v4$group)
+sample_metadata_metaG_allvisits_v2v4$Visit = as.factor(sample_metadata_metaG_allvisits_v2v4$Visit)
+
+
+df_sample_metadata_metaG_allvisits_v2v4 = data.frame(sample_metadata_metaG_allvisits_v2v4[,c("samplenr","MSP_count", "group", "Visit", "Groupe_dose")])
+
+m.df_sample_metadata_metaG_allvisits_v2v4 = melt(df_sample_metadata_metaG_allvisits_v2v4)
+
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = m.df_sample_metadata_metaG_allvisits_v2v4 %>% filter(Visit == "V2")
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Visit= factor(Visit, labels="D0"))
+  
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
+  
+  
+my_comparisons_v2 <- list( c("FMP.3", "CP.3"))
+
+p3=
+ ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv2, x = "Groupe_dose", y = "value",
+              color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              # palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+           palette=c("#66CCFF", "#FF9999"),
+              add = "jitter",
+              ylab = "MSP richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+scale_y_continuous(name = 'MSP richness', limits=c(0,300)) +
+   stat_compare_means(comparisons = my_comparisons_v2, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = m.df_sample_metadata_metaG_allvisits_v2v4 %>% filter(Visit == "V4")
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, Visit= factor(Visit, labels="D28"))
+
+m.df_sample_metadata_metaG_allvisits_v2v4_filterv4 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
+  
+  
+my_comparisons_v4 <- list( c("FMP.3", "CP.3"))
+
+p4=
+ ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_filterv4, x = "Groupe_dose", y = "value",
+              color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              # palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+           palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "MSP richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+scale_y_continuous(name = 'MSP richness', limits=c(0,300)) +
+   stat_compare_means(comparisons = my_comparisons_v4, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+tiff(file="MSP_richness_samplesv2v4.tiff", w=800, h=400)
+plot_grid(p3,p4,align="h",nrow=1, ncol=2)
+dev.off()
+
+# combine gene and MSP richness on the same plot
+
+
+
+tiff(file="microbiome_richness_samplesv2v4.tiff", w=900, h=700)
+plot_grid(p1,p2,p3,p4,align="h",labels = c("A","", "B", ""),nrow=2, ncol=2)
+dev.off()
+
+```
+
+
+```{r}
+# delta gene count
+# delta msp count
+load(system.file("data/sample_metadata_metaG_allvisits_v2v4.rda", package="Tolerance"))
+#write.csv2(sample_metadata_metaG_allvisits_v2v4, file="~/tolerance/data/sample_metadata_metaG_allvisits_v2v4.csv")
+
+# delta gene count and MSP count on excel
+
+sample_metadata_metaG_allvisits_v2v4_delta = read.csv2(system.file("data/sample_metadata_metaG_allvisits_v2v4_deltaGC_MSP.csv", package="Tolerance"))
+
+#sample_metadata_metaG_allvisits_v2v4_delta = read.csv2("~/actineo_paper/Rlocal_310719/sample_metadata_metaG_allvisits_v2v4_deltaGC_MSP.csv")
+
+sample_metadata_metaG_allvisits_v2v4_delta$Groupe_dose = relevel(sample_metadata_metaG_allvisits_v2v4_delta$Groupe_dose, ref = "CP.3") 
+
+df_sample_metadata_metaG_allvisits_v2v4_delta = data.frame(sample_metadata_metaG_allvisits_v2v4_delta[,c("delta_gene_count", "group", "Visit", "Groupe_dose")])
+
+m.df_sample_metadata_metaG_allvisits_v2v4_delta = melt(df_sample_metadata_metaG_allvisits_v2v4_delta)
+
+m.df_sample_metadata_metaG_allvisits_v2v4_deltafilterv2 = m.df_sample_metadata_metaG_allvisits_v2v4_delta %>% filter(Visit == "V2")
+
+m.df_sample_metadata_metaG_allvisits_v2v4_deltafilterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_deltafilterv2, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
+  
+my_comparisons_deltagene <- list( c("FMP.3", "CP.3"))
+
+p_change_gene=
+ ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_deltafilterv2, x = "Groupe_dose", y = "value",
+              color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              # palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+           palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "Change gene richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+# scale_y_continuous(name = 'Delta gene richness', limits=c(0,300)) +
+   stat_compare_means(comparisons = my_comparisons_deltamsp, label = "p.format", method="wilcox.test")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ # facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+df_sample_metadata_metaG_allvisits_v2v4_delta = data.frame(sample_metadata_metaG_allvisits_v2v4_delta[,c("delta_MSP_count", "group", "Visit", "Groupe_dose")])
+
+m.df_sample_metadata_metaG_allvisits_v2v4_delta = melt(df_sample_metadata_metaG_allvisits_v2v4_delta)
+
+m.df_sample_metadata_metaG_allvisits_v2v4_deltafilterv2 = m.df_sample_metadata_metaG_allvisits_v2v4_delta %>% filter(Visit == "V2")
+
+
+m.df_sample_metadata_metaG_allvisits_v2v4_deltafilterv2 = transform(m.df_sample_metadata_metaG_allvisits_v2v4_deltafilterv2, Groupe_dose= factor(Groupe_dose, labels=c("CP.3","FMP.3"), ordered=TRUE))
+  
+my_comparisons_deltamsp <- list( c("FMP.3", "CP.3"))
+
+p_change_msp=
+ ggboxplot(m.df_sample_metadata_metaG_allvisits_v2v4_deltafilterv2, x = "Groupe_dose", y = "value",
+              color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              # palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
+           palette=c("#3399FF", "#FF0033"),
+              add = "jitter",
+              ylab = "Change MSP richness",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+# scale_y_continuous(name = 'Delta gene richness', limits=c(0,300)) +
+   stat_compare_means(comparisons = my_comparisons_deltamsp, label = "p.format", method="wilcox.test")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ # facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+tiff(file="change_microbiome_richness.tiff", w=800, h=400)
+plot_grid(p_change_gene,p_change_msp,align="h",labels = c("A", "B"),nrow=1, ncol=2,label_size = 22)
+dev.off()
+plot_grid(p_change_gene,p_change_msp,align="h",labels = c("A", "B"),nrow=1, ncol=2,label_size = 22)
+
+```
+
+
+```{r eval=FALSE, include=FALSE}
+
+tolerance_MSP_table %>% 
+  filter(module_name=="core") %>%
+  select(msp_name,gene_name) %>%
+  merge(.,profile_tolerance_scaled_rounded_dwzn13.2M, by.x="gene_name", by.y="row.names") %>%
+  select(-gene_name) %>%
+  group_by(msp_name) %>%
+  summarise_all(median) -> tmp
+
+tmp %>%
+  group_by(msp_name) %>%
+  mutate_all(round) %>%
+  ungroup() %>%
+  summarise_if(is.numeric,sum)
+
+
+```
+
+
+

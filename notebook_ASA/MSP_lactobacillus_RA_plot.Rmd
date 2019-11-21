@@ -1,0 +1,814 @@
+---
+title: "MSP Lactobacillus relative abundance plot"
+output: html_notebook
+---
+
+```{r message=FALSE, warning=FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(ggsignif)
+library(reshape2)
+library(readr)
+library(cowplot)
+
+```
+
+# load data
+```{r}
+# load taxo MSP
+taxoMSP = read.csv2("../data-raw/taxo_1662msp.csv")
+
+# load MSP relative abundance
+load("../data-raw/MSP_relative_abundance_matrix_rounded.rda")
+
+
+  
+MSP_relative_abundance_matrix_rounded = prop.table(MSP_relative_abundance_matrix_rounded %>% as.matrix,1)
+
+MSP_relative_abundance_matrix_rounded[which(is.na(MSP_relative_abundance_matrix_rounded))] <-0
+
+MSP_relative_abundance_matrix_rounded= as.data.frame(MSP_relative_abundance_matrix_rounded)
+
+# load metadata
+# load("C:/Users/alvareao/Documents/actineo_paper/Rlocal_310719/sample_metadata_metaG.rda")
+sample_metadata_metaG = read.csv2("../data-raw/sample_metadata_metaG.csv")
+
+sample_metadata_metaG_v2v4 = sample_metadata_metaG[sample_metadata_metaG$visits_v2v4=="1",]
+sample_metadata_metaG_v2v4 = sample_metadata_metaG_v2v4[sample_metadata_metaG_v2v4$Visit=="V2" | sample_metadata_metaG_v2v4$Visit=="V4",]
+
+save(sample_metadata_metaG_v2v4, file="sample_metadata_metaG_v2v4_010819.rda")
+
+
+```
+
+# select MSP Lactobacillus
+```{r}
+taxoMSP_Lactobacillus = taxoMSP[taxoMSP$genus=="Lactobacillus",]
+taxoMSP_Lactobacillus %>% head
+
+save(taxoMSP_Lactobacillus, file="taxoMSP_Lactobacillus.rda")
+str(taxoMSP_Lactobacillus)
+taxoMSP_Lactobacillus$species = as.character(taxoMSP_Lactobacillus$species)
+taxoMSP_Lactobacillus$X = as.character(taxoMSP_Lactobacillus$X)
+taxoMSP_Lactobacillus$msp_name = taxoMSP_Lactobacillus$X
+#  [1] "msp_lrhamnosus" "msp_1182"       "msp_0651"       "msp_1025"       "msp_1122"       "msp_1200"      
+#  [7] "msp_0950"       "msp_0872"       "msp_1180"       "msp_0397"       "msp_1685"       "msp_1158"      
+# [13] "msp_0092"       "msp_0323"       "msp_a08"        "msp_1241"       "msp_1134"       "msp_1146"      
+
+name_MSP_Lactobacillus = taxoMSP_Lactobacillus$species
+# 18 MSP
+
+MSP_relative_abundance_matrix_rounded_t = t(MSP_relative_abundance_matrix_rounded)
+MSP_relative_abundance_matrix_rounded_t = as.data.frame(MSP_relative_abundance_matrix_rounded_t)
+
+MSP_RA_Lactobacillus = MSP_relative_abundance_matrix_rounded_t[,taxoMSP_Lactobacillus$msp_name]
+
+save(MSP_RA_Lactobacillus, file="MSP_RA_Lactobacillus.rda")
+
+
+
+sample_metadata_metaG_v2v4 = sample_metadata_metaG_v2v4[match(rownames(MSP_RA_Lactobacillus),sample_metadata_metaG_v2v4$samplenr),] 
+all.equal(rownames(MSP_RA_Lactobacillus),sample_metadata_metaG_v2v4$samplenr)
+
+MSP_RA_Lactobacillus$sample = rownames(MSP_RA_Lactobacillus)
+
+sample_metadata_metaG_v2v4_MSP_Lacto = merge(sample_metadata_metaG_v2v4, MSP_RA_Lactobacillus, by.x="samplenr", by.y="sample")
+
+sample_metadata_metaG_v2v4_MSP_Lacto %>% head
+
+sample_metadata_metaG_v2v4_MSP_Lacto$Groupe_dose = as.factor(sample_metadata_metaG_v2v4_MSP_Lacto$Groupe_dose)
+
+sample_metadata_metaG_v2v4_MSP_Lacto$Visit = as.factor(sample_metadata_metaG_v2v4_MSP_Lacto$Visit)
+
+sample_metadata_metaG_v2v4_MSP_Lacto$Groupe_dose = relevel(sample_metadata_metaG_v2v4_MSP_Lacto$Groupe_dose, ref = "CP.3") 
+
+summary(sample_metadata_metaG_v2v4_MSP_Lacto)
+save(sample_metadata_metaG_v2v4_MSP_Lacto, file="sample_metadata_metaG_v2v4_MSP_Lacto.rda")
+
+load("sample_metadata_metaG_v2v4_MSP_Lacto.rda")
+
+
+
+
+
+
+```
+
+
+# plot MSP Lactobacillus - individuals with samples at V2 and V4 (n=76, noATN v5)
+
+```{r warning=FALSE}
+
+
+# plot L. rhamnosus
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_lrhamnosus")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus rhamnosus")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+# m.sample_metadata_metaG_v2v4_MSP_Lacto_filterv2v4 = m.sample_metadata_metaG_MSP_Lacto %>% filter(Visit == "D0" | Visit == "D28")
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p1=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+            palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              ylab = "Log10 relative abundance L. rhamnosus",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+# scale_y_continuous(name = 'Gene richness', limits=c(0,1300000)) +
+   scale_y_log10(name="Log10 relative abundance L. rhamnosus") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+# plot Lactobacillus acidophilus msp_1182
+
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1182")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus acidophilus")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+
+p2=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+            palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              ylab = "Log10 relative abundance L. acidophilus",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. acidophilus") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+# plot Lactobacillus amylovorus msp_0651
+
+
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_0651")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus amylovorus")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+
+p3=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+            palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 Relative abundance L. amylovorus",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. amylovorus") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot Lactobacillus casei == paracasei msp_1025
+
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1025")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus casei-paracasei")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p4=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. casei/paracasei") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+# plot L crispatus msp_1122
+
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1122")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus crispatus")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p5=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. crispatus") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+# plot Lactobacillus delbrueckii msp_1200
+
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1200")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus delbrueckii")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p6=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. delbrueckii") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+
+# plot Lactobacillus fermentum msp_0950
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_0950")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus fermentum")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p7=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. fermentum") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot Lactobacillus gasseri msp_0872
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_0872")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus gasseri")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p8=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. gasseri") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot Lactobacillus johnsonii msp_1180
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1180")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus johnsonii")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p9=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. johnsonii") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot Lactobacillus mucosae msp_0397
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_0397")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus mucosae")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p10=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. mucosae") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot Lactobacillus oris msp_1685
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1685")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus oris")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p11=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. oris") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+# plot Lactobacillus reuteri msp_1158
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1158")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus reuteri")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p12=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. reuteri") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot Lactobacillus rogosae msp_0092
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_0092")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus rogosae")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p13=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. rogosae") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+# plot Lactobacillus ruminis msp_0323
+
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_0323")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus ruminis")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p14=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. ruminis") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot Lactobacillus salivarius msp_a08
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_a08")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus salivarius")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p15=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. salivarius") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot Lactobacillus vaginalis msp_1241
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1241")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("Lactobacillus vaginalis")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p16=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance L. vaginalis") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot unclassified Lactobacillus msp_1134
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1134")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("unclassified Lactobacillus")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p17=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance unclassified Lactobacillus") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+# plot unclassified Lactobacillus msp_1146
+
+
+
+df.sample_metadata_metaG_v2v4_MSP_Lacto = data.frame(sample_metadata_metaG_v2v4_MSP_Lacto[,c("Visit","Groupe_dose", "Groupe", "group","msp_1146")])
+m.sample_metadata_metaG_v2v4_MSP_Lacto = melt(df.sample_metadata_metaG_v2v4_MSP_Lacto)
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, variable = factor(variable, labels=c("unclassified Lactobacillus")))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Visit = factor(Visit, labels=c("D0", "D28"), ordered=TRUE))
+m.sample_metadata_metaG_v2v4_MSP_Lacto =  transform(m.sample_metadata_metaG_v2v4_MSP_Lacto, Groupe_dose = factor(Groupe_dose, labels=c("CP.3", "FMP.3"), ordered=TRUE))
+
+
+m.sample_metadata_metaG_v2v4_MSP_Lacto$value[m.sample_metadata_metaG_v2v4_MSP_Lacto$value == 0 ]=1e-06
+
+
+my_comparisons <- list( c("FMP.3", "CP.3"))
+
+p18=
+ ggboxplot(m.sample_metadata_metaG_v2v4_MSP_Lacto, x = "Groupe_dose", y = "value",
+            color = "Groupe_dose", 
+            fill="Groupe_dose",
+            alpha=0.5,
+              palette=c("#3399FF", "#FF0033"),
+              #add = "jitter",
+              # ylab = "Log10 relative abundance L. casei/paracasei",
+              xlab= "",
+              ggtheme = theme_pubr()) +
+   scale_y_log10(name="Log10 relative abundance unclassified Lactobacillus") +
+   stat_compare_means(comparisons = my_comparisons, label = "p.signif")+
+   theme(axis.title.x=element_blank(), legend.position = 'none')+
+ facet_grid(. ~ Visit)+
+  theme(strip.text.x = element_text(size=13, color="white", face="bold")) +
+  theme(strip.background = element_rect(colour="white", fill="gray48", linetype="solid"))+
+  theme(axis.title.x = element_text(color="black", face="bold", size=13),
+        axis.title.y = element_text(color="black", size=12, face="bold"),
+        axis.text.y = element_text(color="black", size=10, face="bold"),
+        axis.text.x = element_text(color="black", size=10, face="bold"),
+        legend.text = element_text(color="black", size=10, face="bold"),
+        legend.title = element_text(color="black", size=13, face="bold"))
+
+
+tiff(file="MSP_lactobacillus_AR_plot.tiff", w=1600, h=2000)
+cowplot::plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,align="h",nrow=5, ncol=4)
+dev.off()
+
+
+```
+
+

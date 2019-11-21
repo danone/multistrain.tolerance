@@ -1,0 +1,55 @@
+---
+title: "Genes detected at V4 versus V2 brought by Actineo «catalogue»"
+output: html_notebook
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(DESeq2)
+library(ggplot2)
+devtools::load_all(reset=FALSE)
+
+```
+
+
+# selection of genes with signal at V2 in the rounded gene abundance matrix
+```{r}
+load("~/tolerance/data-raw/profile_tolerance_scaled_rounded_final.RData")
+
+sample_metadata_metaG_allvisits = 
+readr::read_csv2("~/tolerance/data/sample_metadata_metaG_allvisits.csv")
+# 107 samples
+
+sample_metadata_metaG_allvisits_v2 = sample_metadata_metaG_allvisits[sample_metadata_metaG_allvisits$Visit=="V2", ]
+# 45 samples at v2
+
+sample_metadata_metaG_allvisits_v2$samplenr = as.character(sample_metadata_metaG_allvisits_v2$samplenr)
+
+profile_tolerance_scaled_rounded_v2 = profile_tolerance_scaled_rounded[,match(sample_metadata_metaG_allvisits_v2$samplenr, colnames(profile_tolerance_scaled_rounded))]
+
+save(profile_tolerance_scaled_rounded_v2, file="~/tolerance/data-raw/profile_tolerance_scaled_rounded_v2.RData", compress=T)
+
+profile_tolerance_scaled_rounded_v2_nonull = profile_tolerance_scaled_rounded_v2[rowSums(profile_tolerance_scaled_rounded_v2)>0,]
+save(profile_tolerance_scaled_rounded_v2_nonull, file="~/tolerance/data-raw/profile_tolerance_scaled_rounded_v2_nonull.Rdata", compress=T)
+
+# 45 samples
+# 5,508,325 genes
+
+```
+
+
+# download of gene names of actineo
+```{r}
+
+gene_names_actineo = 
+  readr::read_tsv("~/tolerance/data/list_name_genes_actineo.txt",col_names = F)
+
+gene_names_actineo %>% head
+
+# gene_names_actineo_list = list(gene_names_actineo)
+
+rownames(gene_names_actineo)= gene_names_actineo$X1
+# ">gene_6|GeneMark.hmm|204_nt|+|3570|3773|Ldb290"   
+
+```
