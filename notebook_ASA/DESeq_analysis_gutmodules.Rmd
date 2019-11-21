@@ -3,6 +3,7 @@ title: "Differential analysis - KEGG gut modules"
 output: html_notebook
 ---
 
+import libraries
 ```{r message=FALSE, warning=FALSE}
 library(dplyr)
 library(DESeq2)
