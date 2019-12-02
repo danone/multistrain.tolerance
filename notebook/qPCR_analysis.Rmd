@@ -11,6 +11,8 @@ library(dplyr)
 library(ggpubr)
 library(wesanderson)
 
+library(reshape2)
+
 
 ```
 
@@ -20,7 +22,13 @@ library(wesanderson)
 
 
 
-data= read.csv2("../notebook_clean/Tolerance_qPCR_Bilan_repro_version170804_final_modif260419.csv")
+data= read.csv2("../notebook_ASA/Tolerance_qPCR_Bilan_repro_version170804_final_modif260419.csv")
+
+data %>% 
+  group_by(target,Product,Time.points) %>% 
+  select(Mean) %>% 
+  summarise(median=median(Mean),IQR25=quantile(Mean,0.25), IQR75=quantile(Mean,0.75)) %>%
+  write.csv2("qPCR_summary.csv")
 
 str(data)
 
@@ -89,7 +97,9 @@ m.df_data_1518 %>%
   mutate(p.value=p.value%>%p.adjust(method="BH"))
 
 
-
+m.df_data_1518 %>%
+  filter(Time.points%in% c("D14","D28"), Product %in% c("FMP.1","FMP.3")) %>%
+  group_by(Product,target,Time.points)
 
 ```
 
