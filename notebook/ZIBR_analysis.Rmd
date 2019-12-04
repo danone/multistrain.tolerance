@@ -138,7 +138,6 @@ spe_df %>%
 
 
 ```{r}
-
 ## make a big loop
 
 genus_stat_summary %>%
@@ -189,8 +188,14 @@ save(zibr_est_df, file="zibr_est_df.rda")
 # paste("beta.est", 
 #       c(rep("estimate",5), rep("Pvalue",5)),
 #       rep(c("Intercept","Baseline","Challenge","fx3"),2), sep=".")
-# 
+#
+```
 
+
+
+
+```{r}
+load("zibr_est_df.rda")
 colnames(zibr_est_df) = genus_select
 
 zibr_est_df %>%
@@ -227,14 +232,16 @@ zibr_est_df %>%
   select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
   mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
   filter(joint.p.fx3<0.05 & joint.p.Challenge <0.05) %>% pull(genus) -> genus_select
-
-
 ```
 
 
 
 
+
 ```{r fig.height=10, fig.width=6}
+
+#read.csv2("result_ZIBR.csv") %>% select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>% mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>% filter(joint.p.fx3<0.05 & joint.p.Challenge <0.05) %>% pull(genus) -> genus_select
+
 
 genus %>%
   tibble::column_to_rownames("genus") %>%
@@ -243,6 +250,7 @@ genus %>%
 row.names(genus_clr)=genus$genus
 
 library(ade4)
+library(purrr)
 
 genus_clr_pca = dudi.pca(as.data.frame(genus_clr[genus_select,]%>%t), scannf = F, nf=3)
 
@@ -252,7 +260,7 @@ genus_clr_pca$eig/sum(genus_clr_pca$eig)
 
 sample_metadata %>%
   merge(genus_clr_pca$li, by.x="samplenr", by.y="row.names") %>%
-  filter(Visit %in% c("V3","V4")) %>%
+  filter(Visit %in% c("V2","V3","V4","V5")) %>%
   ggplot() + geom_point(aes(x=Axis1,y=Axis2,col=Groupe)) + 
   facet_grid(Visit~Doses)
 
