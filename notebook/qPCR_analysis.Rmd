@@ -68,7 +68,7 @@ p1=
           fill="Product",
           alpha=0.5,
           add = "jitter",
-          ylab ="log10 CRISPR gene copies number/g feces",
+          ylab ="log10 CRISPR gene copy number/g feces",
           xlab = "Days",
           palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
           ggtheme = theme_pubr()) +
@@ -124,7 +124,7 @@ p2=
             fill="Product",
             alpha=0.5,
             add = "jitter",
-            ylab ="log10 cas gene copies number/g feces",
+            ylab ="log10 cas gene copy number/g feces",
             xlab = "Days",
             palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
             ggtheme = theme_pubr()) +
@@ -178,7 +178,7 @@ p3=
             alpha=0.5,
             add = "jitter",
             palette=c("#66CCFF", "#3399FF", "#FF9999", "#FF0033"),
-            ylab ="log10 Cro/CI family copies number/g feces",
+            ylab ="log10 Cro/CI family copy number/g feces",
             xlab = "Days",
             ggtheme = theme_pubr()) +
   theme(legend.position = 'right')+
@@ -225,7 +225,7 @@ leg <- ggpubr::get_legend(p1)
 #p2 <- p2 + theme(legend.position = "none")
 #p3 <- p3 + theme(legend.position = "none")
 
-plot_grid(
+cowplot::plot_grid(
   p1 + theme(legend.position = "none") ,leg,
   p2,leg,
   p3+ theme(legend.position = "none"),leg, 
