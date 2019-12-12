@@ -629,4 +629,59 @@ tmp %>%
 ```
 
 
+## genus alpha diversity
+```{r}
+
+
+data(sample_metadata)  
+
+load("genus.rda")
+
+genus
+
+
+```
+
+
+
+```{r}
+
+
+
+genus %>%
+  tibble::column_to_rownames("genus") %>%
+  t %>%
+  vegan::rarefy(sample = 1000) %>%
+  as.data.frame %>%
+  dplyr::rename(count=1) %>%
+  merge(sample_metadata, by.x="row.names", by.y="samplenr") %>%
+  ggplot + geom_boxplot(aes(x=Visit,y=count,fill=Groupe)) + facet_wrap(~Doses)
+  
+  
+genus %>%
+  tibble::column_to_rownames("genus") %>%
+  t %>%
+  vegan::rarefy(sample = 1000) %>%
+  as.data.frame %>%
+  dplyr::rename(count=1) %>%
+  merge(sample_metadata, by.x="row.names", by.y="samplenr") %>%
+select(count,Visit,Groupe,Doses) %>%
+  reshape2::melt(id.vars=c("Visit","Groupe","Doses")) %>%
+  group_by(Visit, Doses) %>%
+  do(with(., wilcox.test(value~as.character(Groupe), data=.) %>% broom::tidy()))
+  
+  tidyr::nest(-Visit,-Groupe) %>% 
+  
+  mutate(
+        wilcox_test=purrr::map(data,~wilcox.test(.$count~.$Doses)),
+        tidy=purrr::map(wilcox_test, broom::tidy)) %>% 
+      unnest(tidy,.drop=TRUE)
+  
+  
+
+```
+
+
+
+
 
