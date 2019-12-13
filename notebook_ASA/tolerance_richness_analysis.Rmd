@@ -655,7 +655,10 @@ genus %>%
   as.data.frame %>%
   dplyr::rename(count=1) %>%
   merge(sample_metadata, by.x="row.names", by.y="samplenr") %>%
-  ggplot + geom_boxplot(aes(x=Visit,y=count,fill=Groupe)) + facet_wrap(~Doses)
+  mutate(Visit=Visit %>% forcats::fct_recode(D0="V2", D14="V3",D28="V4",D56="V5") ) %>%
+  ggplot + geom_boxplot(aes(x=Visit,y=count,fill=Groupe %>% gsub("ATN","Test",.) %>% gsub("CP","Control",.))) + 
+  facet_wrap(~Doses) + ylab("Observed genus count") + 
+  xlab("Visit") + theme_classic() + scale_fill_brewer("", type="qual")
   
   
 genus %>%
