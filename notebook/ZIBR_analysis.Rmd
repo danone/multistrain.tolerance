@@ -27,8 +27,6 @@ genus
 
 
 
-
-
 ```{r}
 genus %>%
   reshape2::melt(id.vars="genus") %>%
@@ -235,6 +233,39 @@ zibr_est_df %>%
 ```
 
 
+```{r fig.height=5, fig.width=12}
+
+
+load("zibr_est_df.rda")
+
+
+
+genus %>%
+  tibble::column_to_rownames("genus") %>%
+  mutate_all(SpiecEasi::clr) -> genus_clr
+
+row.names(genus_clr)=genus$genus
+
+zibr_est_df %>%
+  t %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genus") %>% 
+  select(genus,joint.p.baseline,joint.p.Challenge, joint.p.fx3) %>%
+  mutate(joint.p.fx3 = joint.p.fx3 %>% p.adjust(method = "fdr"), joint.p.Challenge = joint.p.Challenge %>% p.adjust(method = "fdr")) %>%
+  filter(joint.p.fx3<0.05 & joint.p.Challenge <0.05) %>% pull(genus) -> genus_select
+
+
+
+genus_clr[genus_select,] %>%
+  tibble::rownames_to_column("genus") %>%
+  reshape2::melt(id.vars="genus") %>%
+  merge(sample_metadata, by.x="variable", by.y="samplenr") %>%
+  ggplot() + geom_boxplot(aes(x=Visit,y=value,fill=Groupe %>% gsub("ATN","Test",.) %>% gsub("CP","Control",.)))  + 
+  facet_grid(Doses~genus %>% gsub(";","\n",.)) + ylab("rel. abundance (CLR)") + 
+  scale_fill_brewer("",type="qual") + theme_classic()
+
+
+```
 
 
 
