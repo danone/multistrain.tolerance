@@ -236,3 +236,13 @@ ggsave("Figure_qPCR.pdf")
 
 ```
 
+```{r fig.height=5, fig.width=16}
+
+
+cowplot::plot_grid(p1+ theme(legend.position = "none"),p2,p3+ theme(legend.position = "none"), leg, align = "h", axis="t", nrow=1, ncol=4, rel_widths = c(1,1,1,0.2))
+
+ggsave("Figure_qPCR.pdf")
+
+
+```
+
