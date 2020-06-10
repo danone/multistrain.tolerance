@@ -782,6 +782,8 @@ kegg_contrib_V2 %>% #sample_frac(0.1) %>%
   write.csv2(KO_contrib_Lactobacillus, file="KO_contrib_Lactobacillus.csv")
 
 
+  #KO_contrib_Lactobacillus = read.csv2("KO_contrib_Lactobacillus.csv", row.names=1)
+  
 ```
 
 ```{r}
@@ -1244,6 +1246,28 @@ kegg_similarity %>%
 
 
 ```
+
+## mean contrib by lacto species
+
+
+```{r}
+KO_contrib_Lactobacillus %>%
+ merge(kegg_melt, by="KO") %>% dim
+
+
+kegg_melt %>% 
+  filter(KO %in% KO_contrib_Lactobacillus$KO) %>% 
+  merge(tolerance_MSP_table, by="gene_name") %>% 
+  filter(gene_name %in% genes_names_from_products) %>%
+  merge(KO_contrib_Lactobacillus, by="KO") %>%
+  reshape2::dcast(KO~msp_name, value.var = "mean_contrib", fill=0) %>%
+  merge(KO_contrib_Lactobacillus, by="KO") %>%
+  write.csv2(file="KO_per_lacto_FMP_species.csv")
+  
+
+
+```
+
 
 
 
