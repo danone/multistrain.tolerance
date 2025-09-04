@@ -142,6 +142,7 @@ dds2 <- estimateSizeFactors(dds2, type="poscounts")
 # Full design matrix
 mod <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose + Groupe_dose:Visit, temp)
 mod <- mod[,colSums(mod)>0]
+mod <- mod[colnames(dds2),]
 dds2 <- estimateDispersions(dds2, modelMatrix = mod)
 
 save(dds2, file="~/tolerance/notebook/dds2_16S_subjecs_with_all_visits_082019.rda")
@@ -150,6 +151,7 @@ load("~/tolerance/notebook/dds2_16S_subjecs_with_all_visits_082019.rda")
 # Reduced design matrix
 mod2 <- model.matrix(~ Groupe_dose:subject.n + Groupe_dose, temp)
 mod2 = mod2[, colSums(mod2)>0]
+mod2 <- mod2[colnames(dds2),]
 
 
 ##### test RLT ######
